@@ -1,0 +1,29 @@
+'use client';
+
+import { useAuth } from '@/hooks/useAuth';
+
+export default function LoginPage() {
+  const { signIn, startDemo, loading, user } = useAuth();
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: '20px', background: '#0a0a0a', color: '#fff', fontFamily: 'var(--font-orbitron), sans-serif' }}>
+      <h1 style={{ textShadow: '0 0 10px #00f0ff', color: '#00f0ff', fontSize: '2.5rem', letterSpacing: '2px' }}>CHRONOS LOGIN</h1>
+      <p style={{ fontFamily: 'var(--font-inter), sans-serif', color: '#888' }}>Stage 2 Authentication Verification</p>
+      
+      {loading ? (
+        <p style={{ fontFamily: 'var(--font-jetbrains-mono), monospace' }}>Loading session...</p>
+      ) : user ? (
+        <p style={{ fontFamily: 'var(--font-jetbrains-mono), monospace' }}>Signed in as {user.displayName}</p>
+      ) : (
+        <div style={{ display: 'flex', gap: '15px' }}>
+          <button onClick={signIn} style={{ background: '#00f0ff', color: '#000', border: 'none', padding: '12px 24px', borderRadius: '5px', cursor: 'pointer', fontFamily: 'var(--font-jetbrains-mono), monospace', fontWeight: 'bold', boxShadow: '0 0 10px #00f0ff' }}>
+            SIGN IN WITH GOOGLE
+          </button>
+          <button onClick={startDemo} style={{ background: 'transparent', color: '#00f0ff', border: '2px solid #00f0ff', padding: '10px 22px', borderRadius: '5px', cursor: 'pointer', fontFamily: 'var(--font-jetbrains-mono), monospace', fontWeight: 'bold' }}>
+            TRY DEMO MODE
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
