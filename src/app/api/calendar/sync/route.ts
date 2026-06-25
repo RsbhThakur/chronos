@@ -72,9 +72,9 @@ export async function POST(request: Request) {
     }
 
     const task = taskSnap.data() as Task;
-    const deadlineDate = task.deadline && typeof (task.deadline as { toDate?: () => Date }).toDate === 'function'
-      ? (task.deadline as { toDate: () => Date }).toDate()
-      : new Date(task.deadline as string | number | Date);
+    const deadlineDate = task.deadline && typeof (task.deadline as unknown as { toDate?: () => Date }).toDate === 'function'
+      ? (task.deadline as unknown as { toDate: () => Date }).toDate()
+      : new Date(task.deadline as unknown as string | number | Date);
     
     // Set start time to task deadline, and end time based on estimatedMinutes
     const startTime = deadlineDate.toISOString();
