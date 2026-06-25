@@ -22,6 +22,8 @@ export const metadata: Metadata = {
   description: "Your AI-powered productivity companion that rescues you from missed deadlines",
 };
 
+import Providers from "@/components/providers/Providers";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -29,7 +31,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable} ${orbitron.variable}`}>
-      <body>{children}</body>
+      <body>
+        <Providers>
+          {children}
+        </Providers>
+      </body>
     </html>
   );
 }
