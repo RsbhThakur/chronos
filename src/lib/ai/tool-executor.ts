@@ -1,8 +1,14 @@
 import { adminDb } from '@/lib/firebase-admin';
-import { ai, getModelName, getAgentSystemInstruction } from './gemini-client';
+import { ai, getModelName, getAgentSystemInstruction, generateStructuredContent } from './gemini-client';
 import { AgentType, UserProfile, Task, Goal, Milestone, RescuePlan, GhostWorkerOutput, BottleneckForecast, ProductivityInsight } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import { google } from 'googleapis';
+
+// Import specialized AI agent Zod schemas and fallback configurations
+import { RescuePlanSchema, DEFAULT_FALLBACK_RESCUE_PLAN } from './agents/rescue-agent';
+import { GhostWorkerSchema, DEFAULT_FALLBACK_GHOST_WORKER } from './agents/ghost-worker-agent';
+import { DecomposerSchema, DEFAULT_FALLBACK_DECOMPOSITION } from './agents/decomposer-agent';
+import { ProductivityInsightsResponseSchema, DEFAULT_FALLBACK_INSIGHTS, BottleneckForecastResponseSchema, DEFAULT_FALLBACK_FORECASTS } from './agents/timewarp-agent';
 
 /**
  * Main dispatcher to execute tool calls returned by Vertex AI agents.
@@ -259,9 +265,6 @@ async function toolActivateRescueMode(args: any, userId: string) {
   const now = new Date();
   const totalMinutesAvailable = Math.max(0, Math.floor((deadlineDate.getTime() - now.getTime()) / 60000));
 
-  const modelName = getModelName('pro');
-  const systemInstruction = getAgentSystemInstruction('rescue', userProfile);
-
   const prompt = `Task: ${taskData.title}
 Description: ${taskData.description}
 Subtasks remaining: ${JSON.stringify(taskData.subtasks.filter(s => !s.completed))}
@@ -269,68 +272,64 @@ Current Time: ${now.toISOString()}
 Deadline: ${deadlineDate.toISOString()}
 Total Minutes Available: ${totalMinutesAvailable}`;
 
-  const response = await ai.models.generateContent({
-    model: modelName,
-    contents: prompt,
-    config: {
-      systemInstruction,
-      responseMimeType: 'application/json',
-      responseSchema: {
-        type: 'OBJECT',
-        properties: {
-          severity: { type: 'STRING', enum: ['yellow', 'orange', 'red'] },
-          totalMinutesAvailable: { type: 'INTEGER' },
-          totalMinutesNeeded: { type: 'INTEGER' },
-          feasible: { type: 'BOOLEAN' },
-          plan: {
-            type: 'ARRAY',
-            items: {
-              type: 'OBJECT',
-              properties: {
-                id: { type: 'STRING' },
-                timeBlock: { type: 'STRING' },
-                action: { type: 'STRING' },
-                estimatedMinutes: { type: 'INTEGER' },
-                tips: { type: 'STRING' },
-                canBeSkipped: { type: 'BOOLEAN' },
-                completed: { type: 'BOOLEAN' }
-              },
-              required: ['id', 'timeBlock', 'action', 'estimatedMinutes', 'tips', 'canBeSkipped', 'completed']
-            }
+  const responseSchema = {
+    type: 'OBJECT',
+    properties: {
+      severity: { type: 'STRING', enum: ['yellow', 'orange', 'red'] },
+      totalMinutesAvailable: { type: 'INTEGER' },
+      totalMinutesNeeded: { type: 'INTEGER' },
+      feasible: { type: 'BOOLEAN' },
+      plan: {
+        type: 'ARRAY',
+        items: {
+          type: 'OBJECT',
+          properties: {
+            id: { type: 'STRING' },
+            timeBlock: { type: 'STRING' },
+            action: { type: 'STRING' },
+            estimatedMinutes: { type: 'INTEGER' },
+            tips: { type: 'STRING' },
+            canBeSkipped: { type: 'BOOLEAN' },
+            completed: { type: 'BOOLEAN' }
           },
-          sacrifices: { type: 'ARRAY', items: { type: 'STRING' } },
-          motivationalMessage: { type: 'STRING' },
-          checkpoints: {
-            type: 'ARRAY',
-            items: {
-              type: 'OBJECT',
-              properties: {
-                time: { type: 'STRING' },
-                milestone: { type: 'STRING' },
-                reached: { type: 'BOOLEAN' }
-              },
-              required: ['time', 'milestone', 'reached']
-            }
-          }
-        },
-        required: [
-          'severity',
-          'totalMinutesAvailable',
-          'totalMinutesNeeded',
-          'feasible',
-          'plan',
-          'sacrifices',
-          'motivationalMessage',
-          'checkpoints'
-        ]
+          required: ['id', 'timeBlock', 'action', 'estimatedMinutes', 'tips', 'canBeSkipped', 'completed']
+        }
+      },
+      sacrifices: { type: 'ARRAY', items: { type: 'STRING' } },
+      motivationalMessage: { type: 'STRING' },
+      checkpoints: {
+        type: 'ARRAY',
+        items: {
+          type: 'OBJECT',
+          properties: {
+            time: { type: 'STRING' },
+            milestone: { type: 'STRING' },
+            reached: { type: 'BOOLEAN' }
+          },
+          required: ['time', 'milestone', 'reached']
+        }
       }
-    }
-  });
+    },
+    required: [
+      'severity',
+      'totalMinutesAvailable',
+      'totalMinutesNeeded',
+      'feasible',
+      'plan',
+      'sacrifices',
+      'motivationalMessage',
+      'checkpoints'
+    ]
+  };
 
-  const rawJson = response.text || response.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!rawJson) throw new Error('Rescue Mode generation returned no content');
-  
-  const parsedPlan = JSON.parse(rawJson);
+  const parsedPlan = await generateStructuredContent({
+    agentType: 'rescue',
+    userProfile,
+    prompt,
+    responseSchema,
+    zodSchema: RescuePlanSchema,
+    fallbackValue: DEFAULT_FALLBACK_RESCUE_PLAN,
+  });
   const rescuePlan: RescuePlan = {
     ...parsedPlan,
     activatedAt: new Date(),
@@ -364,37 +363,30 @@ async function toolGenerateGhostWorkerDraft(args: any, userId: string) {
   if (!taskSnap.exists) throw new Error('Task not found');
   const taskData = taskSnap.data() as Task;
 
-  const modelName = getModelName('pro');
-  const systemInstruction = getAgentSystemInstruction('ghost-worker', userProfile);
-
   const prompt = `Task Title: ${taskData.title}
 Task Description: ${taskData.description}
 Deliverable Type requested: ${deliverableType}
 Additional Instructions: ${additionalContext || 'None'}`;
 
-  const response = await ai.models.generateContent({
-    model: modelName,
-    contents: prompt,
-    config: {
-      systemInstruction,
-      responseMimeType: 'application/json',
-      responseSchema: {
-        type: 'OBJECT',
-        properties: {
-          type: { type: 'STRING', enum: ['email', 'document', 'presentation', 'code', 'agenda'] },
-          title: { type: 'STRING' },
-          content: { type: 'STRING' },
-          reviewNotes: { type: 'ARRAY', items: { type: 'STRING' } }
-        },
-        required: ['type', 'title', 'content', 'reviewNotes']
-      }
-    }
+  const responseSchema = {
+    type: 'OBJECT',
+    properties: {
+      type: { type: 'STRING', enum: ['email', 'document', 'presentation', 'code', 'agenda'] },
+      title: { type: 'STRING' },
+      content: { type: 'STRING' },
+      reviewNotes: { type: 'ARRAY', items: { type: 'STRING' } }
+    },
+    required: ['type', 'title', 'content', 'reviewNotes']
+  };
+
+  const parsedOutput = await generateStructuredContent({
+    agentType: 'ghost-worker',
+    userProfile,
+    prompt,
+    responseSchema,
+    zodSchema: GhostWorkerSchema,
+    fallbackValue: DEFAULT_FALLBACK_GHOST_WORKER,
   });
-
-  const rawJson = response.text || response.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!rawJson) throw new Error('Ghost Worker generation failed');
-
-  const parsedOutput = JSON.parse(rawJson);
   const ghostWorkerOutput: GhostWorkerOutput = {
     ...parsedOutput,
     generatedAt: new Date(),
@@ -416,9 +408,6 @@ async function toolDecomposeGoal(args: any, userId: string) {
   const userDoc = await adminDb.collection('users').doc(userId).get();
   const userProfile = userDoc.data() as UserProfile;
 
-  const modelName = getModelName('pro');
-  const systemInstruction = getAgentSystemInstruction('decomposer', userProfile);
-
   const now = new Date();
   const goalDeadline = new Date(deadline);
 
@@ -428,54 +417,50 @@ Final Deadline: ${goalDeadline.toISOString()}
 Current Date: ${now.toISOString()}
 Context: ${context || 'None'}`;
 
-  const response = await ai.models.generateContent({
-    model: modelName,
-    contents: prompt,
-    config: {
-      systemInstruction,
-      responseMimeType: 'application/json',
-      responseSchema: {
-        type: 'OBJECT',
-        properties: {
-          milestones: {
-            type: 'ARRAY',
-            items: {
-              type: 'OBJECT',
-              properties: {
-                title: { type: 'STRING' },
-                dueDate: { type: 'STRING' }
-              },
-              required: ['title', 'dueDate']
-            }
+  const responseSchema = {
+    type: 'OBJECT',
+    properties: {
+      milestones: {
+        type: 'ARRAY',
+        items: {
+          type: 'OBJECT',
+          properties: {
+            title: { type: 'STRING' },
+            dueDate: { type: 'STRING' }
           },
-          tasks: {
-            type: 'ARRAY',
-            items: {
-              type: 'OBJECT',
-              properties: {
-                title: { type: 'STRING' },
-                description: { type: 'STRING' },
-                priority: { type: 'STRING', enum: ['critical', 'high', 'medium', 'low'] },
-                estimatedMinutes: { type: 'INTEGER' },
-                category: { type: 'STRING' },
-                tags: { type: 'ARRAY', items: { type: 'STRING' } },
-                milestoneTitle: { type: 'STRING' }
-              },
-              required: ['title', 'description', 'priority', 'estimatedMinutes', 'category', 'milestoneTitle']
-            }
+          required: ['title', 'dueDate']
+        }
+      },
+      tasks: {
+        type: 'ARRAY',
+        items: {
+          type: 'OBJECT',
+          properties: {
+            title: { type: 'STRING' },
+            description: { type: 'STRING' },
+            priority: { type: 'STRING', enum: ['critical', 'high', 'medium', 'low'] },
+            estimatedMinutes: { type: 'INTEGER' },
+            category: { type: 'STRING' },
+            tags: { type: 'ARRAY', items: { type: 'STRING' } },
+            milestoneTitle: { type: 'STRING' }
           },
-          totalEstimatedHours: { type: 'NUMBER' },
-          suggestedSchedule: { type: 'STRING' }
-        },
-        required: ['milestones', 'tasks', 'totalEstimatedHours', 'suggestedSchedule']
-      }
-    }
+          required: ['title', 'description', 'priority', 'estimatedMinutes', 'category', 'milestoneTitle']
+        }
+      },
+      totalEstimatedHours: { type: 'NUMBER' },
+      suggestedSchedule: { type: 'STRING' }
+    },
+    required: ['milestones', 'tasks', 'totalEstimatedHours', 'suggestedSchedule']
+  };
+
+  const decomposition = await generateStructuredContent({
+    agentType: 'decomposer',
+    userProfile,
+    prompt,
+    responseSchema,
+    zodSchema: DecomposerSchema,
+    fallbackValue: DEFAULT_FALLBACK_DECOMPOSITION,
   });
-
-  const rawJson = response.text || response.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!rawJson) throw new Error('Decomposer failed');
-
-  const decomposition = JSON.parse(rawJson);
   const goalId = uuidv4();
 
   // Map milestones
@@ -559,46 +544,39 @@ async function toolGetProductivityInsights(args: any, userId: string) {
   const snap = await adminDb.collection('users').doc(userId).collection('analytics').limit(30).get();
   const logs = snap.docs.map(doc => doc.data());
 
-  const modelName = getModelName('flash');
-  const systemInstruction = getAgentSystemInstruction('timewarp', userProfile);
-
   const prompt = `Generate productivity insights based on these historical analytics records:
 ${JSON.stringify(logs)}
 Time Range requested: ${timeRange}`;
 
-  const response = await ai.models.generateContent({
-    model: modelName,
-    contents: prompt,
-    config: {
-      systemInstruction,
-      responseMimeType: 'application/json',
-      responseSchema: {
-        type: 'OBJECT',
-        properties: {
-          insights: {
-            type: 'ARRAY',
-            items: {
-              type: 'OBJECT',
-              properties: {
-                type: { type: 'STRING', enum: ['achievement', 'warning', 'recommendation', 'pattern'] },
-                title: { type: 'STRING' },
-                description: { type: 'STRING' },
-                metric: { type: 'NUMBER' },
-                trend: { type: 'STRING', enum: ['up', 'down', 'stable'] }
-              },
-              required: ['type', 'title', 'description']
-            }
-          }
-        },
-        required: ['insights']
+  const responseSchema = {
+    type: 'OBJECT',
+    properties: {
+      insights: {
+        type: 'ARRAY',
+        items: {
+          type: 'OBJECT',
+          properties: {
+            type: { type: 'STRING', enum: ['achievement', 'warning', 'recommendation', 'pattern'] },
+            title: { type: 'STRING' },
+            description: { type: 'STRING' },
+            metric: { type: 'NUMBER' },
+            trend: { type: 'STRING', enum: ['up', 'down', 'stable'] }
+          },
+          required: ['type', 'title', 'description']
+        }
       }
-    }
+    },
+    required: ['insights']
+  };
+
+  const data = await generateStructuredContent({
+    agentType: 'timewarp',
+    userProfile,
+    prompt,
+    responseSchema,
+    zodSchema: ProductivityInsightsResponseSchema,
+    fallbackValue: DEFAULT_FALLBACK_INSIGHTS,
   });
-
-  const rawJson = response.text || response.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!rawJson) throw new Error('Productivity Insights generation failed');
-
-  const data = JSON.parse(rawJson);
   return { success: true, insights: data.insights };
 }
 
@@ -611,45 +589,38 @@ async function toolGetBottleneckForecast(args: any, userId: string) {
   const tasksSnap = await adminDb.collection('users').doc(userId).collection('tasks').get();
   const tasks = tasksSnap.docs.map(doc => doc.data());
 
-  const modelName = getModelName('flash');
-  const systemInstruction = getAgentSystemInstruction('timewarp', userProfile);
-
   const prompt = `Analyze future bottlenecks for the next ${daysAhead} days.
 Current Task list: ${JSON.stringify(tasks)}`;
 
-  const response = await ai.models.generateContent({
-    model: modelName,
-    contents: prompt,
-    config: {
-      systemInstruction,
-      responseMimeType: 'application/json',
-      responseSchema: {
-        type: 'OBJECT',
-        properties: {
-          forecasts: {
-            type: 'ARRAY',
-            items: {
-              type: 'OBJECT',
-              properties: {
-                date: { type: 'STRING' },
-                riskLevel: { type: 'STRING', enum: ['low', 'medium', 'high', 'critical'] },
-                reason: { type: 'STRING' },
-                taskCount: { type: 'INTEGER' },
-                recommendedAction: { type: 'STRING' }
-              },
-              required: ['date', 'riskLevel', 'reason', 'taskCount', 'recommendedAction']
-            }
-          }
-        },
-        required: ['forecasts']
+  const responseSchema = {
+    type: 'OBJECT',
+    properties: {
+      forecasts: {
+        type: 'ARRAY',
+        items: {
+          type: 'OBJECT',
+          properties: {
+            date: { type: 'STRING' },
+            riskLevel: { type: 'STRING', enum: ['low', 'medium', 'high', 'critical'] },
+            reason: { type: 'STRING' },
+            taskCount: { type: 'INTEGER' },
+            recommendedAction: { type: 'STRING' }
+          },
+          required: ['date', 'riskLevel', 'reason', 'taskCount', 'recommendedAction']
+        }
       }
-    }
+    },
+    required: ['forecasts']
+  };
+
+  const data = await generateStructuredContent({
+    agentType: 'timewarp',
+    userProfile,
+    prompt,
+    responseSchema,
+    zodSchema: BottleneckForecastResponseSchema,
+    fallbackValue: DEFAULT_FALLBACK_FORECASTS,
   });
-
-  const rawJson = response.text || response.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!rawJson) throw new Error('Bottleneck forecast failed');
-
-  const data = JSON.parse(rawJson);
   return { success: true, forecasts: data.forecasts };
 }
 

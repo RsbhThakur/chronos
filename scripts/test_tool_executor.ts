@@ -183,7 +183,19 @@ require.cache[clientPath] = {
       }
     },
     getModelName: (type: 'flash' | 'pro') => type === 'flash' ? 'gemini-3.5-flash' : 'gemini-2.5-pro',
-    getAgentSystemInstruction: () => 'Mock system instruction'
+    getAgentSystemInstruction: () => 'Mock system instruction',
+    generateStructuredContent: async ({ agentType, prompt, zodSchema, fallbackValue }: any) => {
+      const mockResult = await (require.cache[clientPath] as any).exports.ai.models.generateContent({ contents: prompt });
+      const rawText = mockResult.text;
+      if (!rawText) return fallbackValue;
+      try {
+        const parsed = JSON.parse(rawText);
+        const validated = zodSchema.safeParse(parsed);
+        return validated.success ? validated.data : fallbackValue;
+      } catch (err) {
+        return fallbackValue;
+      }
+    }
   }
 } as any;
 
