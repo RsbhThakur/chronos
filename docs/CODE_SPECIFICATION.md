@@ -29,7 +29,7 @@
 ### Commands to Run
 ```bash
 npx -y create-next-app@latest ./ --typescript --eslint --app --src-dir --import-alias "@/*" --no-tailwind --no-turbopack
-npm install @google/generative-ai firebase firebase-admin next-auth googleapis zod framer-motion recharts date-fns lucide-react uuid
+npm install @google/genai firebase firebase-admin next-auth googleapis zod framer-motion recharts date-fns lucide-react uuid
 npm install -D @types/uuid
 ```
 
@@ -82,8 +82,11 @@ module.exports = nextConfig;
 
 ### .env.local — Complete Template
 ```env
-# === Gemini API ===
-GEMINI_API_KEY=your_gemini_api_key_here
+# === Gemini Vertex AI ===
+VERTEX_PROJECT_ID=your_gcp_project_id_here
+VERTEX_LOCATION=us-central1
+GOOGLE_APPLICATION_CREDENTIALS=
+GOOGLE_APPLICATION_CREDENTIALS_JSON=
 GEMINI_MODEL_FLASH=gemini-2.5-flash
 GEMINI_MODEL_PRO=gemini-2.5-pro
 
@@ -867,16 +870,22 @@ export interface DemoState {
 ### File: `src/lib/ai/gemini-client.ts`
 
 ```typescript
-import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 
-// Initialize: new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
+// Initialize: 
+// const ai = new GoogleGenAI({
+//   vertexai: true,
+//   project: process.env.VERTEX_PROJECT_ID,
+//   location: process.env.VERTEX_LOCATION || 'global',
+// });
 //
-// Export function getModel(type: 'flash' | 'pro'):
-//   flash → gemini-2.5-flash (used for: chat, quick analysis, vision)
-//   pro → gemini-2.5-pro (used for: rescue planning, ghost worker, decomposition)
+// Export function getModelName(type: 'flash' | 'pro'):
+//   return type === 'flash' 
+//     ? (process.env.GEMINI_MODEL_FLASH || 'gemini-3.5-flash') 
+//     : (process.env.GEMINI_MODEL_PRO || 'gemini-3.1-pro');
 //
 // Export function createAgentChat(agentType, userProfile, conversationHistory):
-//   Returns a chat session with the appropriate system instruction
+//   Returns a chat session (using model.startChat) with the appropriate system instruction
 //   and tool declarations based on agent type
 ```
 
@@ -2605,14 +2614,15 @@ gcloud config set project chronos-hackathon
 # 2. Enable APIs
 gcloud services enable run.googleapis.com cloudbuild.googleapis.com \
   firestore.googleapis.com fcm.googleapis.com \
-  calendar-json.googleapis.com gmail.googleapis.com tasks.googleapis.com
+  calendar-json.googleapis.com gmail.googleapis.com tasks.googleapis.com \
+  aiplatform.googleapis.com
 
 # 3. Create Firebase project (via Firebase Console)
 # 4. Enable Firestore, Auth (Google provider), Cloud Messaging
 
 # 5. Set environment variables in Cloud Run
 gcloud run services update chronos --region=asia-south1 \
-  --set-env-vars="GEMINI_API_KEY=xxx,NEXT_PUBLIC_FIREBASE_API_KEY=xxx,..."
+  --set-env-vars="VERTEX_PROJECT_ID=xxx,VERTEX_LOCATION=xxx,NEXT_PUBLIC_FIREBASE_API_KEY=xxx,..."
 
 # 6. Deploy
 gcloud builds submit --config cloudbuild.yaml

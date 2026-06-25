@@ -30,8 +30,8 @@ Chronos is a **full-stack, agentic AI productivity platform** that goes far beyo
 > **Google Cloud Billing**: You'll need a GCP project with billing enabled for Cloud Run deployment, Gemini API, and Firebase services. The free tier covers most hackathon usage, but ensure billing is set up.
 
 > [!IMPORTANT]
-> **API Keys Required**: You need to create credentials for:
-> 1. Gemini API key (from Google AI Studio)
+> **API & Credentials Required**: You need to set up:
+> 1. Enable Vertex AI API on Google Cloud Console
 > 2. Google OAuth 2.0 Client ID (for Calendar/Gmail/Tasks integration)
 > 3. Firebase project configuration
 > 4. FCM (Firebase Cloud Messaging) server key
@@ -382,7 +382,7 @@ This is the **core differentiator**. Each agent is a specialized Gemini instance
 
 #### [NEW] src/lib/ai/gemini-client.ts
 Central Gemini client configuration:
-- Initialize `GoogleGenerativeAI` with API key
+- Initialize `VertexAI` with project ID and location
 - Model factory: `getFlashModel()`, `getProModel()`
 - System instruction templates per agent type
 - Structured output schemas using Zod
@@ -1005,7 +1005,7 @@ steps:
 #### Deployment Steps:
 1. Create GCP project + enable Cloud Run, Cloud Build APIs
 2. Create Firebase project linked to GCP project
-3. Enable Gemini API in Google AI Studio, get API key
+3. Enable Vertex AI API on Google Cloud Console
 4. Set up Google OAuth consent screen + credentials
 5. Enable Google Calendar, Gmail, Tasks APIs
 6. Deploy: `gcloud builds submit --config cloudbuild.yaml`
@@ -1175,7 +1175,7 @@ To maximize the 15% "Usage of Google Technologies" score:
 | ✅ **Gemini Structured Output** | Zod schemas for type-safe AI responses | Medium |
 | ✅ **Gemini Live API** | Real-time voice interaction | High |
 | ✅ **Gemini Vision** | Camera document scanning | Medium |
-| ✅ **Google AI Studio** | API key management, prompt prototyping | Required |
+| ✅ **Vertex AI** | Enterprise model hosting, GCP credit consumption | Required |
 | ✅ **Firebase Auth** | Google OAuth sign-in | Medium |
 | ✅ **Firestore** | NoSQL database for all data | High |
 | ✅ **Firebase Cloud Messaging** | Push notifications | Medium |
