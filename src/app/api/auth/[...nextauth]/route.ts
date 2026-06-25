@@ -143,5 +143,12 @@ async function refreshAccessToken(token: any) {
   }
 }
 
-const handler = NextAuth(authOptions);
+const getNextAuthHandler = () => {
+  if (typeof NextAuth === 'function') return NextAuth;
+  if (typeof (NextAuth as any).default === 'function') return (NextAuth as any).default;
+  if (typeof (NextAuth as any).default?.default === 'function') return (NextAuth as any).default.default;
+  return NextAuth;
+};
+
+const handler = getNextAuthHandler()(authOptions);
 export { handler as GET, handler as POST };
