@@ -1,0 +1,1577 @@
+import { UserMode, UserProfile, Task, Goal, Habit, DailyAnalytics, RescuePlan, GhostWorkerOutput } from '@/types';
+
+// ===== 3 DEMO USER PROFILES =====
+export const demoUsers: Record<UserMode, UserProfile> = {
+  student: {
+    id: 'demo-student-001',
+    displayName: 'Arjun Mehta',
+    email: 'arjun@demo.chronos.dev',
+    photoURL: '',
+    mode: 'student',
+    personality: {
+      workStyle: 'sprinter',
+      motivationType: 'pressure',
+      communicationStyle: 'casual',
+      timezone: 'Asia/Kolkata',
+      peakHours: [9, 10, 11, 14, 15, 16, 21, 22],
+    },
+    preferences: {
+      gamificationEnabled: true,
+      ghostWorkerEnabled: true,
+      rescueModeEnabled: true,
+      voiceEnabled: true,
+      notificationChannels: ['push', 'inApp'],
+    },
+    onboardingCompleted: true,
+    createdAt: new Date('2026-06-10'),
+  },
+  professional: {
+    id: 'demo-professional-001',
+    displayName: 'Priya Sharma',
+    email: 'priya@demo.chronos.dev',
+    photoURL: '',
+    mode: 'professional',
+    personality: {
+      workStyle: 'marathoner',
+      motivationType: 'data-driven',
+      communicationStyle: 'professional',
+      timezone: 'Asia/Kolkata',
+      peakHours: [9, 10, 11, 14, 15, 16],
+    },
+    preferences: {
+      gamificationEnabled: false,
+      ghostWorkerEnabled: true,
+      rescueModeEnabled: true,
+      voiceEnabled: true,
+      notificationChannels: ['push', 'email', 'inApp'],
+    },
+    onboardingCompleted: true,
+    createdAt: new Date('2026-06-08'),
+  },
+  entrepreneur: {
+    id: 'demo-entrepreneur-001',
+    displayName: 'Karan Patel',
+    email: 'karan@demo.chronos.dev',
+    photoURL: '',
+    mode: 'entrepreneur',
+    personality: {
+      workStyle: 'mixed',
+      motivationType: 'encouragement',
+      communicationStyle: 'casual',
+      timezone: 'Asia/Kolkata',
+      peakHours: [8, 9, 10, 11, 15, 16, 20, 21, 22, 23],
+    },
+    preferences: {
+      gamificationEnabled: true,
+      ghostWorkerEnabled: true,
+      rescueModeEnabled: true,
+      voiceEnabled: true,
+      notificationChannels: ['push', 'email', 'inApp'],
+    },
+    onboardingCompleted: true,
+    createdAt: new Date('2026-06-05'),
+  },
+};
+
+// Mock Rescue Plan for Arjun's ML Assignment
+const studentMLRescuePlan: RescuePlan = {
+  severity: 'red',
+  totalMinutesAvailable: 90,
+  totalMinutesNeeded: 85,
+  feasible: true,
+  plan: [
+    {
+      id: 'step-1',
+      timeBlock: '4:15 - 4:35 PM',
+      action: 'Complete Section 3 (Neural Network diagrams)',
+      estimatedMinutes: 20,
+      tips: 'Use the pre-made architecture diagram template to speed up sketching.',
+      canBeSkipped: false,
+      completed: true,
+    },
+    {
+      id: 'step-2',
+      timeBlock: '4:35 - 4:55 PM',
+      action: 'Write Results analysis (use template)',
+      estimatedMinutes: 20,
+      tips: 'Focus on highlighting accuracy, recall, and loss graphs.',
+      canBeSkipped: false,
+      completed: false,
+    },
+    {
+      id: 'step-3',
+      timeBlock: '4:55 - 5:00 PM',
+      action: 'Quick break, stretch',
+      estimatedMinutes: 5,
+      tips: 'Get a glass of water, walk away from screen.',
+      canBeSkipped: true,
+      completed: false,
+    },
+    {
+      id: 'step-4',
+      timeBlock: '5:00 - 5:20 PM',
+      action: 'Write Conclusion + References',
+      estimatedMinutes: 20,
+      tips: 'Summarize core learnings and state future work.',
+      canBeSkipped: false,
+      completed: false,
+    },
+    {
+      id: 'step-5',
+      timeBlock: '5:20 - 5:30 PM',
+      action: 'Proofread + Submit',
+      estimatedMinutes: 10,
+      tips: 'Verify the upload matches standard naming convention.',
+      canBeSkipped: false,
+      completed: false,
+    },
+  ],
+  sacrifices: ['Formatting bibliography (use auto-cite)'],
+  motivationalMessage: 'Yo Arjun, 90 minutes is tight but highly doable if we lock in right now. I will guide you step by step! ⏰🔥',
+  checkpoints: [
+    { time: '4:35 PM', milestone: 'Section 3 finished', reached: true },
+    { time: '5:20 PM', milestone: 'Report drafting finished', reached: false },
+  ],
+  activatedAt: new Date(Date.now() - 15 * 60 * 1000), // 15 mins ago
+  completedSteps: 1,
+};
+
+// Mock Ghost Worker Output for Karan's Pitch Deck
+const entrepreneurPitchGhostWorker: GhostWorkerOutput = {
+  type: 'presentation',
+  title: 'Investor Pitch Slide Notes',
+  content: `### Slide 1: Introduction & Vision
+- Opening Hook: "In the next 5 years, personal time management will transition entirely to agentic guardians. Chronos is leading that revolution."
+- Story: Briefly tell the story of Arjun, Priya, and Karan struggling to manage deadlines.
+- Goal: Secure ₹2 Cr seed capital to scale the Vertex AI orchestration engine.
+
+### Slide 2: The Core Metric
+- Highlight current week-over-week user retention: 42%.
+- Show the productivity index average: users complete 28% more tasks within the first 14 days.`,
+  generatedAt: new Date(Date.now() - 30 * 60 * 1000),
+  approved: false,
+  edits: null,
+};
+
+// ===== GET FRESH DEMO TASKS =====
+export function getDemoTasks(mode: UserMode): Task[] {
+  const now = Date.now();
+  const getTodayEnd = () => {
+    const d = new Date();
+    d.setHours(23, 59, 59, 999);
+    return d;
+  };
+
+  switch (mode) {
+    case 'student':
+      return [
+        {
+          id: 'st-task-001',
+          userId: 'demo-student-001',
+          title: 'Machine Learning Assignment',
+          description: 'Build neural network classifier and document analysis report.',
+          status: 'in_progress',
+          priority: 'critical',
+          deadline: new Date(now + 1.5 * 60 * 60 * 1000), // 1.5h left
+          estimatedMinutes: 120,
+          actualMinutes: 45,
+          category: 'Academics',
+          tags: ['ML', 'Report', 'Urgent'],
+          subtasks: [
+            { id: 'st-sub-1', title: 'Data Preprocessing script', completed: true },
+            { id: 'st-sub-2', title: 'Train model', completed: true },
+            { id: 'st-sub-3', title: 'Write Analysis', completed: false },
+            { id: 'st-sub-4', title: 'Conclusion & References', completed: false },
+          ],
+          aiGenerated: false,
+          parentGoalId: 'st-goal-001',
+          rescuePlan: studentMLRescuePlan,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 2 * 24 * 60 * 60 * 1000),
+          completedAt: null,
+        },
+        {
+          id: 'st-task-002',
+          userId: 'demo-student-001',
+          title: 'Submit Lab Report',
+          description: 'Upload the PDF physics simulation lab files.',
+          status: 'todo',
+          priority: 'high',
+          deadline: new Date(now + 3 * 60 * 60 * 1000), // 3h left
+          estimatedMinutes: 60,
+          actualMinutes: 0,
+          category: 'Academics',
+          tags: ['Physics', 'Lab'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: 'st-goal-001',
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 1 * 24 * 60 * 60 * 1000),
+          completedAt: null,
+        },
+        {
+          id: 'st-task-003',
+          userId: 'demo-student-001',
+          title: 'Review DSA Notes for Interview',
+          description: 'Brush up on Dynamic Programming and Graph Algorithms.',
+          status: 'todo',
+          priority: 'high',
+          deadline: getTodayEnd(),
+          estimatedMinutes: 90,
+          actualMinutes: 0,
+          category: 'Career Prep',
+          tags: ['Placement', 'DSA'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: 'st-goal-002',
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 12 * 60 * 60 * 1000),
+          completedAt: null,
+        },
+        {
+          id: 'st-task-004',
+          userId: 'demo-student-001',
+          title: 'Email Professor about Extension',
+          description: 'Draft extension request for compilers term project.',
+          status: 'todo',
+          priority: 'medium',
+          deadline: getTodayEnd(),
+          estimatedMinutes: 15,
+          actualMinutes: 0,
+          category: 'Academics',
+          tags: ['Email'],
+          subtasks: [],
+          aiGenerated: true,
+          parentGoalId: null,
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 6 * 60 * 60 * 1000),
+          completedAt: null,
+        },
+        {
+          id: 'st-task-005',
+          userId: 'demo-student-001',
+          title: 'Complete React Project Component',
+          description: 'Finish dashboard widgets and chart integration.',
+          status: 'in_progress',
+          priority: 'high',
+          deadline: getTodayEnd(),
+          estimatedMinutes: 180,
+          actualMinutes: 90,
+          category: 'Academics',
+          tags: ['React', 'Capstone'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: 'st-goal-001',
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 24 * 60 * 60 * 1000),
+          completedAt: null,
+        },
+        {
+          id: 'st-task-006',
+          userId: 'demo-student-001',
+          title: 'Prepare Presentation Slides',
+          description: 'Draft slide deck outlining ML project milestones.',
+          status: 'todo',
+          priority: 'medium',
+          deadline: new Date(now + 2 * 24 * 60 * 60 * 1000),
+          estimatedMinutes: 60,
+          actualMinutes: 0,
+          category: 'Academics',
+          tags: ['Presentation'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: 'st-goal-001',
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 1 * 24 * 60 * 60 * 1000),
+          completedAt: null,
+        },
+        {
+          id: 'st-task-007',
+          userId: 'demo-student-001',
+          title: 'Study for Database Exam',
+          description: 'Read Chapters 8-12 of Korth, focus on Indexing and Transaction Management.',
+          status: 'todo',
+          priority: 'critical',
+          deadline: new Date(now + 4 * 24 * 60 * 60 * 1000),
+          estimatedMinutes: 300,
+          actualMinutes: 0,
+          category: 'Academics',
+          tags: ['Exam', 'DBMS'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: null,
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 3 * 24 * 60 * 60 * 1000),
+          completedAt: null,
+        },
+        {
+          id: 'st-task-008',
+          userId: 'demo-student-001',
+          title: 'Update LinkedIn Profile',
+          description: 'Add junior year research experience details.',
+          status: 'todo',
+          priority: 'low',
+          deadline: new Date(now + 5 * 24 * 60 * 60 * 1000),
+          estimatedMinutes: 45,
+          actualMinutes: 0,
+          category: 'Career Prep',
+          tags: ['Profile'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: 'st-goal-002',
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 4 * 24 * 60 * 60 * 1000),
+          completedAt: null,
+        },
+        {
+          id: 'st-task-009',
+          userId: 'demo-student-001',
+          title: 'Attend Mock Interview Session',
+          description: '1-on-1 interview with industry expert on Zoom.',
+          status: 'todo',
+          priority: 'high',
+          deadline: new Date(now + 3 * 24 * 60 * 60 * 1000),
+          estimatedMinutes: 60,
+          actualMinutes: 0,
+          category: 'Career Prep',
+          tags: ['MockInterview', 'Placement'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: 'st-goal-002',
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 2 * 24 * 60 * 60 * 1000),
+          completedAt: null,
+        },
+        {
+          id: 'st-task-010',
+          userId: 'demo-student-001',
+          title: 'Submit Resume to 5 Companies',
+          description: 'Apply on placement portal for early software engineer intern roles.',
+          status: 'completed',
+          priority: 'high',
+          deadline: new Date(now - 12 * 60 * 60 * 1000),
+          estimatedMinutes: 60,
+          actualMinutes: 45,
+          category: 'Career Prep',
+          tags: ['Placement', 'JobApp'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: 'st-goal-002',
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 2 * 24 * 60 * 60 * 1000),
+          completedAt: new Date(now - 24 * 60 * 60 * 1000), // yesterday
+        },
+        {
+          id: 'st-task-011',
+          userId: 'demo-student-001',
+          title: 'Complete Python Assignment',
+          description: 'Implement OOP patterns and decorators exercise.',
+          status: 'completed',
+          priority: 'medium',
+          deadline: new Date(now - 24 * 60 * 60 * 1000),
+          estimatedMinutes: 90,
+          actualMinutes: 80,
+          category: 'Academics',
+          tags: ['Python'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: null,
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 3 * 24 * 60 * 60 * 1000),
+          completedAt: new Date(now - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+        },
+        {
+          id: 'st-task-012',
+          userId: 'demo-student-001',
+          title: 'Read Chapter 7 of CLRS',
+          description: 'Review quicksort analysis and randomized algorithms.',
+          status: 'completed',
+          priority: 'medium',
+          deadline: getTodayEnd(),
+          estimatedMinutes: 45,
+          actualMinutes: 40,
+          category: 'Career Prep',
+          tags: ['Algorithms'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: 'st-goal-002',
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 12 * 60 * 60 * 1000),
+          completedAt: new Date(now - 4 * 60 * 60 * 1000), // today
+        },
+        {
+          id: 'st-task-013',
+          userId: 'demo-student-001',
+          title: 'Blog Post Draft',
+          description: 'Draft overview of internship prep strategies.',
+          status: 'todo',
+          priority: 'low',
+          deadline: new Date(now - 24 * 60 * 60 * 1000), // 1 day overdue
+          estimatedMinutes: 60,
+          actualMinutes: 0,
+          category: 'Personal',
+          tags: ['Blog'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: null,
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 5 * 24 * 60 * 60 * 1000),
+          completedAt: null,
+        },
+        {
+          id: 'st-task-014',
+          userId: 'demo-student-001',
+          title: 'Gym Registration Form',
+          description: 'Complete and hand in hostel physical fitness waiver.',
+          status: 'todo',
+          priority: 'low',
+          deadline: new Date(now - 2 * 24 * 60 * 60 * 1000), // 2 days overdue
+          estimatedMinutes: 10,
+          actualMinutes: 0,
+          category: 'Personal',
+          tags: ['Admin'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: null,
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 5 * 24 * 60 * 60 * 1000),
+          completedAt: null,
+        },
+        {
+          id: 'st-task-015',
+          userId: 'demo-student-001',
+          title: 'Organize study group for database exam',
+          description: 'Book study room and share calendar invite with peers.',
+          status: 'todo',
+          priority: 'medium',
+          deadline: new Date(now + 2 * 24 * 60 * 60 * 1000),
+          estimatedMinutes: 20,
+          actualMinutes: 0,
+          category: 'Academics',
+          tags: ['DBMS', 'Social'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: null,
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 12 * 60 * 60 * 1000),
+          completedAt: null,
+        },
+        {
+          id: 'st-task-016',
+          userId: 'demo-student-001',
+          title: 'Watch ML lecture recordings',
+          description: 'Review convolutional neural networks lecture files.',
+          status: 'in_progress',
+          priority: 'medium',
+          deadline: new Date(now + 1 * 24 * 60 * 60 * 1000),
+          estimatedMinutes: 90,
+          actualMinutes: 30,
+          category: 'Academics',
+          tags: ['ML', 'Video'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: 'st-goal-001',
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 24 * 60 * 60 * 1000),
+          completedAt: null,
+        },
+      ];
+
+    case 'professional':
+      return [
+        {
+          id: 'prof-task-001',
+          userId: 'demo-professional-001',
+          title: 'Finalize Sprint Review Deck',
+          description: 'Add velocity graphs and summarize tech debt resolutions.',
+          status: 'in_progress',
+          priority: 'critical',
+          deadline: new Date(now + 2 * 60 * 60 * 1000), // 2h left
+          estimatedMinutes: 60,
+          actualMinutes: 20,
+          category: 'Work',
+          tags: ['Sprint', 'Presentation'],
+          subtasks: [
+            { id: 'pr-sub-1', title: 'Collate metrics', completed: true },
+            { id: 'pr-sub-2', title: 'Design slides', completed: false },
+          ],
+          aiGenerated: false,
+          parentGoalId: 'prof-goal-001',
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 12 * 60 * 60 * 1000),
+          completedAt: null,
+        },
+        {
+          id: 'prof-task-002',
+          userId: 'demo-professional-001',
+          title: 'Submit Quarterly Report to VP',
+          description: 'Highlight infrastructure costs optimization gains.',
+          status: 'todo',
+          priority: 'high',
+          deadline: new Date(now + 4 * 60 * 60 * 1000), // 4h left
+          estimatedMinutes: 120,
+          actualMinutes: 0,
+          category: 'Work',
+          tags: ['Report', 'VP'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: 'prof-goal-001',
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 24 * 60 * 60 * 1000),
+          completedAt: null,
+        },
+        {
+          id: 'prof-task-003',
+          userId: 'demo-professional-001',
+          title: 'Review Pull Requests (3 pending)',
+          description: 'Provide structural review comments on authentication refactoring branch.',
+          status: 'todo',
+          priority: 'high',
+          deadline: getTodayEnd(),
+          estimatedMinutes: 60,
+          actualMinutes: 0,
+          category: 'Work',
+          tags: ['CodeReview', 'GitHub'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: 'prof-goal-001',
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 8 * 60 * 60 * 1000),
+          completedAt: null,
+        },
+        {
+          id: 'prof-task-004',
+          userId: 'demo-professional-001',
+          title: 'Prepare 1:1 Agenda with Manager',
+          description: 'Document achievements and key blockers on promotion track.',
+          status: 'todo',
+          priority: 'medium',
+          deadline: getTodayEnd(),
+          estimatedMinutes: 30,
+          actualMinutes: 0,
+          category: 'Career',
+          tags: ['Meeting', 'CareerInfo'],
+          subtasks: [],
+          aiGenerated: true,
+          parentGoalId: 'prof-goal-001',
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 4 * 60 * 60 * 1000),
+          completedAt: null,
+        },
+        {
+          id: 'prof-task-005',
+          userId: 'demo-professional-001',
+          title: 'Client Demo Prep — Feature Walkthrough',
+          description: 'Verify backend integration on staging and prepare feature checklists.',
+          status: 'in_progress',
+          priority: 'critical',
+          deadline: getTodayEnd(),
+          estimatedMinutes: 120,
+          actualMinutes: 60,
+          category: 'Work',
+          tags: ['Demo', 'Client'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: null,
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 12 * 60 * 60 * 1000),
+          completedAt: null,
+        },
+        {
+          id: 'prof-task-006',
+          userId: 'demo-professional-001',
+          title: 'Performance Review Self-Assessment',
+          description: 'Write summary of core architectural leads over the past quarter.',
+          status: 'todo',
+          priority: 'high',
+          deadline: new Date(now + 3 * 24 * 60 * 60 * 1000),
+          estimatedMinutes: 90,
+          actualMinutes: 0,
+          category: 'Career',
+          tags: ['Assessment'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: 'prof-goal-001',
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 2 * 24 * 60 * 60 * 1000),
+          completedAt: null,
+        },
+        {
+          id: 'prof-task-007',
+          userId: 'demo-professional-001',
+          title: 'Architecture Design Doc — Microservices',
+          description: 'Design communication topologies for the notification and activity subsystems.',
+          status: 'todo',
+          priority: 'medium',
+          deadline: new Date(now + 4 * 24 * 60 * 60 * 1000),
+          estimatedMinutes: 180,
+          actualMinutes: 0,
+          category: 'Work',
+          tags: ['Architecture', 'DesignDoc'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: null,
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 3 * 24 * 60 * 60 * 1000),
+          completedAt: null,
+        },
+        {
+          id: 'prof-task-008',
+          userId: 'demo-professional-001',
+          title: 'Team Standup Retrospective Notes',
+          description: 'Document retro highlights and actionable process improvements.',
+          status: 'todo',
+          priority: 'low',
+          deadline: new Date(now + 2 * 24 * 60 * 60 * 1000),
+          estimatedMinutes: 30,
+          actualMinutes: 0,
+          category: 'Work',
+          tags: ['Standup', 'Retro'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: null,
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 24 * 60 * 60 * 1000),
+          completedAt: null,
+        },
+        {
+          id: 'prof-task-009',
+          userId: 'demo-professional-001',
+          title: 'Interview Candidate — Backend Role',
+          description: 'Conduct system design phase interview.',
+          status: 'todo',
+          priority: 'high',
+          deadline: new Date(now + 3 * 24 * 60 * 60 * 1000),
+          estimatedMinutes: 60,
+          actualMinutes: 0,
+          category: 'Work',
+          tags: ['Interview', 'Recruiting'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: 'prof-goal-001',
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 1 * 24 * 60 * 60 * 1000),
+          completedAt: null,
+        },
+        {
+          id: 'prof-task-010',
+          userId: 'demo-professional-001',
+          title: 'Deploy v2.3 to Staging',
+          description: 'Run deployment scripts and check environment flags.',
+          status: 'completed',
+          priority: 'high',
+          deadline: new Date(now - 12 * 60 * 60 * 1000),
+          estimatedMinutes: 45,
+          actualMinutes: 50,
+          category: 'Work',
+          tags: ['Deployment'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: null,
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 2 * 24 * 60 * 60 * 1000),
+          completedAt: new Date(now - 24 * 60 * 60 * 1000), // yesterday
+        },
+        {
+          id: 'prof-task-011',
+          userId: 'demo-professional-001',
+          title: 'Fix Production Bug #4821',
+          description: 'Resolve session token expiration boundary issue.',
+          status: 'completed',
+          priority: 'critical',
+          deadline: getTodayEnd(),
+          estimatedMinutes: 60,
+          actualMinutes: 30,
+          category: 'Work',
+          tags: ['Bugfix', 'Production'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: null,
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 12 * 60 * 60 * 1000),
+          completedAt: new Date(now - 2 * 60 * 60 * 1000), // today
+        },
+        {
+          id: 'prof-task-012',
+          userId: 'demo-professional-001',
+          title: 'Complete AWS Certification Module 5',
+          description: 'Finish Virtual Private Clouds (VPCs) configurations tutorial.',
+          status: 'completed',
+          priority: 'medium',
+          deadline: new Date(now - 2 * 24 * 60 * 60 * 1000),
+          estimatedMinutes: 120,
+          actualMinutes: 110,
+          category: 'Career',
+          tags: ['AWS', 'Study'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: 'prof-goal-002',
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 5 * 24 * 60 * 60 * 1000),
+          completedAt: new Date(now - 3 * 24 * 60 * 60 * 1000), // 3 days ago
+        },
+        {
+          id: 'prof-task-013',
+          userId: 'demo-professional-001',
+          title: 'Update API Documentation',
+          description: 'Reflect v2 authentication endpoint modifications.',
+          status: 'todo',
+          priority: 'low',
+          deadline: new Date(now - 24 * 60 * 60 * 1000), // 1 day overdue
+          estimatedMinutes: 90,
+          actualMinutes: 0,
+          category: 'Work',
+          tags: ['Documentation'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: null,
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 4 * 24 * 60 * 60 * 1000),
+          completedAt: null,
+        },
+        {
+          id: 'prof-task-014',
+          userId: 'demo-professional-001',
+          title: 'Expense Report Submission',
+          description: 'Expense documents for travel offsite.',
+          status: 'todo',
+          priority: 'low',
+          deadline: new Date(now - 2 * 24 * 60 * 60 * 1000), // 2 days overdue
+          estimatedMinutes: 15,
+          actualMinutes: 0,
+          category: 'Personal',
+          tags: ['Admin', 'Expenses'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: null,
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 5 * 24 * 60 * 60 * 1000),
+          completedAt: null,
+        },
+        {
+          id: 'prof-task-015',
+          userId: 'demo-professional-001',
+          title: 'Refactor dashboard data rendering layer',
+          description: 'Clean up unnecessary renders and optimize charts queries.',
+          status: 'in_progress',
+          priority: 'high',
+          deadline: new Date(now + 1 * 24 * 60 * 60 * 1000),
+          estimatedMinutes: 120,
+          actualMinutes: 45,
+          category: 'Work',
+          tags: ['Refactor', 'Performance'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: null,
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 24 * 60 * 60 * 1000),
+          completedAt: null,
+        },
+        {
+          id: 'prof-task-016',
+          userId: 'demo-professional-001',
+          title: 'Catch up on architectural review comments',
+          description: 'Reply to suggestions on the draft RFC.',
+          status: 'todo',
+          priority: 'medium',
+          deadline: new Date(now + 2 * 24 * 60 * 60 * 1000),
+          estimatedMinutes: 40,
+          actualMinutes: 0,
+          category: 'Work',
+          tags: ['RFC', 'Review'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: null,
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 12 * 60 * 60 * 1000),
+          completedAt: null,
+        },
+      ];
+
+    case 'entrepreneur':
+      return [
+        {
+          id: 'ent-task-001',
+          userId: 'demo-entrepreneur-001',
+          title: 'Investor Pitch Deck — Final Review',
+          description: 'Finalize metrics, slides, and scripts before presentation.',
+          status: 'in_progress',
+          priority: 'critical',
+          deadline: new Date(now + 1 * 60 * 60 * 1000), // 1h left
+          estimatedMinutes: 60,
+          actualMinutes: 30,
+          category: 'Fundraising',
+          tags: ['Investor', 'PitchDeck', 'Urgent'],
+          subtasks: [
+            { id: 'ent-sub-1', title: 'Verify financial forecasts', completed: true },
+            { id: 'ent-sub-2', title: 'Draft key slide notes', completed: false },
+          ],
+          aiGenerated: false,
+          parentGoalId: 'ent-goal-002',
+          rescuePlan: null,
+          ghostWorkerOutput: entrepreneurPitchGhostWorker,
+          createdAt: new Date(now - 3 * 24 * 60 * 60 * 1000),
+          completedAt: null,
+        },
+        {
+          id: 'ent-task-002',
+          userId: 'demo-entrepreneur-001',
+          title: 'Send Hiring Post on LinkedIn',
+          description: 'Promote search for lead systems integrator engineer.',
+          status: 'todo',
+          priority: 'high',
+          deadline: new Date(now + 3 * 60 * 60 * 1000), // 3h left
+          estimatedMinutes: 20,
+          actualMinutes: 0,
+          category: 'Recruiting',
+          tags: ['Hiring', 'LinkedIn'],
+          subtasks: [],
+          aiGenerated: true,
+          parentGoalId: null,
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 12 * 60 * 60 * 1000),
+          completedAt: null,
+        },
+        {
+          id: 'ent-task-003',
+          userId: 'demo-entrepreneur-001',
+          title: 'Review MVP Analytics Dashboard',
+          description: 'Analyze user onboarding conversion funnel drops.',
+          status: 'todo',
+          priority: 'high',
+          deadline: getTodayEnd(),
+          estimatedMinutes: 60,
+          actualMinutes: 0,
+          category: 'Product',
+          tags: ['Analytics', 'MVP'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: 'ent-goal-001',
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 12 * 60 * 60 * 1000),
+          completedAt: null,
+        },
+        {
+          id: 'ent-task-004',
+          userId: 'demo-entrepreneur-001',
+          title: 'Reply to 5 Customer Support Emails',
+          description: 'Resolve high-priority Razorpay transaction query tickets.',
+          status: 'todo',
+          priority: 'medium',
+          deadline: getTodayEnd(),
+          estimatedMinutes: 30,
+          actualMinutes: 0,
+          category: 'Operations',
+          tags: ['Support'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: null,
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 6 * 60 * 60 * 1000),
+          completedAt: null,
+        },
+        {
+          id: 'ent-task-005',
+          userId: 'demo-entrepreneur-001',
+          title: 'Schedule Social Media Content for Week',
+          description: 'Create Twitter/X hooks outlining Chronos technical highlights.',
+          status: 'in_progress',
+          priority: 'medium',
+          deadline: getTodayEnd(),
+          estimatedMinutes: 60,
+          actualMinutes: 15,
+          category: 'Marketing',
+          tags: ['Social', 'Twitter'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: 'ent-goal-001',
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 1 * 24 * 60 * 60 * 1000),
+          completedAt: null,
+        },
+        {
+          id: 'ent-task-006',
+          userId: 'demo-entrepreneur-001',
+          title: 'Finalize Term Sheet with Angel Investor',
+          description: 'Incorporate review amendments from lawyers on valuation caps.',
+          status: 'todo',
+          priority: 'critical',
+          deadline: new Date(now + 2 * 24 * 60 * 60 * 1000),
+          estimatedMinutes: 120,
+          actualMinutes: 0,
+          category: 'Fundraising',
+          tags: ['Investor', 'Legal'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: 'ent-goal-002',
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 2 * 24 * 60 * 60 * 1000),
+          completedAt: null,
+        },
+        {
+          id: 'ent-task-007',
+          userId: 'demo-entrepreneur-001',
+          title: 'Landing Page A/B Test Analysis',
+          description: 'Verify if neon-cyberpunk styling converts better than clean-tech design.',
+          status: 'todo',
+          priority: 'medium',
+          deadline: new Date(now + 3 * 24 * 60 * 60 * 1000),
+          estimatedMinutes: 90,
+          actualMinutes: 0,
+          category: 'Product',
+          tags: ['ABTest', 'Marketing'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: 'ent-goal-001',
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 3 * 24 * 60 * 60 * 1000),
+          completedAt: null,
+        },
+        {
+          id: 'ent-task-008',
+          userId: 'demo-entrepreneur-001',
+          title: 'Onboard New Developer — Setup Guide',
+          description: 'Write local firebase emulation and environment onboarding walkthrough.',
+          status: 'todo',
+          priority: 'high',
+          deadline: new Date(now + 4 * 24 * 60 * 60 * 1000),
+          estimatedMinutes: 120,
+          actualMinutes: 0,
+          category: 'Team',
+          tags: ['Onboarding', 'Developer'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: null,
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 2 * 24 * 60 * 60 * 1000),
+          completedAt: null,
+        },
+        {
+          id: 'ent-task-009',
+          userId: 'demo-entrepreneur-001',
+          title: 'Product Roadmap Q3 Planning',
+          description: 'Finalize feature sequences for Voice integration and account synchronization.',
+          status: 'todo',
+          priority: 'high',
+          deadline: new Date(now + 5 * 24 * 60 * 60 * 1000),
+          estimatedMinutes: 150,
+          actualMinutes: 0,
+          category: 'Product',
+          tags: ['Roadmap', 'Planning'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: 'ent-goal-001',
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 1 * 24 * 60 * 60 * 1000),
+          completedAt: null,
+        },
+        {
+          id: 'ent-task-010',
+          userId: 'demo-entrepreneur-001',
+          title: 'Launch Beta to 100 Users',
+          description: 'Email setup details and instructions to external test cohorts.',
+          status: 'completed',
+          priority: 'critical',
+          deadline: new Date(now - 24 * 60 * 60 * 1000),
+          estimatedMinutes: 180,
+          actualMinutes: 200,
+          category: 'Product',
+          tags: ['Launch', 'MVP'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: 'ent-goal-001',
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 4 * 24 * 60 * 60 * 1000),
+          completedAt: new Date(now - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+        },
+        {
+          id: 'ent-task-011',
+          userId: 'demo-entrepreneur-001',
+          title: 'Register Trademark Application',
+          description: 'Submit registry documents and finalize application payments.',
+          status: 'completed',
+          priority: 'medium',
+          deadline: new Date(now - 12 * 60 * 60 * 1000),
+          estimatedMinutes: 45,
+          actualMinutes: 45,
+          category: 'Operations',
+          tags: ['Trademark', 'Legal'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: null,
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 3 * 24 * 60 * 60 * 1000),
+          completedAt: new Date(now - 24 * 60 * 60 * 1000), // yesterday
+        },
+        {
+          id: 'ent-task-012',
+          userId: 'demo-entrepreneur-001',
+          title: 'Set Up Payment Gateway (Razorpay)',
+          description: 'Integrate Razorpay scripts and verify checkout API flow.',
+          status: 'completed',
+          priority: 'high',
+          deadline: getTodayEnd(),
+          estimatedMinutes: 90,
+          actualMinutes: 100,
+          category: 'Product',
+          tags: ['Razorpay', 'Payment'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: 'ent-goal-001',
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 24 * 60 * 60 * 1000),
+          completedAt: new Date(now - 3 * 60 * 60 * 1000), // today
+        },
+        {
+          id: 'ent-task-013',
+          userId: 'demo-entrepreneur-001',
+          title: 'Blog: Our Journey from Idea to MVP',
+          description: 'Draft the post sharing core tech stacks and design philosophies.',
+          status: 'todo',
+          priority: 'low',
+          deadline: new Date(now - 3 * 24 * 60 * 60 * 1000), // 3 days overdue
+          estimatedMinutes: 120,
+          actualMinutes: 0,
+          category: 'Marketing',
+          tags: ['Blog'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: null,
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 6 * 24 * 60 * 60 * 1000),
+          completedAt: null,
+        },
+        {
+          id: 'ent-task-014',
+          userId: 'demo-entrepreneur-001',
+          title: 'Tax Filing Documents to CA',
+          description: 'Verify quarterly sales numbers and submit declarations.',
+          status: 'todo',
+          priority: 'high',
+          deadline: new Date(now - 24 * 60 * 60 * 1000), // 1 day overdue
+          estimatedMinutes: 45,
+          actualMinutes: 0,
+          category: 'Operations',
+          tags: ['Taxes', 'CA'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: null,
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 5 * 24 * 60 * 60 * 1000),
+          completedAt: null,
+        },
+        {
+          id: 'ent-task-015',
+          userId: 'demo-entrepreneur-001',
+          title: 'Review server hosting costs and optimize',
+          description: 'Configure auto-scaling boundaries and stop idle development containers.',
+          status: 'todo',
+          priority: 'medium',
+          deadline: new Date(now + 2 * 24 * 60 * 60 * 1000),
+          estimatedMinutes: 60,
+          actualMinutes: 0,
+          category: 'Operations',
+          tags: ['Infrastructure', 'Costs'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: null,
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 24 * 60 * 60 * 1000),
+          completedAt: null,
+        },
+        {
+          id: 'ent-task-016',
+          userId: 'demo-entrepreneur-001',
+          title: 'Prepare newsletter for subscriber base',
+          description: 'Write progress highlights outlining Chronos beta features.',
+          status: 'in_progress',
+          priority: 'medium',
+          deadline: new Date(now + 1 * 24 * 60 * 60 * 1000),
+          estimatedMinutes: 45,
+          actualMinutes: 15,
+          category: 'Marketing',
+          tags: ['Newsletter', 'Email'],
+          subtasks: [],
+          aiGenerated: false,
+          parentGoalId: null,
+          rescuePlan: null,
+          ghostWorkerOutput: null,
+          createdAt: new Date(now - 24 * 60 * 60 * 1000),
+          completedAt: null,
+        },
+      ];
+  }
+}
+
+// ===== DEMO GOALS =====
+export const demoGoals: Record<UserMode, Goal[]> = {
+  student: [
+    {
+      id: 'st-goal-001',
+      userId: 'demo-student-001',
+      title: 'Complete Final Year Project',
+      description: 'Design, implement, test, and document compilers Capstone system.',
+      status: 'active',
+      progress: 65,
+      milestones: [
+        { id: 'st-m-1', title: 'Literature Review', completed: true, dueDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
+        { id: 'st-m-2', title: 'Implementation', completed: true, dueDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) },
+        { id: 'st-m-3', title: 'Testing', completed: false, dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000) },
+        { id: 'st-m-4', title: 'Documentation', completed: false, dueDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000) },
+        { id: 'st-m-5', title: 'Presentation', completed: false, dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000) },
+      ],
+      linkedTaskIds: ['st-task-001', 'st-task-002', 'st-task-005', 'st-task-006', 'st-task-016'],
+      createdAt: new Date('2026-05-01'),
+      deadline: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
+    },
+    {
+      id: 'st-goal-002',
+      userId: 'demo-student-001',
+      title: 'Crack Campus Placements',
+      description: 'Secure software engineer position during placements.',
+      status: 'active',
+      progress: 30,
+      milestones: [
+        { id: 'st-m2-1', title: 'Resume Ready', completed: true, dueDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000) },
+        { id: 'st-m2-2', title: '100 DSA Problems (30/100)', completed: false, dueDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000) },
+        { id: 'st-m2-3', title: 'System Design Prep', completed: false, dueDate: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000) },
+        { id: 'st-m2-4', title: 'Mock Interviews x5 (1/5)', completed: false, dueDate: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000) },
+      ],
+      linkedTaskIds: ['st-task-003', 'st-task-008', 'st-task-009', 'st-task-010', 'st-task-012'],
+      createdAt: new Date('2026-05-15'),
+      deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    },
+  ],
+  professional: [
+    {
+      id: 'prof-goal-001',
+      userId: 'demo-professional-001',
+      title: 'Get Promoted to Senior Engineer',
+      description: 'Lead critical architectures, mentor juniors, and expand metrics.',
+      status: 'active',
+      progress: 55,
+      milestones: [
+        { id: 'pr-m-1', title: 'Lead 2 Projects (1/2 done)', completed: false, dueDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000) },
+        { id: 'pr-m-2', title: 'Mentoring', completed: true, dueDate: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000) },
+        { id: 'pr-m-3', title: 'Tech Talk at Team Meeting', completed: false, dueDate: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000) },
+        { id: 'pr-m-4', title: 'Cross-team Collaboration', completed: true, dueDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) },
+      ],
+      linkedTaskIds: ['prof-task-001', 'prof-task-002', 'prof-task-003', 'prof-task-004', 'prof-task-006', 'prof-task-009'],
+      createdAt: new Date('2026-04-01'),
+      deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    },
+    {
+      id: 'prof-goal-002',
+      userId: 'demo-professional-001',
+      title: 'AWS Solutions Architect Certification',
+      description: 'Pass the AWS Solutions Architect exam.',
+      status: 'active',
+      progress: 40,
+      milestones: [
+        { id: 'pr-m2-1', title: 'Complete Course (60%)', completed: false, dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000) },
+        { id: 'pr-m2-2', title: 'Practice Exams (0/3)', completed: false, dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000) },
+        { id: 'pr-m2-3', title: 'Schedule Exam', completed: false, dueDate: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000) },
+      ],
+      linkedTaskIds: ['prof-task-012'],
+      createdAt: new Date('2026-05-01'),
+      deadline: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000),
+    },
+  ],
+  entrepreneur: [
+    {
+      id: 'ent-goal-001',
+      userId: 'demo-entrepreneur-001',
+      title: 'Launch Product V1.0',
+      description: 'Deploy MVP, verify beta feedbacks, configure gateways, and launch.',
+      status: 'active',
+      progress: 72,
+      milestones: [
+        { id: 'ent-m-1', title: 'MVP Built', completed: true, dueDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
+        { id: 'ent-m-2', title: 'Beta Testing', completed: true, dueDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000) },
+        { id: 'ent-m-3', title: 'Payment Integration', completed: true, dueDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000) },
+        { id: 'ent-m-4', title: 'Marketing Site', completed: false, dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000) },
+        { id: 'ent-m-5', title: 'Launch Campaign', completed: false, dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000) },
+      ],
+      linkedTaskIds: ['ent-task-003', 'ent-task-005', 'ent-task-007', 'ent-task-009', 'ent-task-010', 'ent-task-012'],
+      createdAt: new Date('2026-04-10'),
+      deadline: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
+    },
+    {
+      id: 'ent-goal-002',
+      userId: 'demo-entrepreneur-001',
+      title: 'Close Seed Round — ₹2 Cr',
+      description: 'Fundraise from reputable angel investors.',
+      status: 'active',
+      progress: 35,
+      milestones: [
+        { id: 'ent-m2-1', title: 'Pitch Deck', completed: true, dueDate: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000) },
+        { id: 'ent-m2-2', title: '10 Investor Meetings (4/10)', completed: false, dueDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000) },
+        { id: 'ent-m2-3', title: 'Due Diligence Docs', completed: false, dueDate: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000) },
+        { id: 'ent-m2-4', title: 'Term Sheet', completed: false, dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) },
+      ],
+      linkedTaskIds: ['ent-task-001', 'ent-task-006'],
+      createdAt: new Date('2026-05-01'),
+      deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    },
+  ],
+};
+
+// ===== DEMO HABITS =====
+export const demoHabits: Record<UserMode, Habit[]> = {
+  student: [
+    {
+      id: 'st-habit-001',
+      userId: 'demo-student-001',
+      title: 'Solve 2 LeetCode Problems',
+      frequency: 'daily',
+      completedDates: [
+        new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      ],
+      streak: 8,
+      category: 'Academics',
+    },
+    {
+      id: 'st-habit-002',
+      userId: 'demo-student-001',
+      title: 'Read 30 minutes',
+      frequency: 'daily',
+      completedDates: [
+        new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      ],
+      streak: 4,
+      category: 'Personal',
+    },
+    {
+      id: 'st-habit-003',
+      userId: 'demo-student-001',
+      title: 'Exercise',
+      frequency: 'daily',
+      completedDates: [
+        new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      ],
+      streak: 2,
+      category: 'Personal',
+    },
+  ],
+  professional: [
+    {
+      id: 'prof-habit-001',
+      userId: 'demo-professional-001',
+      title: 'Review Tech News (15 min)',
+      frequency: 'daily',
+      completedDates: Array.from({ length: 12 }, (_, i) =>
+        new Date(Date.now() - (i + 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      ),
+      streak: 12,
+      category: 'Work',
+    },
+    {
+      id: 'prof-habit-002',
+      userId: 'demo-professional-001',
+      title: 'Write in Journal',
+      frequency: 'daily',
+      completedDates: Array.from({ length: 5 }, (_, i) =>
+        new Date(Date.now() - (i + 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      ),
+      streak: 5,
+      category: 'Personal',
+    },
+    {
+      id: 'prof-habit-003',
+      userId: 'demo-professional-001',
+      title: 'No-Meeting Focus Block (2h)',
+      frequency: 'daily',
+      completedDates: Array.from({ length: 3 }, (_, i) =>
+        new Date(Date.now() - (i + 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      ),
+      streak: 3,
+      category: 'Work',
+    },
+  ],
+  entrepreneur: [
+    {
+      id: 'ent-habit-001',
+      userId: 'demo-entrepreneur-001',
+      title: 'Tweet about product',
+      frequency: 'daily',
+      completedDates: Array.from({ length: 15 }, (_, i) =>
+        new Date(Date.now() - (i + 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      ),
+      streak: 15,
+      category: 'Marketing',
+    },
+    {
+      id: 'ent-habit-002',
+      userId: 'demo-entrepreneur-001',
+      title: '30-min reading (business/tech)',
+      frequency: 'daily',
+      completedDates: Array.from({ length: 7 }, (_, i) =>
+        new Date(Date.now() - (i + 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      ),
+      streak: 7,
+      category: 'Personal',
+    },
+    {
+      id: 'ent-habit-003',
+      userId: 'demo-entrepreneur-001',
+      title: 'Customer conversation (1/day)',
+      frequency: 'daily',
+      completedDates: Array.from({ length: 4 }, (_, i) =>
+        new Date(Date.now() - (i + 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      ),
+      streak: 4,
+      category: 'Operations',
+    },
+  ],
+};
+
+// ===== DEMO GAMIFICATION DATA =====
+export const demoGamification = {
+  student: {
+    level: 5,
+    xp: 850,
+    streak: 12,
+    badges: ['First Task', 'Week Warrior', 'Speed Demon', '10-Task Streak'],
+  },
+  professional: {
+    level: 7,
+    xp: 3200,
+    streak: 18,
+    badges: ['First Task', 'Week Warrior', 'Month Master', 'Consistency King', 'Rescue Survivor'],
+  },
+  entrepreneur: {
+    level: 6,
+    xp: 1800,
+    streak: 15,
+    badges: ['First Task', 'Hustle Mode', 'Ghost Worker Fan', 'Streak Legend'],
+  },
+};
+
+// ===== PROGRAMMATIC DAILY ANALYTICS GENERATOR =====
+export function generateDemoAnalytics(mode: UserMode, userId: string): DailyAnalytics[] {
+  const analytics: DailyAnalytics[] = [];
+  const now = new Date();
+
+  // Mode specific bottlenecks
+  const modeBottlenecks: Record<UserMode, string[]> = {
+    student: ['study-distractions', 'high-cognitive-load'],
+    professional: ['meeting-fatigue', 'context-switching'],
+    entrepreneur: ['context-switching', 'decision-paralysis'],
+  };
+
+  for (let i = 29; i >= 0; i--) {
+    const date = new Date(now);
+    date.setDate(now.getDate() - i);
+    const dateStr = date.toISOString().split('T')[0];
+
+    const dayOfWeek = date.getDay();
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+    // Seed logic for consistent data pattern
+    const seed = (i * 9 + dayOfWeek * 17) % 100;
+    const progressFactor = (30 - i) * 0.6; // upward trend
+
+    let productivityScore = 0;
+    let focusMinutes = 0;
+    let tasksCompleted = 0;
+    let tasksCreated = 0;
+    let rescueModeActivations = 0;
+    let bottlenecksDetected: string[] = [];
+
+    if (isWeekend) {
+      productivityScore = Math.floor(30 + (seed % 25) + progressFactor);
+      focusMinutes = Math.floor(60 + (seed % 90));
+      tasksCompleted = seed % 3 === 0 ? 1 : 0;
+      tasksCreated = seed % 4 === 0 ? 1 : 0;
+    } else {
+      productivityScore = Math.floor(60 + (seed % 20) + progressFactor);
+      focusMinutes = Math.floor(120 + (seed % 120) + progressFactor * 1.5);
+      tasksCompleted = Math.floor(2 + (seed % 3));
+      tasksCreated = Math.floor(1 + (seed % 3));
+    }
+
+    // Clamp score
+    if (productivityScore > 100) productivityScore = 100;
+    if (productivityScore < 0) productivityScore = 0;
+
+    // 2 rescue mode activations in past week (e.g. 3 and 5 days ago)
+    if (i === 3 || i === 5) {
+      rescueModeActivations = 1;
+      bottlenecksDetected = [...modeBottlenecks[mode]];
+    }
+
+    analytics.push({
+      date: dateStr,
+      tasksCompleted,
+      tasksCreated,
+      focusMinutes,
+      rescueModeActivations,
+      productivityScore,
+      bottlenecksDetected,
+    });
+  }
+
+  return analytics;
+}
+
+// ===== DEMO CONVERSATION HISTORY =====
+export const demoConversations: Record<UserMode, Array<{ role: 'user' | 'model'; parts: Array<{ text: string }> }>> = {
+  student: [
+    { role: 'user', parts: [{ text: "I'm stressed about my ML assignment" }] },
+    {
+      role: 'model',
+      parts: [
+        {
+          text: `Yo Arjun, I see your ML assignment is due in 1.5 hours and you're only 40% done. That's tight but doable if we move NOW. Want me to activate Rescue Mode? I'll build a compressed action plan to get you through this. ⏰🔥`,
+        },
+      ],
+    },
+    { role: 'user', parts: [{ text: 'Yes please!' }] },
+    {
+      role: 'model',
+      parts: [
+        {
+          text: `🚨 **RESCUE MODE ACTIVATED!**
+Here's your compressed plan:
+• **4:15 - 4:35 PM** — Complete Section 3 (Neural Network diagrams)
+• **4:35 - 4:55 PM** — Write Results analysis (use template)
+• **4:55 - 5:00 PM** — Quick break, stretch
+• **5:00 - 5:20 PM** — Write Conclusion + References
+• **5:20 - 5:30 PM** — Proofread + Submit
+
+🎯 **Skip**: Formatting bibliography (use auto-cite). You got this! 💪`,
+        },
+      ],
+    },
+  ],
+  professional: [
+    { role: 'user', parts: [{ text: "What's my status for today?" }] },
+    {
+      role: 'model',
+      parts: [
+        {
+          text: `Good morning, Priya. Here's your day at a glance:
+📊 **Priority Score**: 78/100
+⚠️ **2 items** need immediate attention:
+1. **Finalize Sprint Review Deck** — due in 2h (I recommend Rescue Mode)
+2. **Client Demo Prep — Feature Walkthrough** — due by EOD
+
+📈 You completed 4 tasks yesterday, 12% above your weekly average.
+*Recommended next action: Start with the Sprint Review Deck.*`,
+        },
+      ],
+    },
+  ],
+  entrepreneur: [
+    { role: 'user', parts: [{ text: 'I need to prepare for my investor meeting' }] },
+    {
+      role: 'model',
+      parts: [
+        {
+          text: `Let's crush this, Karan! 🚀
+Your **Investor Pitch Deck — Final Review** is due in 1 hour. Let me help:
+👻 **Ghost Worker** can draft your key talking points
+📋 I'll break down the prep into quick steps
+
+Want me to activate Ghost Worker to draft your opening pitch and key metrics slide notes? That'll save you 20 minutes!`,
+        },
+      ],
+    },
+  ],
+};
+
+// ===== SCRIPTED CHAT RESPONSES =====
+export const scriptedChatResponses: Record<UserMode, Record<string, string>> = {
+  student: {
+    'plan my day': `Yo Arjun, here is your game plan for today:
+📚 **Academics**: Complete Capstone React components first (90m left of effort).
+🔥 **Urgent**: Physics Lab report is due in 3h, get that done next.
+🧠 **Placement**: Spend 45m reviewing CLRS QuickSort/randomized algorithms.
+Stay hydrated and block notifications! 🚀`,
+    'what should i do next?': `Arjun, you need to work on **Machine Learning Assignment** immediately. It is due in 1.5 hours and only 40% complete. I highly recommend opening the active **Rescue Plan**! 🚨`,
+    'break down complete final year project': `Sure Arjun! Breaking down **Complete Final Year Project**:
+1. **Testing** (due in 5 days): Write integration tests for compiler frontend.
+2. **Documentation** (due in 10 days): Compile LaTeX project report.
+3. **Presentation** (due in 15 days): Prepare demo slides and practice pitching to advisor.`,
+  },
+  professional: {
+    'plan my day': `Good morning Priya. Here is your structured focus plan:
+💼 **Focus Block (9 AM - 11 AM)**: Finalize the Sprint Review Deck.
+💻 **Core Tasks**: Complete review of the 3 pending PRs in the afternoon.
+🤝 **Meetings**: Manager 1:1 prep (agenda drafted by AI).
+Avoid scheduling ad-hoc meetings today to protect focus.`,
+    'what should i do next?': `Priya, I recommend starting with **Finalize Sprint Review Deck** (due in 2 hours). It is critical priority and on the promotion track goal.`,
+    'break down aws solutions architect certification': `Here is the roadmap for **AWS solutions architect certification**:
+1. **Complete Course (60%)**: VPCs, Transit Gateway, and Route53 endpoints review.
+2. **Practice Exams**: Simulate 3 practice exams to check baseline score.
+3. **Schedule Exam**: Book testing center window for late July.`,
+  },
+  entrepreneur: {
+    'plan my day': `Let's hustle, Karan! 🚀 Here's your high-impact schedule:
+💎 **Hour 1**: Investor Pitch Deck final review (notes ready by Ghost Worker).
+📣 **Hiring**: Send recruiting post on LinkedIn.
+👥 **Customers**: Reply to the Razorpay ticket issues (5 support emails).
+Focus on distribution and closing the term sheet!`,
+    'what should i do next?': `Karan, your **Investor Pitch Deck** is due in 1 hour. Get that slides review finished! Ghost Worker has already drafted talking points for you.`,
+    'break down launch product v1.0': `Roadmap for **Launch Product V1.0**:
+1. **Marketing Site**: Review copies and animations on pricing section.
+2. **Launch Campaign**: Design Product Hunt post, email outreach cohorts.
+3. **Analytics**: Verify telemetry is active on onboarding screens.`,
+  },
+};
