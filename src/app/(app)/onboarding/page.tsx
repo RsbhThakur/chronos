@@ -5,14 +5,20 @@ import { useRouter } from 'next/navigation';
 import { db as clientDb } from '@/lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useState } from 'react';
+import { useDemo } from '@/hooks/useDemo';
 
 export default function OnboardingPage() {
   const { user, signOut } = useAuth();
   const router = useRouter();
   const [saving, setSaving] = useState(false);
+  const { isDemo } = useDemo();
 
   const completeOnboarding = async () => {
     if (!user) return;
+    if (isDemo) {
+      router.push('/dashboard');
+      return;
+    }
     setSaving(true);
     try {
       const userRef = doc(clientDb, 'users', user.id);
