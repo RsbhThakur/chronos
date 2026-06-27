@@ -110,99 +110,109 @@ const mockDb = {
   }
 };
 
-// Register Firebase Admin mock
-const adminPath = require.resolve('../src/lib/firebase-admin');
-require.cache[adminPath] = {
-  id: adminPath,
-  filename: adminPath,
-  loaded: true,
-  exports: {
-    adminDb: mockDb,
-    adminAuth: {
-      createCustomToken: async (uid: string) => `mock-firebase-token-${uid}`
-    }
-  }
-} as any;
+function registerMock(modulePath: string, mockExports: any) {
+  const resolved = require.resolve(modulePath);
+  const normalizedLower = resolved.charAt(0).toLowerCase() + resolved.slice(1);
+  const normalizedUpper = resolved.charAt(0).toUpperCase() + resolved.slice(1);
+  
+  const cacheEntry = {
+    id: resolved,
+    filename: resolved,
+    loaded: true,
+    exports: mockExports
+  } as any;
+  
+  require.cache[resolved] = cacheEntry;
+  require.cache[normalizedLower] = cacheEntry;
+  require.cache[normalizedUpper] = cacheEntry;
+  
+  const withoutExt = resolved.replace(/\.ts$/, '');
+  const normalizedLowerNoExt = withoutExt.charAt(0).toLowerCase() + withoutExt.slice(1);
+  const normalizedUpperNoExt = withoutExt.charAt(0).toUpperCase() + withoutExt.slice(1);
+  
+  require.cache[withoutExt] = cacheEntry;
+  require.cache[normalizedLowerNoExt] = cacheEntry;
+  require.cache[normalizedUpperNoExt] = cacheEntry;
+}
 
-// Register Gemini Client mock
-const clientPath = require.resolve('../src/lib/ai/gemini-client');
-require.cache[clientPath] = {
-  id: clientPath,
-  filename: clientPath,
-  loaded: true,
-  exports: {
-    ai: {
-      models: {
-        generateContent: async (params: any) => {
-          if (params.contents.includes('Task:')) {
-            // Rescue mode
-            return {
-              text: JSON.stringify({
-                severity: 'orange',
-                totalMinutesAvailable: 120,
-                totalMinutesNeeded: 90,
-                feasible: true,
-                plan: [
-                  { id: 'step-0', timeBlock: '1:00 PM - 1:30 PM', action: 'Write draft', estimatedMinutes: 30, tips: 'Focus', canBeSkipped: false, completed: false }
-                ],
-                sacrifices: ['Skip meeting'],
-                motivationalMessage: 'Keep going!',
-                checkpoints: []
-              })
-            };
-          }
-          if (params.contents.includes('Goal Title:')) {
-            // Goal decomposition
-            return {
-              text: JSON.stringify({
-                milestones: [{ title: 'Milestone 1', dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() }],
-                tasks: [{ title: 'Subtask 1', description: 'Desc 1', priority: 'high', estimatedMinutes: 45, category: 'Work', milestoneTitle: 'Milestone 1' }],
-                totalEstimatedHours: 0.75,
-                suggestedSchedule: 'One task per day'
-              })
-            };
-          }
-          if (params.contents.includes('Time Range')) {
-            // Productivity Insights
-            return {
-              text: JSON.stringify({
-                insights: [{ type: 'achievement', title: 'Great job', description: 'Completions up 20%' }]
-              })
-            };
-          }
-          if (params.contents.includes('bottlenecks')) {
-            // Bottleneck forecast
-            return {
-              text: JSON.stringify({
-                forecasts: [{ date: '2026-06-26', riskLevel: 'medium', reason: 'High load', taskCount: 3, recommendedAction: 'Reschedule low priority tasks' }]
-              })
-            };
-          }
-          return { text: '{}' };
+// Register mocks
+registerMock('../src/lib/firebase-admin', {
+  adminDb: mockDb,
+  adminAuth: {
+    createCustomToken: async (uid: string) => `mock-firebase-token-${uid}`
+  }
+});
+
+const clientMock = {
+  ai: {
+    models: {
+      generateContent: async (params: any) => {
+        if (params.contents.includes('Task:')) {
+          return {
+            text: JSON.stringify({
+              severity: 'orange',
+              totalMinutesAvailable: 120,
+              totalMinutesNeeded: 90,
+              feasible: true,
+              plan: [
+                { id: 'step-0', timeBlock: '1:00 PM - 1:30 PM', action: 'Write draft', estimatedMinutes: 30, tips: 'Focus', canBeSkipped: false, completed: false }
+              ],
+              sacrifices: ['Skip meeting'],
+              motivationalMessage: 'Keep going!',
+              checkpoints: []
+            })
+          };
         }
-      }
-    },
-    getModelName: (type: 'flash' | 'pro') => type === 'flash' ? 'gemini-3.5-flash' : 'gemini-2.5-pro',
-    getAgentSystemInstruction: () => 'Mock system instruction',
-    generateStructuredContent: async ({ agentType, prompt, zodSchema, fallbackValue }: any) => {
-      const mockResult = await (require.cache[clientPath] as any).exports.ai.models.generateContent({ contents: prompt });
-      const rawText = mockResult.text;
-      if (!rawText) return fallbackValue;
-      try {
-        const parsed = JSON.parse(rawText);
-        const validated = zodSchema.safeParse(parsed);
-        return validated.success ? validated.data : fallbackValue;
-      } catch (err) {
-        return fallbackValue;
+        if (params.contents.includes('Goal Title:')) {
+          return {
+            text: JSON.stringify({
+              milestones: [{ title: 'Milestone 1', dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() }],
+              tasks: [{ title: 'Subtask 1', description: 'Desc 1', priority: 'high', estimatedMinutes: 45, category: 'Work', milestoneTitle: 'Milestone 1' }],
+              totalEstimatedHours: 0.75,
+              suggestedSchedule: 'One task per day'
+            })
+          };
+        }
+        if (params.contents.includes('Time Range')) {
+          return {
+            text: JSON.stringify({
+              insights: [{ type: 'achievement', title: 'Great job', description: 'Completions up 20%' }]
+            })
+          };
+        }
+        if (params.contents.includes('bottlenecks')) {
+          return {
+            text: JSON.stringify({
+              forecasts: [{ date: '2026-06-26', riskLevel: 'medium', reason: 'High load', taskCount: 3, recommendedAction: 'Reschedule low priority tasks' }]
+            })
+          };
+        }
+        return { text: '{}' };
       }
     }
+  },
+  getModelName: (type: 'flash' | 'pro') => type === 'flash' ? 'gemini-3.5-flash' : 'gemini-3.1-pro',
+  getAgentSystemInstruction: () => 'Mock system instruction',
+  generateStructuredContent: async ({ agentType, prompt, zodSchema, fallbackValue }: any) => {
+    const mockResult = await clientMock.ai.models.generateContent({ contents: prompt });
+    const rawText = mockResult.text;
+    if (!rawText) return fallbackValue;
+    try {
+      const parsed = JSON.parse(rawText);
+      const validated = zodSchema.safeParse(parsed);
+      return validated.success ? validated.data : fallbackValue;
+    } catch (err) {
+      return fallbackValue;
+    }
   }
-} as any;
+};
+
+registerMock('../src/lib/ai/gemini-client', clientMock);
 
 // ==========================================
 // 2. IMPORT THE DISPATCHER UNDER TEST
 // ==========================================
-import { executeToolCall } from '../src/lib/ai/tool-executor';
+const { executeToolCall } = require('../src/lib/ai/tool-executor');
 
 // ==========================================
 // 3. RUN UNIT TESTS

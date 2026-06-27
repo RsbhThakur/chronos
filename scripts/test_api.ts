@@ -109,118 +109,107 @@ const mockDb = {
   }
 };
 
-// Register Firebase Admin mock
-const adminPath = require.resolve('../src/lib/firebase-admin');
-require.cache[adminPath] = {
-  id: adminPath,
-  filename: adminPath,
-  loaded: true,
-  exports: {
-    adminDb: mockDb,
-    adminAuth: {
-      createCustomToken: async (uid: string) => `mock-firebase-token-${uid}`
-    }
-  }
-} as any;
+function registerMock(modulePath: string, mockExports: any) {
+  const resolved = require.resolve(modulePath);
+  const normalizedLower = resolved.charAt(0).toLowerCase() + resolved.slice(1);
+  const normalizedUpper = resolved.charAt(0).toUpperCase() + resolved.slice(1);
+  
+  const cacheEntry = {
+    id: resolved,
+    filename: resolved,
+    loaded: true,
+    exports: mockExports
+  } as any;
+  
+  require.cache[resolved] = cacheEntry;
+  require.cache[normalizedLower] = cacheEntry;
+  require.cache[normalizedUpper] = cacheEntry;
+  
+  const withoutExt = resolved.replace(/\.ts$/, '');
+  const normalizedLowerNoExt = withoutExt.charAt(0).toLowerCase() + withoutExt.slice(1);
+  const normalizedUpperNoExt = withoutExt.charAt(0).toUpperCase() + withoutExt.slice(1);
+  
+  require.cache[withoutExt] = cacheEntry;
+  require.cache[normalizedLowerNoExt] = cacheEntry;
+  require.cache[normalizedUpperNoExt] = cacheEntry;
+}
 
-// Register NextAuth mock
-const nextAuthPath = require.resolve('next-auth/next');
-require.cache[nextAuthPath] = {
-  id: nextAuthPath,
-  filename: nextAuthPath,
-  loaded: true,
-  exports: {
-    getServerSession: async () => ({
-      user: { id: 'user-abc-123' },
-      accessToken: 'mock-google-access-token'
-    })
+// Register mocks
+registerMock('../src/lib/firebase-admin', {
+  adminDb: mockDb,
+  adminAuth: {
+    createCustomToken: async (uid: string) => `mock-firebase-token-${uid}`
   }
-} as any;
+});
 
-// Register next-auth default export mock
-const nextAuthModulePath = require.resolve('next-auth');
+registerMock('next-auth/next', {
+  getServerSession: async () => ({
+    user: { id: 'user-abc-123' },
+    accessToken: 'mock-google-access-token'
+  })
+});
+
 const mockNextAuth = () => () => ({});
 (mockNextAuth as any).default = mockNextAuth;
-require.cache[nextAuthModulePath] = {
-  id: nextAuthModulePath,
-  filename: nextAuthModulePath,
-  loaded: true,
-  exports: mockNextAuth
-} as any;
+registerMock('next-auth', mockNextAuth);
 
-
-// Register Google APIs mock
-const googleapisPath = require.resolve('googleapis');
-require.cache[googleapisPath] = {
-  id: googleapisPath,
-  filename: googleapisPath,
-  loaded: true,
-  exports: {
-    google: {
-      auth: {
-        OAuth2: class {
-          setCredentials() {}
-        }
-      },
-      calendar: () => ({
-        events: {
-          list: async () => ({
-            data: {
-              items: [
-                { summary: 'Meeting with Lead', start: { dateTime: '2026-06-26T10:00:00Z' }, end: { dateTime: '2026-06-26T11:00:00Z' }, description: 'Check-in' }
-              ]
-            }
-          }),
-          insert: async (params: any) => ({
-            data: {
-              id: 'mock-event-id-999',
-              htmlLink: 'https://calendar.google.com/mock-link'
-            }
-          })
-        }
-      })
-    }
-  }
-} as any;
-
-// Register Gemini Client mock
-const clientPath = require.resolve('../src/lib/ai/gemini-client');
-require.cache[clientPath] = {
-  id: clientPath,
-  filename: clientPath,
-  loaded: true,
-  exports: {
-    ai: {
-      models: {
-        generateContent: async () => ({ text: '{}' })
+registerMock('googleapis', {
+  google: {
+    auth: {
+      OAuth2: class {
+        setCredentials() {}
       }
     },
-    getModelName: (type: string) => 'mock-model',
-    getAgentSystemInstruction: () => 'Mock instruction',
-    generateStructuredContent: async ({ agentType, prompt, zodSchema, fallbackValue }: any) => {
-      // Mock decomposer response structure
-      if (agentType === 'decomposer') {
-        return {
-          milestones: [{ title: 'Milestone 1', dueDate: '2026-06-30T12:00:00Z' }],
-          tasks: [{ title: 'Subtask 1', description: 'Desc 1', priority: 'high', estimatedMinutes: 45, category: 'Work', milestoneTitle: 'Milestone 1' }],
-          totalEstimatedHours: 0.75,
-          suggestedSchedule: 'One task per day'
-        };
+    calendar: () => ({
+      events: {
+        list: async () => ({
+          data: {
+            items: [
+              { summary: 'Meeting with Lead', start: { dateTime: '2026-06-26T10:00:00Z' }, end: { dateTime: '2026-06-26T11:00:00Z' }, description: 'Check-in' }
+            ]
+          }
+        }),
+        insert: async (params: any) => ({
+          data: {
+            id: 'mock-event-id-999',
+            htmlLink: 'https://calendar.google.com/mock-link'
+          }
+        })
       }
-      return fallbackValue;
-    }
+    })
   }
-} as any;
+});
+
+registerMock('../src/lib/ai/gemini-client', {
+  ai: {
+    models: {
+      generateContent: async () => ({ text: '{}' })
+    }
+  },
+  getModelName: (type: string) => 'mock-model',
+  getAgentSystemInstruction: () => 'Mock instruction',
+  generateStructuredContent: async ({ agentType, prompt, zodSchema, fallbackValue }: any) => {
+    if (agentType === 'decomposer') {
+      return {
+        milestones: [{ title: 'Milestone 1', dueDate: '2026-06-30T12:00:00Z' }],
+        tasks: [{ title: 'Subtask 1', description: 'Desc 1', priority: 'high', estimatedMinutes: 45, category: 'Work', milestoneTitle: 'Milestone 1' }],
+        totalEstimatedHours: 0.75,
+        suggestedSchedule: 'One task per day'
+      };
+    }
+    return fallbackValue;
+  }
+});
 
 // ==========================================
 // 2. IMPORT THE HANDLERS UNDER TEST
 // ==========================================
 
-import { GET as getTasks, POST as postTasks, PATCH as patchTasks, DELETE as deleteTasks } from '../src/app/api/tasks/route';
-import { GET as getGoals, POST as postGoals, PATCH as patchGoals, DELETE as deleteGoals } from '../src/app/api/goals/route';
-import { GET as getHabits, POST as postHabits, PATCH as patchHabits } from '../src/app/api/goals/habits/route';
-import { GET as getCalendar, POST as postCalendar } from '../src/app/api/calendar/sync/route';
-import { POST as postDecompose } from '../src/app/api/ai/decompose/route';
+const { GET: getTasks, POST: postTasks, PATCH: patchTasks, DELETE: deleteTasks } = require('../src/app/api/tasks/route');
+const { GET: getGoals, POST: postGoals, PATCH: patchGoals, DELETE: deleteGoals } = require('../src/app/api/goals/route');
+const { GET: getHabits, POST: postHabits, PATCH: patchHabits } = require('../src/app/api/goals/habits/route');
+const { GET: getCalendar, POST: postCalendar } = require('../src/app/api/calendar/sync/route');
+const { POST: postDecompose } = require('../src/app/api/ai/decompose/route');
 
 // ==========================================
 // 3. RUN UNIT TESTS

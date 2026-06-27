@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Task } from '@/types';
+import { useDemo } from '@/hooks/useDemo';
 
 export interface UseTasksFilters {
   status?: string;
@@ -16,8 +17,19 @@ export const useTasks = (userId: string, filters?: UseTasksFilters) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const { isDemo, tasks: demoTasks, createTask: demoCreateTask, updateTask: demoUpdateTask, completeTask: demoCompleteTask, deleteTask: demoDeleteTask } = useDemo();
+
+  // Sync demo mode tasks
+  useEffect(() => {
+    if (isDemo) {
+      setFirestoreTasks(demoTasks);
+      setLoading(false);
+    }
+  }, [isDemo, demoTasks]);
+
   // Real-time Firestore Sync
   useEffect(() => {
+    if (isDemo) return;
     if (!userId) {
       Promise.resolve().then(() => {
         setFirestoreTasks([]);
@@ -115,6 +127,9 @@ export const useTasks = (userId: string, filters?: UseTasksFilters) => {
   // --- CRUD API Calls with Optimistic Updates ---
 
   const createTask = async (taskInput: Omit<Task, 'id' | 'userId' | 'createdAt' | 'completedAt' | 'actualMinutes' | 'aiGenerated' | 'parentGoalId' | 'rescuePlan' | 'ghostWorkerOutput'> & { parentGoalId?: string | null }) => {
+    if (isDemo) {
+      return demoCreateTask(taskInput);
+    }
     const tempId = 'temp-' + Math.random().toString(36).substring(2, 11);
     const optimisticTask: Task = {
       ...taskInput,
@@ -168,6 +183,9 @@ export const useTasks = (userId: string, filters?: UseTasksFilters) => {
   };
 
   const updateTask = async (taskId: string, updates: Partial<Task>) => {
+    if (isDemo) {
+      return demoUpdateTask(taskId, updates);
+    }
     // Keep reference to previous state for rollback
     const originalTasks = [...firestoreTasks];
     const originalOptimistic = [...optimisticTasks];
@@ -201,6 +219,9 @@ export const useTasks = (userId: string, filters?: UseTasksFilters) => {
   };
 
   const completeTask = async (taskId: string) => {
+    if (isDemo) {
+      return demoCompleteTask(taskId);
+    }
     // Keep reference to previous state for rollback
     const originalTasks = [...firestoreTasks];
     const originalOptimistic = [...optimisticTasks];
@@ -235,6 +256,9 @@ export const useTasks = (userId: string, filters?: UseTasksFilters) => {
   };
 
   const deleteTask = async (taskId: string) => {
+    if (isDemo) {
+      return demoDeleteTask(taskId);
+    }
     // Optimistically remove from view
     setDeletedIds((prev) => {
       const next = new Set(prev);

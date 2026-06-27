@@ -11,6 +11,9 @@ interface TaskCardProps {
   onEdit: (task: Task) => void;
   onDelete: (taskId: string) => void;
   onRescue: (taskId: string) => void;
+  onCardClick?: (task: Task) => void;
+  onHoverChange?: (hovered: boolean) => void;
+  isHoveredSibling?: boolean;
   compact?: boolean;
 }
 
@@ -18,6 +21,9 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   task,
   onComplete,
   onEdit,
+  onCardClick,
+  onHoverChange,
+  isHoveredSibling = false,
   onDelete,
   onRescue,
   compact = false,
@@ -84,6 +90,8 @@ export const TaskCard: React.FC<TaskCardProps> = ({
     low: 'var(--neon-green)',
   };
 
+  const [isHovered, setIsHovered] = useState(false);
+
   // Subtask calculations
   const subtasks = task.subtasks || [];
   const totalSubtasks = subtasks.length;
@@ -107,7 +115,6 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.3 } }}
-          whileHover={{ scale: 1.02 }}
           transition={{ type: 'spring', stiffness: 300, damping: 25 }}
           className={`glass-card relative flex flex-col justify-between w-full ${
             task.rescuePlan ? 'animate-rescue' : ''
@@ -115,10 +122,32 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           style={{
             borderLeft: `4px solid ${priorityColors[task.priority] || 'var(--glass-border)'}`,
             padding: compact ? 'var(--space-3)' : 'var(--space-4)',
-            minHeight: compact ? 'auto' : '150px',
+            minHeight: compact ? 'auto' : '100px',
             cursor: 'pointer',
+            borderColor: isHovered ? 'var(--neon-cyan)' : 'var(--glass-border)',
+            boxShadow: isHovered
+              ? '0 12px 24px -8px rgba(0, 229, 255, 0.2), 0 8px 16px -6px rgba(0, 0, 0, 0.5)'
+              : 'none',
+            transform: isHovered ? 'scale(1.02)' : 'scale(1)',
+            zIndex: isHovered ? 10 : 1,
+            opacity: isHoveredSibling ? 0.45 : 1,
+            transition: 'border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, opacity 0.25s ease',
           }}
-          onClick={() => onEdit(task)}
+          onMouseEnter={() => {
+            setIsHovered(true);
+            if (onHoverChange) onHoverChange(true);
+          }}
+          onMouseLeave={() => {
+            setIsHovered(false);
+            if (onHoverChange) onHoverChange(false);
+          }}
+          onClick={() => {
+            if (onCardClick) {
+              onCardClick(task);
+            } else {
+              onEdit(task);
+            }
+          }}
         >
           {/* Top Row: Title + Priority Badge */}
           <div className="flex justify-between items-start w-full gap-3">
@@ -129,13 +158,24 @@ export const TaskCard: React.FC<TaskCardProps> = ({
                 }`}
                 style={{
                   fontSize: 'var(--text-base)',
-                  color: task.status === 'completed' ? 'var(--text-tertiary)' : 'var(--text-primary)',
+                  color: task.status === 'completed' ? 'var(--text-tertiary)' : isHovered ? 'var(--neon-cyan)' : 'var(--text-primary)',
                   maxWidth: compact ? '150px' : '220px',
+                  transform: isHovered ? 'scale(1.03) translateX(2px)' : 'scale(1) translateX(0)',
+                  transformOrigin: 'left center',
+                  transition: 'all 0.2s ease-in-out',
                 }}
               >
                 {task.title}
               </h4>
-              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>
+              <span
+                style={{
+                  fontSize: 'var(--text-xs)',
+                  color: isHovered ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                  transform: isHovered ? 'translateX(2px)' : 'translateX(0)',
+                  transition: 'all 0.2s ease-in-out',
+                  display: 'inline-block',
+                }}
+              >
                 {task.category}
               </span>
             </div>
@@ -161,25 +201,6 @@ export const TaskCard: React.FC<TaskCardProps> = ({
               </span>
             </div>
           </div>
-
-          {/* Middle Section: Description (truncated to 2 lines) */}
-          {!compact && task.description && (
-            <p
-              className="w-full text-secondary"
-              style={{
-                fontSize: 'var(--text-sm)',
-                margin: 'var(--space-2) 0',
-                display: '-webkit-box',
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: 'vertical',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                color: 'var(--text-secondary)',
-              }}
-            >
-              {task.description}
-            </p>
-          )}
 
           {/* Subtasks Progress Bar */}
           {totalSubtasks > 0 && !compact && (
@@ -211,9 +232,9 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           )}
 
           {/* Bottom Row: Badges, Timer, and Actions */}
-          <div className="flex justify-between items-center w-full" style={{ marginTop: 'var(--space-2)' }}>
+          <div className="flex justify-between items-center w-full flex-wrap gap-2" style={{ marginTop: 'var(--space-2)' }}>
             {/* Status Badges or Time Left */}
-            <div className="flex gap-2 items-center">
+            <div className="flex gap-2 items-center flex-wrap">
               {urgency === 'overdue' && (
                 <span className="badge badge--pink animate-pulse-neon">OVERDUE</span>
               )}

@@ -9,6 +9,7 @@ interface TaskKanbanProps {
   tasks: Task[];
   onTaskUpdate: (taskId: string, updates: Partial<Task>) => void;
   onTaskClick: (task: Task) => void;
+  onTaskEdit?: (task: Task) => void;
   onTaskComplete?: (taskId: string) => void;
   onTaskDelete?: (taskId: string) => void;
   onTaskRescue?: (taskId: string) => void;
@@ -25,12 +26,14 @@ export const TaskKanban: React.FC<TaskKanbanProps> = ({
   tasks,
   onTaskUpdate,
   onTaskClick,
+  onTaskEdit,
   onTaskComplete,
   onTaskDelete,
   onTaskRescue,
   onAddTaskClick,
 }) => {
   const [draggedOverCol, setDraggedOverCol] = useState<TaskStatus | null>(null);
+  const [hoveredTaskId, setHoveredTaskId] = useState<string | null>(null);
 
   // Column definitions
   const columns: ColumnConfig[] = [
@@ -73,10 +76,11 @@ export const TaskKanban: React.FC<TaskKanbanProps> = ({
     <div
       className="flex w-full gap-6"
       style={{
-        minHeight: '600px',
+        height: '100%',
         overflowX: 'auto',
         paddingBottom: 'var(--space-4)',
         alignItems: 'stretch',
+        justifyContent: 'center',
       }}
     >
       {columns.map((col) => {
@@ -91,15 +95,18 @@ export const TaskKanban: React.FC<TaskKanbanProps> = ({
             onDrop={(e) => handleDrop(e, col.id)}
             className="flex-col w-full"
             style={{
-              flex: '1',
-              minWidth: '300px',
+              flex: '1 0 320px',
               maxWidth: '450px',
-              background: 'var(--bg-secondary)',
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              background: isDraggedOver ? 'rgba(0, 229, 255, 0.03)' : 'transparent',
               borderRadius: 'var(--radius-lg)',
-              padding: 'var(--space-4)',
+              padding: 'var(--space-2)',
               border: isDraggedOver ? '2px dashed var(--neon-cyan)' : '2px solid transparent',
               boxShadow: isDraggedOver ? '0 0 15px var(--neon-cyan-glow)' : 'none',
               transition: 'all var(--transition-base)',
+              boxSizing: 'border-box'
             }}
           >
             {/* Column Header */}
@@ -107,8 +114,8 @@ export const TaskKanban: React.FC<TaskKanbanProps> = ({
               className="flex justify-between items-center w-full"
               style={{
                 marginBottom: 'var(--space-4)',
-                borderBottom: '1px solid var(--glass-border)',
                 paddingBottom: 'var(--space-2)',
+                flexShrink: 0
               }}
             >
               <h3 className="font-display font-semibold tracking-wide" style={{ fontSize: 'var(--text-md)' }}>
@@ -123,10 +130,12 @@ export const TaskKanban: React.FC<TaskKanbanProps> = ({
             <div
               className="flex-col gap-3 w-full"
               style={{
-                minHeight: '450px',
+                flex: 1,
                 display: 'flex',
                 overflowY: 'auto',
+                paddingRight: '12px',
                 paddingBottom: 'var(--space-4)',
+                minHeight: 0
               }}
             >
               {colTasks.length > 0 ? (
@@ -139,9 +148,12 @@ export const TaskKanban: React.FC<TaskKanbanProps> = ({
                     <TaskCard
                       task={task}
                       onComplete={onTaskComplete || (() => onTaskUpdate(task.id, { status: 'completed' }))}
-                      onEdit={onTaskClick}
+                      onEdit={onTaskEdit || onTaskClick}
+                      onCardClick={onTaskClick}
                       onDelete={onTaskDelete || (() => {})}
                       onRescue={onTaskRescue || (() => {})}
+                      onHoverChange={(hovered) => setHoveredTaskId(hovered ? task.id : null)}
+                      isHoveredSibling={hoveredTaskId !== null && hoveredTaskId !== task.id}
                     />
                   </div>
                 ))
@@ -152,7 +164,6 @@ export const TaskKanban: React.FC<TaskKanbanProps> = ({
                   style={{
                     display: 'flex',
                     flex: '1',
-                    height: '350px',
                     color: 'var(--text-tertiary)',
                     fontSize: 'var(--text-sm)',
                     border: '1px dashed var(--glass-border)',
@@ -168,22 +179,51 @@ export const TaskKanban: React.FC<TaskKanbanProps> = ({
                   <span>{`No ${col.title.toLowerCase()} tasks`}</span>
                 </div>
               )}
+            </div>
 
-              {/* Add Task Button at bottom of Todo column */}
-              {col.id === 'todo' && onAddTaskClick && (
+            {/* Column Footer: Docked Add Task Button */}
+            {col.id === 'todo' && onAddTaskClick && (
+              <div style={{ padding: '8px 0 4px 0', flexShrink: 0 }}>
                 <button
                   onClick={onAddTaskClick}
-                  className="glow-button w-full"
+                  className="glass-card"
                   style={{
-                    marginTop: 'auto',
-                    borderStyle: 'dashed',
-                    background: 'transparent',
+                    width: '100%',
+                    padding: '10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    border: '1px dashed rgba(0, 229, 255, 0.4)',
+                    background: 'rgba(0, 229, 255, 0.02)',
+                    color: 'var(--neon-cyan)',
+                    fontSize: 'var(--text-xs)',
+                    fontWeight: '600',
+                    letterSpacing: '0.5px',
+                    borderRadius: 'var(--radius-md)',
+                    cursor: 'pointer',
+                    transition: 'all var(--transition-fast)',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(0, 229, 255, 0.08)';
+                    e.currentTarget.style.borderStyle = 'solid';
+                    e.currentTarget.style.borderColor = 'var(--neon-cyan)';
+                    e.currentTarget.style.boxShadow = '0 0 15px rgba(0, 229, 255, 0.2)';
+                    e.currentTarget.style.color = '#fff';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(0, 229, 255, 0.02)';
+                    e.currentTarget.style.borderStyle = 'dashed';
+                    e.currentTarget.style.borderColor = 'rgba(0, 229, 255, 0.4)';
+                    e.currentTarget.style.boxShadow = 'none';
+                    e.currentTarget.style.color = 'var(--neon-cyan)';
                   }}
                 >
-                  <Plus size={16} /> Add Task
+                  <Plus size={14} />
+                  <span>ADD NEW TASK</span>
                 </button>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         );
       })}

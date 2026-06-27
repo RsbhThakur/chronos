@@ -7,6 +7,7 @@ import { auth as clientAuth, db as clientDb } from '@/lib/firebase';
 import { signInWithCustomToken, signOut as firebaseSignOut, onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { UserProfile } from '@/types';
+import { useDemo } from '@/hooks/useDemo';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -52,15 +53,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const router = useRouter();
   const pathname = usePathname();
 
+  const { isDemo: demoActive, demoUser, startDemo: triggerDemo, exitDemo: triggerExit } = useDemo();
+
   // Load demo mode state from localStorage on init
   useEffect(() => {
     const persistedDemo = localStorage.getItem('chronos_demo_mode') === 'true';
     if (persistedDemo) {
       setIsDemo(true);
-      setUser(DEMO_USER);
       setLoading(false);
     }
   }, []);
+
+  // Sync isDemo and user profile when demo state changes
+  useEffect(() => {
+    if (demoActive && demoUser) {
+      setIsDemo(true);
+      setUser(demoUser);
+      setLoading(false);
+    }
+  }, [demoActive, demoUser]);
 
   // 1. Sync NextAuth session with Firebase Client Auth via Custom Token
   useEffect(() => {
@@ -164,6 +175,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     localStorage.removeItem('chronos_demo_mode');
+    localStorage.removeItem('chronos_demo_mode_persona');
+    if (demoActive) {
+      triggerExit();
+      return;
+    }
     setIsDemo(false);
     setUser(null);
     setLoading(true);
@@ -174,10 +190,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const startDemo = () => {
-    localStorage.setItem('chronos_demo_mode', 'true');
-    setIsDemo(true);
-    setUser(DEMO_USER);
-    setLoading(false);
+    triggerDemo('student');
     router.push('/dashboard');
   };
 
