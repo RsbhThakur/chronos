@@ -246,11 +246,21 @@ export default function DashboardPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)', padding: 'var(--space-6) var(--space-8)' }}>
+    <div style={{
+      height: '100vh',
+      maxHeight: '100vh',
+      overflow: 'hidden',
+      background: 'var(--bg-primary)',
+      color: 'var(--text-primary)',
+      padding: '20px 24px 80px 24px',
+      display: 'flex',
+      flexDirection: 'column',
+      boxSizing: 'border-box'
+    }}>
       {/* Header Panel */}
-      <header className="glass-card" style={{ padding: 'var(--space-4) var(--space-6)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-6)' }}>
+      <header className="glass-card" style={{ padding: '12px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexShrink: 0 }}>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <h1 className="neon-text-cyan font-display" style={{ fontSize: 'var(--text-2xl)', fontWeight: 900, letterSpacing: '2px' }}>
+          <h1 className="neon-text-cyan font-display" style={{ fontSize: 'var(--text-xl)', fontWeight: 900, letterSpacing: '2px', margin: 0 }}>
             CHRONOS
           </h1>
           <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
@@ -266,19 +276,19 @@ export default function DashboardPage() {
       </header>
 
       {/* Gamification / Stats Bar */}
-      <section className="dashboard-grid" style={{ marginBottom: 'var(--space-6)' }}>
-        <div className="glass-card" style={{ padding: 'var(--space-4) var(--space-6)', display: 'flex', flexWrap: 'wrap', gap: '32px', alignItems: 'center', flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Award size={32} className="neon-text-cyan" />
+      <section style={{ marginBottom: '12px', flexShrink: 0 }}>
+        <div className="glass-card" style={{ padding: '12px 20px', display: 'flex', flexWrap: 'nowrap', gap: '32px', alignItems: 'center', overflowX: 'auto' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+            <Award size={28} className="neon-text-cyan" />
             <div>
               <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Level</div>
-              <div style={{ fontSize: 'var(--text-xl)', fontWeight: 'bold' }}>{gamification.level}</div>
+              <div style={{ fontSize: 'var(--text-lg)', fontWeight: 'bold' }}>{gamification.level}</div>
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Star size={32} className="neon-text-purple" />
-            <div style={{ flex: 1, minWidth: '150px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+            <Star size={28} className="neon-text-purple" />
+            <div style={{ width: '150px' }}>
               <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', textTransform: 'uppercase', display: 'flex', justifyContent: 'space-between' }}>
                 <span>XP earned</span>
                 <span>{gamification.xp} XP</span>
@@ -289,20 +299,20 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Flame size={32} className="neon-text-pink" style={{ animation: 'pulse-neon 1.5s infinite ease-in-out' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+            <Flame size={28} className="neon-text-pink" style={{ animation: 'pulse-neon 1.5s infinite ease-in-out' }} />
             <div>
               <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Streak</div>
-              <div style={{ fontSize: 'var(--text-xl)', fontWeight: 'bold' }}>{gamification.streak} Days</div>
+              <div style={{ fontSize: 'var(--text-lg)', fontWeight: 'bold' }}>{gamification.streak} Days</div>
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1, minWidth: '200px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: '200px' }}>
             <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Unlocked Badges</div>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               {gamification.badges.length > 0 ? (
                 gamification.badges.map((badge, idx) => (
-                  <span key={idx} className="badge badge--purple">{badge}</span>
+                  <span key={idx} className="badge badge--purple" style={{ fontSize: 'var(--text-xs)', padding: '2px 8px' }}>{badge}</span>
                 ))
               ) : (
                 <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>No badges unlocked yet</span>
@@ -313,35 +323,45 @@ export default function DashboardPage() {
       </section>
 
       {/* Main Workspace Layout: Left Content (Kanban) + Right Content (AI Chat) */}
-      <div style={{ display: 'flex', flexDirection: 'row', gap: '24px', flexWrap: 'wrap', alignItems: 'stretch' }}>
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'row',
+        gap: '24px',
+        overflow: 'hidden',
+        minHeight: 0,
+        alignItems: 'stretch'
+      }}>
         {/* Left Column: Kanban Board */}
-        <section className="glass-card" style={{ padding: 'var(--space-6)', overflowX: 'auto', flex: 1, minWidth: '320px', display: 'flex', flexDirection: 'column' }}>
+        <section className="glass-card" style={{ padding: '20px', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0, minHeight: 0 }}>
           {error && (
-            <div style={{ background: 'var(--neon-red)', color: '#fff', padding: 'var(--space-3)', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-4)' }}>
+            <div style={{ background: 'var(--neon-red)', color: '#fff', padding: 'var(--space-3)', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-4)', flexShrink: 0 }}>
               Error: {error}
             </div>
           )}
-          <TaskKanban
-            tasks={tasks}
-            onTaskUpdate={async (id, updates) => { await updateTask(id, updates); }}
-            onTaskClick={handleTaskClick}
-            onTaskComplete={handleCompleteTask}
-            onTaskDelete={handleDeleteTask}
-            onTaskRescue={handleRescueTask}
-            onAddTaskClick={() => setShowAddModal(true)}
-          />
+          <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+            <TaskKanban
+              tasks={tasks}
+              onTaskUpdate={async (id, updates) => { await updateTask(id, updates); }}
+              onTaskClick={handleTaskClick}
+              onTaskComplete={handleCompleteTask}
+              onTaskDelete={handleDeleteTask}
+              onTaskRescue={handleRescueTask}
+              onAddTaskClick={() => setShowAddModal(true)}
+            />
+          </div>
         </section>
 
         {/* Right Column: AI Chat Sidebar */}
-        <section className="glass-card" style={{ width: '360px', padding: 'var(--space-4)', display: 'flex', flexDirection: 'column', height: '650px' }}>
+        <section className="glass-card" style={{ width: '360px', padding: '20px', display: 'flex', flexDirection: 'column', overflow: 'hidden', flexShrink: 0, minHeight: 0 }}>
           {/* Chat Header */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingBottom: '12px', borderBottom: '1px solid var(--glass-border)', marginBottom: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingBottom: '12px', borderBottom: '1px solid var(--glass-border)', marginBottom: '12px', flexShrink: 0 }}>
             <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'var(--neon-cyan)', boxShadow: '0 0 8px var(--neon-cyan-glow)' }} />
-            <h3 style={{ fontSize: 'var(--text-sm)', fontWeight: 'bold', fontFamily: 'var(--font-display)', letterSpacing: '1px' }}>AI TIME GUARDIAN</h3>
+            <h3 style={{ fontSize: 'var(--text-sm)', fontWeight: 'bold', fontFamily: 'var(--font-display)', letterSpacing: '1px', margin: 0 }}>AI TIME GUARDIAN</h3>
           </div>
 
           {/* Messages List */}
-          <div ref={chatContainerRef} style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', paddingRight: '4px', marginBottom: '12px' }}>
+          <div ref={chatContainerRef} style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', paddingRight: '4px', marginBottom: '12px', minHeight: 0 }}>
             {chatMessages.map((msg, idx) => (
               <div key={idx} style={{ alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start', maxWidth: '85%', background: msg.sender === 'user' ? 'rgba(0, 229, 255, 0.08)' : 'rgba(255,255,255,0.03)', border: msg.sender === 'user' ? '1px solid rgba(0, 229, 255, 0.2)' : '1px solid var(--glass-border)', padding: '10px 14px', borderRadius: msg.sender === 'user' ? '14px 14px 2px 14px' : '14px 14px 14px 2px', fontSize: 'var(--text-sm)', color: msg.sender === 'user' ? 'var(--text-primary)' : 'var(--text-secondary)', lineHeight: '1.5' }}>
                 {msg.text || (
@@ -356,7 +376,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Chat Form */}
-          <form onSubmit={handleSendChat} style={{ display: 'flex', gap: '8px', borderTop: '1px solid var(--glass-border)', paddingTop: '12px' }}>
+          <form onSubmit={handleSendChat} style={{ display: 'flex', gap: '8px', borderTop: '1px solid var(--glass-border)', paddingTop: '12px', flexShrink: 0 }}>
             <input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder={isTyping ? "Streaming response..." : "Ask guardian..."} disabled={isTyping} className="input-field" style={{ fontSize: 'var(--text-sm)', padding: '8px 12px' }} />
             <button type="submit" disabled={isTyping || !chatInput.trim()} className="glow-button glow-button--solid" style={{ padding: '0 12px', minWidth: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Send size={14} />
@@ -557,33 +577,39 @@ export default function DashboardPage() {
               )}
 
               {/* Action buttons in details view */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', marginTop: '12px', borderTop: '1px solid var(--glass-border)', paddingTop: '16px' }}>
-                {activeTask.status === 'completed' ? (
-                  <button onClick={() => updateTask(activeTask.id, { status: 'todo', completedAt: null })} className="glow-button glow-button--solid" style={{ flex: 1 }}>
-                    Revert to Todo
-                  </button>
-                ) : (
-                  <>
-                    <button onClick={() => handleCompleteTask(activeTask.id)} className="glow-button glow-button--solid" style={{ flex: 1 }}>
-                      Complete Task
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px', borderTop: '1px solid var(--glass-border)', paddingTop: '16px', width: '100%' }}>
+                {/* Row 1: Primary Operations */}
+                <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
+                  {activeTask.status === 'completed' ? (
+                    <button onClick={() => updateTask(activeTask.id, { status: 'todo', completedAt: null })} className="glow-button glow-button--solid" style={{ flex: 1 }}>
+                      Revert to Todo
                     </button>
-                    {activeTask.rescuePlan ? (
-                      <button onClick={() => handleDeactivateRescue(activeTask.id)} className="glow-button" style={{ borderColor: 'var(--neon-pink)', color: 'var(--neon-pink)', background: 'rgba(236,72,153,0.05)', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                        <ShieldOff size={14} /> Disable Rescue
+                  ) : (
+                    <>
+                      <button onClick={() => handleCompleteTask(activeTask.id)} className="glow-button glow-button--solid" style={{ flex: 1 }}>
+                        Complete Task
                       </button>
-                    ) : (
-                      <button onClick={() => handleRescueTask(activeTask.id)} className="glow-button glow-button--pink" style={{ flex: 1 }}>
-                        Trigger Rescue
-                      </button>
-                    )}
-                  </>
-                )}
-                <button type="button" onClick={() => handleEditClick(activeTask)} className="glow-button glow-button--cyan" style={{ flex: 0.5 }}>
-                  Edit
-                </button>
-                <button onClick={() => handleDeleteTask(activeTask.id)} className="glow-button" style={{ borderColor: 'var(--neon-red)', color: 'var(--neon-red)', background: 'rgba(239,68,68,0.05)', flex: 0.5 }}>
-                  Delete
-                </button>
+                      {activeTask.rescuePlan ? (
+                        <button onClick={() => handleDeactivateRescue(activeTask.id)} className="glow-button" style={{ borderColor: 'var(--neon-pink)', color: 'var(--neon-pink)', background: 'rgba(236,72,153,0.05)', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                          <ShieldOff size={14} /> Disable Rescue
+                        </button>
+                      ) : (
+                        <button onClick={() => handleRescueTask(activeTask.id)} className="glow-button glow-button--pink" style={{ flex: 1 }}>
+                          Trigger Rescue
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+                {/* Row 2: Management/Secondary Operations */}
+                <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
+                  <button type="button" onClick={() => handleEditClick(activeTask)} className="glow-button glow-button--cyan" style={{ flex: 1 }}>
+                    Edit Details
+                  </button>
+                  <button onClick={() => handleDeleteTask(activeTask.id)} className="glow-button" style={{ borderColor: 'var(--neon-red)', color: 'var(--neon-red)', background: 'rgba(239,68,68,0.05)', flex: 1 }}>
+                    Delete Task
+                  </button>
+                </div>
               </div>
             </div>
           )}

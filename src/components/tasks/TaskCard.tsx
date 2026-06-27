@@ -211,9 +211,9 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           )}
 
           {/* Bottom Row: Badges, Timer, and Actions */}
-          <div className="flex justify-between items-center w-full" style={{ marginTop: 'var(--space-2)' }}>
+          <div className="flex justify-between items-center w-full flex-wrap gap-2" style={{ marginTop: 'var(--space-2)' }}>
             {/* Status Badges or Time Left */}
-            <div className="flex gap-2 items-center">
+            <div className="flex gap-2 items-center flex-wrap">
               {urgency === 'overdue' && (
                 <span className="badge badge--pink animate-pulse-neon">OVERDUE</span>
               )}

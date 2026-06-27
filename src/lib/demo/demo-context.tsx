@@ -746,7 +746,7 @@ Here's your compressed plan:
           bottom: '25px',
           left: '50%',
           transform: 'translateX(-50%)',
-          zIndex: 9999,
+          zIndex: 90,
           background: 'rgba(10, 10, 20, 0.85)',
           backdropFilter: 'blur(12px)',
           border: '1px solid rgba(0, 229, 255, 0.3)',

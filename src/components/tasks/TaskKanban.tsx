@@ -73,7 +73,7 @@ export const TaskKanban: React.FC<TaskKanbanProps> = ({
     <div
       className="flex w-full gap-6"
       style={{
-        minHeight: '600px',
+        height: '100%',
         overflowX: 'auto',
         paddingBottom: 'var(--space-4)',
         alignItems: 'stretch',
@@ -91,15 +91,18 @@ export const TaskKanban: React.FC<TaskKanbanProps> = ({
             onDrop={(e) => handleDrop(e, col.id)}
             className="flex-col w-full"
             style={{
-              flex: '1',
-              minWidth: '300px',
+              flex: '1 0 320px',
               maxWidth: '450px',
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
               background: 'var(--bg-secondary)',
               borderRadius: 'var(--radius-lg)',
               padding: 'var(--space-4)',
               border: isDraggedOver ? '2px dashed var(--neon-cyan)' : '2px solid transparent',
               boxShadow: isDraggedOver ? '0 0 15px var(--neon-cyan-glow)' : 'none',
               transition: 'all var(--transition-base)',
+              boxSizing: 'border-box'
             }}
           >
             {/* Column Header */}
@@ -109,6 +112,7 @@ export const TaskKanban: React.FC<TaskKanbanProps> = ({
                 marginBottom: 'var(--space-4)',
                 borderBottom: '1px solid var(--glass-border)',
                 paddingBottom: 'var(--space-2)',
+                flexShrink: 0
               }}
             >
               <h3 className="font-display font-semibold tracking-wide" style={{ fontSize: 'var(--text-md)' }}>
@@ -123,10 +127,11 @@ export const TaskKanban: React.FC<TaskKanbanProps> = ({
             <div
               className="flex-col gap-3 w-full"
               style={{
-                minHeight: '450px',
+                flex: 1,
                 display: 'flex',
                 overflowY: 'auto',
                 paddingBottom: 'var(--space-4)',
+                minHeight: 0
               }}
             >
               {colTasks.length > 0 ? (
@@ -152,7 +157,6 @@ export const TaskKanban: React.FC<TaskKanbanProps> = ({
                   style={{
                     display: 'flex',
                     flex: '1',
-                    height: '350px',
                     color: 'var(--text-tertiary)',
                     fontSize: 'var(--text-sm)',
                     border: '1px dashed var(--glass-border)',
