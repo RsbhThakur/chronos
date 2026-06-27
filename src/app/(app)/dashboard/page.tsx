@@ -336,14 +336,44 @@ export default function DashboardPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           {/* Active Badges Preview */}
           <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'nowrap' }}>
-            {gamification.badges.map((badge, idx) => (
-              <span key={idx} className="badge badge--purple" style={{ fontSize: '9px', padding: '2px 8px' }}>
-                {badge}
-              </span>
-            ))}
+            {gamification.badges.map((badge, idx) => {
+              const lower = badge.toLowerCase();
+              let badgeClass = 'badge--purple';
+              if (lower.includes('first')) badgeClass = 'badge--cyan';
+              else if (lower.includes('week') || lower.includes('warrior')) badgeClass = 'badge--green';
+              else if (lower.includes('speed') || lower.includes('demon')) badgeClass = 'badge--amber';
+              return (
+                <span key={idx} className={`badge ${badgeClass}`} style={{ fontSize: '9px', padding: '2px 8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  {badge}
+                </span>
+              );
+            })}
           </div>
 
-          <button onClick={signOut} className="glow-button glow-button--purple" style={{ padding: '6px 14px', fontSize: 'var(--text-xs)' }}>
+          <button
+            onClick={signOut}
+            className="glow-button"
+            style={{
+              padding: '6px 14px',
+              fontSize: 'var(--text-xs)',
+              borderColor: 'rgba(236, 72, 153, 0.4)',
+              color: 'var(--neon-pink)',
+              background: 'transparent',
+              transition: 'all var(--transition-fast)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = 'var(--neon-pink)';
+              e.currentTarget.style.color = '#fff';
+              e.currentTarget.style.boxShadow = '0 0 10px rgba(236, 72, 153, 0.2)';
+              e.currentTarget.style.background = 'rgba(236, 72, 153, 0.05)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = 'rgba(236, 72, 153, 0.4)';
+              e.currentTarget.style.color = 'var(--neon-pink)';
+              e.currentTarget.style.boxShadow = 'none';
+              e.currentTarget.style.background = 'transparent';
+            }}
+          >
             Sign Out
           </button>
         </div>
@@ -371,6 +401,7 @@ export default function DashboardPage() {
               tasks={tasks}
               onTaskUpdate={async (id, updates) => { await updateTask(id, updates); }}
               onTaskClick={handleTaskClick}
+              onTaskEdit={handleEditClick}
               onTaskComplete={handleCompleteTask}
               onTaskDelete={handleDeleteTask}
               onTaskRescue={handleRescueTask}

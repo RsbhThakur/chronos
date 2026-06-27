@@ -11,6 +11,7 @@ interface TaskCardProps {
   onEdit: (task: Task) => void;
   onDelete: (taskId: string) => void;
   onRescue: (taskId: string) => void;
+  onCardClick?: (task: Task) => void;
   compact?: boolean;
 }
 
@@ -18,6 +19,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   task,
   onComplete,
   onEdit,
+  onCardClick,
   onDelete,
   onRescue,
   compact = false,
@@ -124,7 +126,13 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           }}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
-          onClick={() => onEdit(task)}
+          onClick={() => {
+            if (onCardClick) {
+              onCardClick(task);
+            } else {
+              onEdit(task);
+            }
+          }}
         >
           {/* Top Row: Title + Priority Badge */}
           <div className="flex justify-between items-start w-full gap-3">
@@ -135,13 +143,24 @@ export const TaskCard: React.FC<TaskCardProps> = ({
                 }`}
                 style={{
                   fontSize: 'var(--text-base)',
-                  color: task.status === 'completed' ? 'var(--text-tertiary)' : 'var(--text-primary)',
+                  color: task.status === 'completed' ? 'var(--text-tertiary)' : isHovered ? 'var(--neon-cyan)' : 'var(--text-primary)',
                   maxWidth: compact ? '150px' : '220px',
+                  transform: isHovered ? 'scale(1.03) translateX(2px)' : 'scale(1) translateX(0)',
+                  transformOrigin: 'left center',
+                  transition: 'all 0.2s ease-in-out',
                 }}
               >
                 {task.title}
               </h4>
-              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>
+              <span
+                style={{
+                  fontSize: 'var(--text-xs)',
+                  color: isHovered ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                  transform: isHovered ? 'translateX(2px)' : 'translateX(0)',
+                  transition: 'all 0.2s ease-in-out',
+                  display: 'inline-block',
+                }}
+              >
                 {task.category}
               </span>
             </div>

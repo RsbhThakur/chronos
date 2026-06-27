@@ -9,6 +9,7 @@ interface TaskKanbanProps {
   tasks: Task[];
   onTaskUpdate: (taskId: string, updates: Partial<Task>) => void;
   onTaskClick: (task: Task) => void;
+  onTaskEdit?: (task: Task) => void;
   onTaskComplete?: (taskId: string) => void;
   onTaskDelete?: (taskId: string) => void;
   onTaskRescue?: (taskId: string) => void;
@@ -25,6 +26,7 @@ export const TaskKanban: React.FC<TaskKanbanProps> = ({
   tasks,
   onTaskUpdate,
   onTaskClick,
+  onTaskEdit,
   onTaskComplete,
   onTaskDelete,
   onTaskRescue,
@@ -144,7 +146,8 @@ export const TaskKanban: React.FC<TaskKanbanProps> = ({
                     <TaskCard
                       task={task}
                       onComplete={onTaskComplete || (() => onTaskUpdate(task.id, { status: 'completed' }))}
-                      onEdit={onTaskClick}
+                      onEdit={onTaskEdit || onTaskClick}
+                      onCardClick={onTaskClick}
                       onDelete={onTaskDelete || (() => {})}
                       onRescue={onTaskRescue || (() => {})}
                     />
@@ -172,22 +175,51 @@ export const TaskKanban: React.FC<TaskKanbanProps> = ({
                   <span>{`No ${col.title.toLowerCase()} tasks`}</span>
                 </div>
               )}
+            </div>
 
-              {/* Add Task Button at bottom of Todo column */}
-              {col.id === 'todo' && onAddTaskClick && (
+            {/* Column Footer: Docked Add Task Button */}
+            {col.id === 'todo' && onAddTaskClick && (
+              <div style={{ padding: '8px 0 4px 0', flexShrink: 0 }}>
                 <button
                   onClick={onAddTaskClick}
-                  className="glow-button w-full"
+                  className="glass-card"
                   style={{
-                    marginTop: 'auto',
-                    borderStyle: 'dashed',
-                    background: 'transparent',
+                    width: '100%',
+                    padding: '10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    border: '1px dashed rgba(0, 229, 255, 0.4)',
+                    background: 'rgba(0, 229, 255, 0.02)',
+                    color: 'var(--neon-cyan)',
+                    fontSize: 'var(--text-xs)',
+                    fontWeight: '600',
+                    letterSpacing: '0.5px',
+                    borderRadius: 'var(--radius-md)',
+                    cursor: 'pointer',
+                    transition: 'all var(--transition-fast)',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(0, 229, 255, 0.08)';
+                    e.currentTarget.style.borderStyle = 'solid';
+                    e.currentTarget.style.borderColor = 'var(--neon-cyan)';
+                    e.currentTarget.style.boxShadow = '0 0 15px rgba(0, 229, 255, 0.2)';
+                    e.currentTarget.style.color = '#fff';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(0, 229, 255, 0.02)';
+                    e.currentTarget.style.borderStyle = 'dashed';
+                    e.currentTarget.style.borderColor = 'rgba(0, 229, 255, 0.4)';
+                    e.currentTarget.style.boxShadow = 'none';
+                    e.currentTarget.style.color = 'var(--neon-cyan)';
                   }}
                 >
-                  <Plus size={16} /> Add Task
+                  <Plus size={14} />
+                  <span>ADD NEW TASK</span>
                 </button>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         );
       })}
