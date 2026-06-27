@@ -121,7 +121,9 @@ export const TaskCard: React.FC<TaskCardProps> = ({
             minHeight: compact ? 'auto' : '100px',
             cursor: 'pointer',
             borderColor: isHovered ? 'var(--neon-cyan)' : 'var(--glass-border)',
-            boxShadow: isHovered ? '0 0 15px rgba(0, 229, 255, 0.15)' : 'none',
+            boxShadow: isHovered
+              ? '0 12px 24px -8px rgba(0, 229, 255, 0.2), 0 8px 16px -6px rgba(0, 0, 0, 0.5)'
+              : 'none',
             transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
           }}
           onMouseEnter={() => setIsHovered(true)}
