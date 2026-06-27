@@ -3,7 +3,7 @@
 import React from 'react';
 import { Loader2 } from 'lucide-react';
 
-type Variant = 'cyan' | 'purple' | 'pink' | 'green' | 'solid';
+type Variant = 'cyan' | 'purple' | 'pink' | 'green' | 'amber' | 'solid';
 type Size = 'sm' | 'md' | 'lg';
 
 interface NeonButtonProps {
@@ -31,6 +31,7 @@ const variantColorMap: Record<Variant, string> = {
   purple: 'var(--neon-purple)',
   pink:   'var(--neon-pink)',
   green:  'var(--neon-green)',
+  amber:  'var(--neon-amber)',
   solid:  'var(--neon-cyan)',
 };
 
@@ -39,6 +40,7 @@ const variantBgMap: Record<Variant, string> = {
   purple: 'transparent',
   pink:   'transparent',
   green:  'transparent',
+  amber:  'transparent',
   solid:  'var(--neon-cyan)',
 };
 
@@ -47,6 +49,7 @@ const variantTextMap: Record<Variant, string> = {
   purple: 'var(--neon-purple)',
   pink:   'var(--neon-pink)',
   green:  'var(--neon-green)',
+  amber:  'var(--neon-amber)',
   solid:  '#000',
 };
 

@@ -63,11 +63,12 @@ export const GlassCard: React.FC<GlassCardProps> = ({
   };
 
   const motionProps = animate
-    ? { initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 }, transition: { type: 'spring', stiffness: 280, damping: 24 } }
+    ? { initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 } as const,
+        transition: { type: 'spring' as const, stiffness: 280, damping: 24 } }
     : {};
 
   const hoverProps = hoverable
-    ? { whileHover: { scale: 1.01 } }
+    ? { whileHover: { scale: 1.01 as number } }
     : {};
 
   return (

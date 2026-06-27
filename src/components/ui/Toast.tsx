@@ -84,7 +84,7 @@ const Toast: React.FC<{ toast: ToastItem; onDismiss: (id: string) => void }> = (
     >
       {/* Content */}
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-        <Icon size={16} style={{ color, flexShrink: 0, marginTop: '1px' } as any} />
+        <div style={{ color, flexShrink: 0, marginTop: '1px', display: 'flex' }}><Icon size={16} /></div>
         <p style={{ flex: 1, margin: 0, fontSize: 'var(--text-sm)', color: 'var(--text-primary)', lineHeight: 1.4 }}>
           {toast.message}
         </p>

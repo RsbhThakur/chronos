@@ -1,52 +1,91 @@
 'use client';
 
-import { useAuth } from '@/hooks/useAuth';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { db as clientDb } from '@/lib/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
-import { useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 import { useDemo } from '@/hooks/useDemo';
+import { useToast } from '@/components/ui/Toast';
+import { PersonalityQuiz } from '@/components/onboarding/PersonalityQuiz';
+import { UserProfile } from '@/types';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db as clientDb } from '@/lib/firebase';
 
 export default function OnboardingPage() {
-  const { user, signOut } = useAuth();
   const router = useRouter();
-  const [saving, setSaving] = useState(false);
+  const { user } = useAuth();
   const { isDemo } = useDemo();
+  const { showToast } = useToast();
+  const [saving, setSaving] = useState(false);
 
-  const completeOnboarding = async () => {
-    if (!user) return;
-    if (isDemo) {
-      router.push('/dashboard');
-      return;
-    }
+  const handleQuizComplete = async (profileData: Partial<UserProfile>) => {
     setSaving(true);
-    try {
-      const userRef = doc(clientDb, 'users', user.id);
-      await updateDoc(userRef, {
-        onboardingCompleted: true
-      });
-      router.push('/dashboard');
-    } catch (err) {
-      console.error('Failed to complete onboarding:', err);
-    } finally {
-      setSaving(false);
+
+    if (!isDemo && user?.id) {
+      // Real user: save to Firestore
+      try {
+        const docRef = doc(clientDb, 'users', user.id);
+        await updateDoc(docRef, {
+          mode:                profileData.mode,
+          personality:         profileData.personality,
+          preferences:         profileData.preferences,
+          onboardingCompleted: true,
+        });
+        showToast({ type: 'success', message: "You're all set! Welcome to Chronos 🚀" });
+      } catch (err) {
+        console.error('Failed to save onboarding data:', err);
+        showToast({ type: 'error', message: 'Failed to save preferences. You can update them in Settings.' });
+      }
+    } else {
+      // Demo user: just show success toast (DemoProvider is read-only)
+      showToast({ type: 'success', message: "Demo profile configured! Welcome to Chronos 🚀" });
+      await new Promise((r) => setTimeout(r, 600));
     }
+
+    setSaving(false);
+    router.push('/dashboard');
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: '20px', background: '#0a0a0a', color: '#fff', fontFamily: 'var(--font-orbitron), sans-serif' }}>
-      <h1 style={{ textShadow: '0 0 10px #ff00ff', color: '#ff00ff', fontSize: '2.5rem', letterSpacing: '2px' }}>CHRONOS ONBOARDING</h1>
-      <p style={{ fontFamily: 'var(--font-inter), sans-serif', color: '#888', maxWidth: '500px', textAlign: 'center', lineHeight: '1.6' }}>
-        Welcome {user?.displayName || 'Guardian'}! This is the Onboarding Quiz placeholder. Click below to mock-complete onboarding in Firestore and unlock the dashboard.
-      </p>
-      
-      <div style={{ display: 'flex', gap: '15px' }}>
-        <button onClick={completeOnboarding} disabled={saving} style={{ background: '#ff00ff', color: '#000', border: 'none', padding: '12px 24px', borderRadius: '5px', cursor: 'pointer', fontFamily: 'var(--font-jetbrains-mono), monospace', fontWeight: 'bold', boxShadow: '0 0 10px #ff00ff' }}>
-          {saving ? 'SAVING...' : 'COMPLETE ONBOARDING'}
-        </button>
-        <button onClick={signOut} style={{ background: 'transparent', color: '#ff00ff', border: '2px solid #ff00ff', padding: '10px 22px', borderRadius: '5px', cursor: 'pointer', fontFamily: 'var(--font-jetbrains-mono), monospace', fontWeight: 'bold' }}>
-          SIGN OUT
-        </button>
+    <div style={{
+      minHeight: '100vh',
+      background: 'var(--bg-primary)',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '24px',
+      position: 'relative',
+      overflow: 'hidden',
+    }}>
+      {/* Background ambient glow */}
+      <div style={{ position: 'fixed', top: '-20%', left: '50%', transform: 'translateX(-50%)', width: '600px', height: '600px', background: 'radial-gradient(circle, rgba(0,229,255,0.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
+      <div style={{ position: 'fixed', bottom: '-20%', right: '-10%', width: '400px', height: '400px', background: 'radial-gradient(circle, rgba(168,85,247,0.06) 0%, transparent 70%)', pointerEvents: 'none' }} />
+
+      {/* Main card */}
+      <div style={{
+        width: '100%',
+        maxWidth: '560px',
+        background: 'rgba(10, 10, 22, 0.95)',
+        backdropFilter: 'blur(24px)',
+        border: '1px solid var(--glass-border)',
+        borderRadius: 'var(--radius-xl)',
+        padding: 'clamp(24px, 5vw, 48px)',
+        boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
+        position: 'relative',
+        zIndex: 1,
+      }}>
+        {saving ? (
+          <div style={{ textAlign: 'center', padding: '48px 0' }}>
+            <div className="neon-text-cyan font-display" style={{ fontSize: '32px', fontWeight: 900, letterSpacing: '4px', marginBottom: '16px' }}>
+              CHRONOS
+            </div>
+            <div style={{ color: 'var(--text-tertiary)', fontSize: 'var(--text-sm)', animation: 'pulse-neon 1.5s infinite' }}>
+              Configuring your Time Guardian...
+            </div>
+          </div>
+        ) : (
+          <PersonalityQuiz onComplete={handleQuizComplete} />
+        )}
       </div>
     </div>
   );
