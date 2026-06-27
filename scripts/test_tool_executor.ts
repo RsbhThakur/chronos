@@ -191,7 +191,7 @@ const clientMock = {
       }
     }
   },
-  getModelName: (type: 'flash' | 'pro') => type === 'flash' ? 'gemini-3.5-flash' : 'gemini-2.5-pro',
+  getModelName: (type: 'flash' | 'pro') => type === 'flash' ? 'gemini-3.5-flash' : 'gemini-3.1-pro',
   getAgentSystemInstruction: () => 'Mock system instruction',
   generateStructuredContent: async ({ agentType, prompt, zodSchema, fallbackValue }: any) => {
     const mockResult = await clientMock.ai.models.generateContent({ contents: prompt });
