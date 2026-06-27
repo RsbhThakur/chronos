@@ -4,17 +4,17 @@ import { useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function LoginPage() {
-  const { signIn, startDemo, loading, user } = useAuth();
+  const { signIn, startDemo, loading, user, isDemo } = useAuth();
 
   // Auto-trigger demo if param is passed
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && !user && !isDemo && !loading) {
       const params = new URLSearchParams(window.location.search);
       if (params.get('demo') === 'true') {
         startDemo();
       }
     }
-  }, [startDemo]);
+  }, [startDemo, user, isDemo, loading]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: '20px', background: '#0a0a0a', color: '#fff', fontFamily: 'var(--font-orbitron), sans-serif' }}>
