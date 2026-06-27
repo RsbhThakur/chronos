@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -54,12 +55,12 @@ export default function Home() {
           width: "100%",
           justifyContent: "center"
         }}>
-          <button className="glow-button glow-button--solid" style={{ flex: 1, maxWidth: "200px" }}>
+          <Link href="/login" className="glow-button glow-button--solid" style={{ flex: 1, maxWidth: "200px", display: "inline-flex", justifyContent: "center", alignItems: "center", textDecoration: "none" }}>
             Start System
-          </button>
-          <button className="glow-button glow-button--purple" style={{ flex: 1, maxWidth: "200px" }}>
+          </Link>
+          <Link href="/login" className="glow-button glow-button--purple" style={{ flex: 1, maxWidth: "200px", display: "inline-flex", justifyContent: "center", alignItems: "center", textDecoration: "none" }}>
             Verify Protocols
-          </button>
+          </Link>
         </div>
       </main>
     </div>
