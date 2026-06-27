@@ -120,7 +120,16 @@ export const DemoProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return originalFetch.apply(this, arguments as any);
       }
 
-      const url = typeof input === 'string' ? input : (input as Request).url;
+      let url = '';
+      if (typeof input === 'string') {
+        url = input;
+      } else if (input && typeof input === 'object') {
+        if ('url' in input) {
+          url = (input as any).url || '';
+        } else if (typeof input.toString === 'function') {
+          url = input.toString();
+        }
+      }
 
       // Block Google Firebase network traffic
       if (
