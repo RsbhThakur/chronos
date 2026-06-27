@@ -239,6 +239,8 @@ a:hover { text-decoration: underline; }
 }
 
 .glow-button--solid:hover {
+  background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+  opacity: 0.9;
   box-shadow: 0 0 30px var(--neon-cyan-glow), 0 0 60px var(--neon-purple-glow);
 }
 

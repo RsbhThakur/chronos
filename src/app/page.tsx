@@ -1,11 +1,32 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ArrowDown, Clock, Shield, Sparkles, Zap, Calendar, Mic, Users, Heart } from 'lucide-react';
+import { ArrowDown, Clock, Shield, Sparkles, Zap, Calendar, Mic, Heart } from 'lucide-react';
 
 export default function Home() {
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePos({ x: e.clientX, y: e.clientY });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)', overflowX: 'hidden' }}>
-      {/* Dynamic Background Particle Styles */}
+    <div style={{ minHeight: '100vh', background: 'transparent', color: 'var(--text-primary)', overflowX: 'hidden', position: 'relative' }}>
+      {/* Interactive Mouse-Tracking Glow Layer */}
+      <div style={{
+        position: 'fixed',
+        inset: 0,
+        background: `radial-gradient(circle 220px at ${mousePos.x}px ${mousePos.y}px, rgba(0, 229, 255, 0.035) 0%, rgba(168, 85, 247, 0.015) 60%, transparent 100%)`,
+        pointerEvents: 'none',
+        zIndex: -1
+      }} />
+
+      {/* Floating Particles Styles */}
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes float-slow-1 {
           0%, 100% { transform: translate(0, 0) rotate(0deg); }
@@ -24,14 +45,14 @@ export default function Home() {
           border-radius: 50%;
           background: radial-gradient(circle, var(--neon-cyan-glow) 0%, transparent 70%);
           pointer-events: none;
-          z-index: 1;
+          zIndex: 1;
         }
         .scroll-indicator-container {
           animation: scroll-bounce 2s infinite ease-in-out;
         }
       `}} />
 
-      {/* 1. HERO SECTION (Clean Centered Card + Particles) */}
+      {/* 1. HERO SECTION (Clean Centered Card + Particles over Background Grid) */}
       <header style={{
         position: 'relative',
         height: '100vh',
@@ -40,7 +61,8 @@ export default function Home() {
         justifyContent: 'center',
         alignItems: 'center',
         textAlign: 'center',
-        padding: '0 24px'
+        padding: '0 24px',
+        background: 'transparent'
       }}>
         {/* Floating Background Particles */}
         <div className="time-particle" style={{ width: '300px', height: '300px', top: '15%', left: '10%', animation: 'float-slow-1 25s infinite ease-in-out' }} />
@@ -110,8 +132,8 @@ export default function Home() {
         </div>
       </header>
 
-      {/* 2. PROBLEM STATEMENT */}
-      <section style={{ background: 'var(--bg-secondary)', padding: '100px 24px', borderTop: '1px solid var(--glass-border)', borderBottom: '1px solid var(--glass-border)' }}>
+      {/* 2. PROBLEM STATEMENT (Semi-transparent dark backdrop) */}
+      <section style={{ background: 'rgba(14, 14, 24, 0.45)', backdropFilter: 'blur(8px)', padding: '100px 24px', borderTop: '1px solid var(--glass-border)', borderBottom: '1px solid var(--glass-border)' }}>
         <div className="container" style={{ maxWidth: '900px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '32px' }}>
           <div className="neon-text-pink" style={{ fontSize: 'clamp(3.5rem, 10vw, 6rem)', fontWeight: 900, fontFamily: 'var(--font-display)', lineHeight: 1 }}>
             87%
@@ -126,8 +148,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 3. FEATURES SHOWCASE */}
-      <section style={{ padding: '100px 24px' }}>
+      {/* 3. FEATURES SHOWCASE (Transparent background over grid) */}
+      <section style={{ padding: '100px 24px', background: 'transparent' }}>
         <div className="container">
           <h3 className="neon-text-purple" style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-3xl)', textAlign: 'center', marginBottom: '64px', fontWeight: 800 }}>
             Orchestrated Security Modules
@@ -203,8 +225,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 4. HOW IT WORKS */}
-      <section style={{ background: 'var(--bg-secondary)', padding: '100px 24px', borderTop: '1px solid var(--glass-border)', borderBottom: '1px solid var(--glass-border)' }}>
+      {/* 4. HOW IT WORKS (Semi-transparent dark backdrop) */}
+      <section style={{ background: 'rgba(14, 14, 24, 0.45)', backdropFilter: 'blur(8px)', padding: '100px 24px', borderTop: '1px solid var(--glass-border)', borderBottom: '1px solid var(--glass-border)' }}>
         <div className="container">
           <h3 className="neon-text-green" style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-3xl)', textAlign: 'center', marginBottom: '64px', fontWeight: 800 }}>
             Chronos Defense Protocol
@@ -247,8 +269,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 5. MODES SHOWCASE */}
-      <section style={{ padding: '100px 24px' }}>
+      {/* 5. MODES SHOWCASE (Transparent background over grid) */}
+      <section style={{ padding: '100px 24px', background: 'transparent' }}>
         <div className="container">
           <h3 className="neon-text-cyan" style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-3xl)', textAlign: 'center', marginBottom: '16px', fontWeight: 800 }}>
             Tailored Persona Presets
@@ -298,7 +320,7 @@ export default function Home() {
       </section>
 
       {/* 6. FOOTER */}
-      <footer style={{ background: 'var(--bg-secondary)', borderTop: '1px solid var(--glass-border)', padding: '48px 24px', textAlign: 'center' }}>
+      <footer style={{ background: 'rgba(14, 14, 24, 0.65)', borderTop: '1px solid var(--glass-border)', padding: '48px 24px', textAlign: 'center' }}>
         <div className="container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', fontSize: 'var(--text-sm)' }}>
             <span>Built with</span> <Heart size={14} className="neon-text-pink" /> <span>and Google AI</span>
