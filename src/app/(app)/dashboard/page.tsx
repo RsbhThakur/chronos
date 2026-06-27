@@ -252,75 +252,78 @@ export default function DashboardPage() {
       overflow: 'hidden',
       background: 'var(--bg-primary)',
       color: 'var(--text-primary)',
-      padding: '20px 24px 80px 24px',
+      padding: '24px 24px 90px 24px',
       display: 'flex',
       flexDirection: 'column',
       boxSizing: 'border-box'
     }}>
-      {/* Header Panel */}
-      <header className="glass-card" style={{ padding: '12px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexShrink: 0 }}>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <h1 className="neon-text-cyan font-display" style={{ fontSize: 'var(--text-xl)', fontWeight: 900, letterSpacing: '2px', margin: 0 }}>
+      {/* Header Panel / Navigation Bar */}
+      <header className="glass-card" style={{
+        padding: '12px 24px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '20px',
+        flexShrink: 0,
+        background: 'rgba(10, 10, 20, 0.4)',
+        border: '1px solid var(--glass-border)'
+      }}>
+        {/* Brand & Persona Info */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+          <h1 className="neon-text-cyan font-display" style={{ fontSize: 'var(--text-lg)', fontWeight: 900, letterSpacing: '2px', margin: 0 }}>
             CHRONOS
           </h1>
-          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-            AI Time Guardian Online • User: {user?.displayName} ({user?.mode} mode)
+          <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            Time Guardian • {user?.mode} Mode
           </span>
         </div>
-        
-        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-          <button onClick={signOut} className="glow-button glow-button--purple" style={{ padding: 'var(--space-2) var(--space-4)', fontSize: 'var(--text-xs)' }}>
+
+        {/* Integrated Real-time Stats */}
+        <div style={{ display: 'flex', gap: '28px', alignItems: 'center', fontFamily: 'var(--font-jetbrains-mono), monospace' }}>
+          {/* Level */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Award size={18} className="neon-text-cyan" />
+            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
+              LVL <strong style={{ color: 'var(--text-primary)' }}>{gamification.level}</strong>
+            </span>
+          </div>
+
+          {/* XP Progress */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Star size={18} className="neon-text-purple" />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              <span style={{ fontSize: '9px', color: 'var(--text-tertiary)', lineHeight: 1 }}>{gamification.xp} XP</span>
+              <div style={{ width: '80px', height: '4px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${(gamification.xp % 100)}%`, background: 'linear-gradient(90deg, var(--neon-cyan), var(--neon-purple))' }} />
+              </div>
+            </div>
+          </div>
+
+          {/* Flame Streak */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Flame size={18} className="neon-text-pink" style={{ animation: 'pulse-neon 1.5s infinite ease-in-out' }} />
+            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
+              STREAK <strong style={{ color: 'var(--text-primary)' }}>{gamification.streak}D</strong>
+            </span>
+          </div>
+        </div>
+
+        {/* Badges & Profile */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          {/* Active Badges Preview */}
+          <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'nowrap' }}>
+            {gamification.badges.slice(0, 3).map((badge, idx) => (
+              <span key={idx} className="badge badge--purple" style={{ fontSize: '9px', padding: '2px 8px' }}>
+                {badge}
+              </span>
+            ))}
+          </div>
+
+          <button onClick={signOut} className="glow-button glow-button--purple" style={{ padding: '6px 14px', fontSize: 'var(--text-xs)' }}>
             Sign Out
           </button>
         </div>
       </header>
-
-      {/* Gamification / Stats Bar */}
-      <section style={{ marginBottom: '12px', flexShrink: 0 }}>
-        <div className="glass-card" style={{ padding: '12px 20px', display: 'flex', flexWrap: 'nowrap', gap: '32px', alignItems: 'center', overflowX: 'auto' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
-            <Award size={28} className="neon-text-cyan" />
-            <div>
-              <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Level</div>
-              <div style={{ fontSize: 'var(--text-lg)', fontWeight: 'bold' }}>{gamification.level}</div>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
-            <Star size={28} className="neon-text-purple" />
-            <div style={{ width: '150px' }}>
-              <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', textTransform: 'uppercase', display: 'flex', justifyContent: 'space-between' }}>
-                <span>XP earned</span>
-                <span>{gamification.xp} XP</span>
-              </div>
-              <div style={{ height: '6px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-full)', marginTop: '4px', overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${(gamification.xp % 100)}%`, background: 'linear-gradient(90deg, var(--neon-cyan), var(--neon-purple))', borderRadius: 'var(--radius-full)' }} />
-              </div>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
-            <Flame size={28} className="neon-text-pink" style={{ animation: 'pulse-neon 1.5s infinite ease-in-out' }} />
-            <div>
-              <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Streak</div>
-              <div style={{ fontSize: 'var(--text-lg)', fontWeight: 'bold' }}>{gamification.streak} Days</div>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: '200px' }}>
-            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Unlocked Badges</div>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              {gamification.badges.length > 0 ? (
-                gamification.badges.map((badge, idx) => (
-                  <span key={idx} className="badge badge--purple" style={{ fontSize: 'var(--text-xs)', padding: '2px 8px' }}>{badge}</span>
-                ))
-              ) : (
-                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>No badges unlocked yet</span>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Main Workspace Layout: Left Content (Kanban) + Right Content (AI Chat) */}
       <div style={{
@@ -332,8 +335,8 @@ export default function DashboardPage() {
         minHeight: 0,
         alignItems: 'stretch'
       }}>
-        {/* Left Column: Kanban Board */}
-        <section className="glass-card" style={{ padding: '20px', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0, minHeight: 0 }}>
+        {/* Left Column: Kanban Board (Sleek and borderless) */}
+        <section style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0, minHeight: 0 }}>
           {error && (
             <div style={{ background: 'var(--neon-red)', color: '#fff', padding: 'var(--space-3)', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-4)', flexShrink: 0 }}>
               Error: {error}

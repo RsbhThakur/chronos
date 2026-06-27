@@ -99,7 +99,7 @@ export const TaskKanban: React.FC<TaskKanbanProps> = ({
               background: 'var(--bg-secondary)',
               borderRadius: 'var(--radius-lg)',
               padding: 'var(--space-4)',
-              border: isDraggedOver ? '2px dashed var(--neon-cyan)' : '2px solid transparent',
+              border: isDraggedOver ? '2px dashed var(--neon-cyan)' : '1px solid var(--glass-border)',
               boxShadow: isDraggedOver ? '0 0 15px var(--neon-cyan-glow)' : 'none',
               transition: 'all var(--transition-base)',
               boxSizing: 'border-box'
