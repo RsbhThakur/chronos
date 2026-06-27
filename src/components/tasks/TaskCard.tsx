@@ -290,6 +290,41 @@ export const TaskCard: React.FC<TaskCardProps> = ({
                 </button>
               )}
 
+              <button
+                onClick={() => onEdit(task)}
+                className="flex items-center justify-center"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-secondary)',
+                  cursor: 'pointer',
+                  padding: '2px',
+                  transition: 'color var(--transition-fast)',
+                }}
+                title="Edit Task"
+                onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--neon-cyan)')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
+              >
+                <Edit2 size={14} />
+              </button>
+
+              <button
+                onClick={() => onDelete(task.id)}
+                className="flex items-center justify-center"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-secondary)',
+                  cursor: 'pointer',
+                  padding: '2px',
+                  transition: 'color var(--transition-fast)',
+                }}
+                title="Delete Task"
+                onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--neon-red)')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
+              >
+                <Trash2 size={14} />
+              </button>
             </div>
           </div>
         </motion.div>

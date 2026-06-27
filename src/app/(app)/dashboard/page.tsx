@@ -336,30 +336,12 @@ export default function DashboardPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           {/* Active Badges Preview */}
           <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'nowrap' }}>
-            {gamification.badges.slice(0, 3).map((badge, idx) => (
+            {gamification.badges.map((badge, idx) => (
               <span key={idx} className="badge badge--purple" style={{ fontSize: '9px', padding: '2px 8px' }}>
                 {badge}
               </span>
             ))}
           </div>
-
-          <button
-            ref={headerChatToggleRef}
-            onClick={() => setShowChatSidebar(!showChatSidebar)}
-            className={`glow-button ${showChatSidebar ? 'glow-button--solid' : ''}`}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '6px 14px',
-              fontSize: 'var(--text-xs)',
-              borderColor: 'var(--neon-cyan)',
-              color: showChatSidebar ? '#000' : 'var(--neon-cyan)',
-            }}
-          >
-            <Sparkles size={14} className={showChatSidebar ? '' : 'neon-text-cyan'} />
-            <span>AI Guardian</span>
-          </button>
 
           <button onClick={signOut} className="glow-button glow-button--purple" style={{ padding: '6px 14px', fontSize: 'var(--text-xs)' }}>
             Sign Out
@@ -398,6 +380,21 @@ export default function DashboardPage() {
         </section>
       </div>
 
+      {/* Backdrop Scrim Overlay for active AI Chat */}
+      {showChatSidebar && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.35)',
+            backdropFilter: 'blur(2px)',
+            zIndex: 999,
+            pointerEvents: 'auto',
+          }}
+          onClick={() => setShowChatSidebar(false)}
+        />
+      )}
+
       {/* Floating AI Chat Overlay (fixed Support Drawer) */}
       {showChatSidebar && (
         <section
@@ -405,7 +402,7 @@ export default function DashboardPage() {
           className="glass-card"
           style={{
             position: 'fixed',
-            bottom: '100px',
+            bottom: '88px',
             right: '24px',
             width: '360px',
             height: '520px',
@@ -414,7 +411,7 @@ export default function DashboardPage() {
             flexDirection: 'column',
             overflow: 'hidden',
             zIndex: 1000,
-            boxShadow: '0 0 30px rgba(0, 229, 255, 0.25)',
+            boxShadow: '0 0 30px rgba(0, 229, 255, 0.3)',
             border: '1px solid var(--neon-cyan)',
             background: 'rgba(10, 10, 20, 0.95)',
             backdropFilter: 'blur(20px)',
@@ -456,32 +453,30 @@ export default function DashboardPage() {
         </section>
       )}
 
-      {/* Floating AI Chat Bubble Trigger (visible when sidebar is closed) */}
-      {!showChatSidebar && (
-        <button
-          ref={chatToggleButtonRef}
-          onClick={() => setShowChatSidebar(true)}
-          className="glow-button glow-button--solid"
-          style={{
-            position: 'fixed',
-            bottom: '24px',
-            right: '24px',
-            width: '56px',
-            height: '56px',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            boxShadow: '0 0 20px var(--neon-cyan-glow)',
-            border: '1px solid var(--neon-cyan)',
-            background: 'rgba(10, 10, 20, 0.95)',
-            cursor: 'pointer',
-          }}
-        >
-          <Sparkles size={24} className="neon-text-cyan" />
-        </button>
-      )}
+      {/* Floating AI Chat Bubble Trigger (always visible) */}
+      <button
+        ref={chatToggleButtonRef}
+        onClick={() => setShowChatSidebar(!showChatSidebar)}
+        className="glow-button glow-button--solid"
+        style={{
+          position: 'fixed',
+          bottom: '24px',
+          right: '24px',
+          width: '56px',
+          height: '56px',
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1001,
+          boxShadow: '0 0 20px var(--neon-cyan-glow)',
+          border: '1px solid var(--neon-cyan)',
+          background: 'rgba(10, 10, 20, 0.95)',
+          cursor: 'pointer',
+        }}
+      >
+        {showChatSidebar ? <X size={24} className="neon-text-cyan" /> : <Sparkles size={24} className="neon-text-cyan" />}
+      </button>
 
       {/* --- ADD TASK MODAL OVERLAY --- */}
       {showAddModal && (

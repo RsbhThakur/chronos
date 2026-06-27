@@ -129,6 +129,7 @@ export const TaskKanban: React.FC<TaskKanbanProps> = ({
                 flex: 1,
                 display: 'flex',
                 overflowY: 'auto',
+                paddingRight: '12px',
                 paddingBottom: 'var(--space-4)',
                 minHeight: 0
               }}
