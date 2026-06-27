@@ -33,6 +33,7 @@ export const TaskKanban: React.FC<TaskKanbanProps> = ({
   onAddTaskClick,
 }) => {
   const [draggedOverCol, setDraggedOverCol] = useState<TaskStatus | null>(null);
+  const [hoveredTaskId, setHoveredTaskId] = useState<string | null>(null);
 
   // Column definitions
   const columns: ColumnConfig[] = [
@@ -79,6 +80,7 @@ export const TaskKanban: React.FC<TaskKanbanProps> = ({
         overflowX: 'auto',
         paddingBottom: 'var(--space-4)',
         alignItems: 'stretch',
+        justifyContent: 'center',
       }}
     >
       {columns.map((col) => {
@@ -150,6 +152,8 @@ export const TaskKanban: React.FC<TaskKanbanProps> = ({
                       onCardClick={onTaskClick}
                       onDelete={onTaskDelete || (() => {})}
                       onRescue={onTaskRescue || (() => {})}
+                      onHoverChange={(hovered) => setHoveredTaskId(hovered ? task.id : null)}
+                      isHoveredSibling={hoveredTaskId !== null && hoveredTaskId !== task.id}
                     />
                   </div>
                 ))

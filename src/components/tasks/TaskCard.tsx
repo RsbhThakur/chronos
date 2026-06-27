@@ -12,6 +12,8 @@ interface TaskCardProps {
   onDelete: (taskId: string) => void;
   onRescue: (taskId: string) => void;
   onCardClick?: (task: Task) => void;
+  onHoverChange?: (hovered: boolean) => void;
+  isHoveredSibling?: boolean;
   compact?: boolean;
 }
 
@@ -20,6 +22,8 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   onComplete,
   onEdit,
   onCardClick,
+  onHoverChange,
+  isHoveredSibling = false,
   onDelete,
   onRescue,
   compact = false,
@@ -124,10 +128,19 @@ export const TaskCard: React.FC<TaskCardProps> = ({
             boxShadow: isHovered
               ? '0 12px 24px -8px rgba(0, 229, 255, 0.2), 0 8px 16px -6px rgba(0, 0, 0, 0.5)'
               : 'none',
-            transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+            transform: isHovered ? 'scale(1.02)' : 'scale(1)',
+            zIndex: isHovered ? 10 : 1,
+            opacity: isHoveredSibling ? 0.45 : 1,
+            transition: 'border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, opacity 0.25s ease',
           }}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
+          onMouseEnter={() => {
+            setIsHovered(true);
+            if (onHoverChange) onHoverChange(true);
+          }}
+          onMouseLeave={() => {
+            setIsHovered(false);
+            if (onHoverChange) onHoverChange(false);
+          }}
           onClick={() => {
             if (onCardClick) {
               onCardClick(task);
