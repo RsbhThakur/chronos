@@ -39,6 +39,7 @@ export default function DashboardPage() {
   const [editDeadline, setEditDeadline] = useState('');
 
   // AI Chat Sidebar states
+  const [showChatSidebar, setShowChatSidebar] = useState(false);
   const [chatMessages, setChatMessages] = useState<{ sender: 'user' | 'ai'; text: string }[]>([
     { sender: 'ai', text: `Systems online. I am your Chronos AI Time Guardian for this session. Let me know if you need to optimize your task schedules.` }
   ]);
@@ -309,7 +310,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Badges & Profile */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           {/* Active Badges Preview */}
           <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'nowrap' }}>
             {gamification.badges.slice(0, 3).map((badge, idx) => (
@@ -318,6 +319,23 @@ export default function DashboardPage() {
               </span>
             ))}
           </div>
+
+          <button
+            onClick={() => setShowChatSidebar(!showChatSidebar)}
+            className={`glow-button ${showChatSidebar ? 'glow-button--solid' : ''}`}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 14px',
+              fontSize: 'var(--text-xs)',
+              borderColor: 'var(--neon-cyan)',
+              color: showChatSidebar ? '#000' : 'var(--neon-cyan)',
+            }}
+          >
+            <Sparkles size={14} className={showChatSidebar ? '' : 'neon-text-cyan'} />
+            <span>AI Guardian</span>
+          </button>
 
           <button onClick={signOut} className="glow-button glow-button--purple" style={{ padding: '6px 14px', fontSize: 'var(--text-xs)' }}>
             Sign Out
@@ -356,36 +374,38 @@ export default function DashboardPage() {
         </section>
 
         {/* Right Column: AI Chat Sidebar */}
-        <section className="glass-card" style={{ width: '360px', padding: '20px', display: 'flex', flexDirection: 'column', overflow: 'hidden', flexShrink: 0, minHeight: 0 }}>
-          {/* Chat Header */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingBottom: '12px', borderBottom: '1px solid var(--glass-border)', marginBottom: '12px', flexShrink: 0 }}>
-            <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'var(--neon-cyan)', boxShadow: '0 0 8px var(--neon-cyan-glow)' }} />
-            <h3 style={{ fontSize: 'var(--text-sm)', fontWeight: 'bold', fontFamily: 'var(--font-display)', letterSpacing: '1px', margin: 0 }}>AI TIME GUARDIAN</h3>
-          </div>
+        {showChatSidebar && (
+          <section className="glass-card" style={{ width: '360px', padding: '20px', display: 'flex', flexDirection: 'column', overflow: 'hidden', flexShrink: 0, minHeight: 0 }}>
+            {/* Chat Header */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingBottom: '12px', borderBottom: '1px solid var(--glass-border)', marginBottom: '12px', flexShrink: 0 }}>
+              <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'var(--neon-cyan)', boxShadow: '0 0 8px var(--neon-cyan-glow)' }} />
+              <h3 style={{ fontSize: 'var(--text-sm)', fontWeight: 'bold', fontFamily: 'var(--font-display)', letterSpacing: '1px', margin: 0 }}>AI TIME GUARDIAN</h3>
+            </div>
 
-          {/* Messages List */}
-          <div ref={chatContainerRef} style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', paddingRight: '4px', marginBottom: '12px', minHeight: 0 }}>
-            {chatMessages.map((msg, idx) => (
-              <div key={idx} style={{ alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start', maxWidth: '85%', background: msg.sender === 'user' ? 'rgba(0, 229, 255, 0.08)' : 'rgba(255,255,255,0.03)', border: msg.sender === 'user' ? '1px solid rgba(0, 229, 255, 0.2)' : '1px solid var(--glass-border)', padding: '10px 14px', borderRadius: msg.sender === 'user' ? '14px 14px 2px 14px' : '14px 14px 14px 2px', fontSize: 'var(--text-sm)', color: msg.sender === 'user' ? 'var(--text-primary)' : 'var(--text-secondary)', lineHeight: '1.5' }}>
-                {msg.text || (
-                  <span style={{ display: 'inline-flex', gap: '4px', alignItems: 'center' }}>
-                    <span style={{ width: '4px', height: '4px', background: 'var(--neon-cyan)', borderRadius: '50%', animation: 'pulse-neon 1s infinite' }} />
-                    <span style={{ width: '4px', height: '4px', background: 'var(--neon-cyan)', borderRadius: '50%', animation: 'pulse-neon 1s infinite 0.2s' }} />
-                    <span style={{ width: '4px', height: '4px', background: 'var(--neon-cyan)', borderRadius: '50%', animation: 'pulse-neon 1s infinite 0.4s' }} />
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
+            {/* Messages List */}
+            <div ref={chatContainerRef} style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', paddingRight: '4px', marginBottom: '12px', minHeight: 0 }}>
+              {chatMessages.map((msg, idx) => (
+                <div key={idx} style={{ alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start', maxWidth: '85%', background: msg.sender === 'user' ? 'rgba(0, 229, 255, 0.08)' : 'rgba(255,255,255,0.03)', border: msg.sender === 'user' ? '1px solid rgba(0, 229, 255, 0.2)' : '1px solid var(--glass-border)', padding: '10px 14px', borderRadius: msg.sender === 'user' ? '14px 14px 2px 14px' : '14px 14px 14px 2px', fontSize: 'var(--text-sm)', color: msg.sender === 'user' ? 'var(--text-primary)' : 'var(--text-secondary)', lineHeight: '1.5' }}>
+                  {msg.text || (
+                    <span style={{ display: 'inline-flex', gap: '4px', alignItems: 'center' }}>
+                      <span style={{ width: '4px', height: '4px', background: 'var(--neon-cyan)', borderRadius: '50%', animation: 'pulse-neon 1s infinite' }} />
+                      <span style={{ width: '4px', height: '4px', background: 'var(--neon-cyan)', borderRadius: '50%', animation: 'pulse-neon 1s infinite 0.2s' }} />
+                      <span style={{ width: '4px', height: '4px', background: 'var(--neon-cyan)', borderRadius: '50%', animation: 'pulse-neon 1s infinite 0.4s' }} />
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
 
-          {/* Chat Form */}
-          <form onSubmit={handleSendChat} style={{ display: 'flex', gap: '8px', borderTop: '1px solid var(--glass-border)', paddingTop: '12px', flexShrink: 0 }}>
-            <input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder={isTyping ? "Streaming response..." : "Ask guardian..."} disabled={isTyping} className="input-field" style={{ fontSize: 'var(--text-sm)', padding: '8px 12px' }} />
-            <button type="submit" disabled={isTyping || !chatInput.trim()} className="glow-button glow-button--solid" style={{ padding: '0 12px', minWidth: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Send size={14} />
-            </button>
-          </form>
-        </section>
+            {/* Chat Form */}
+            <form onSubmit={handleSendChat} style={{ display: 'flex', gap: '8px', borderTop: '1px solid var(--glass-border)', paddingTop: '12px', flexShrink: 0 }}>
+              <input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder={isTyping ? "Streaming response..." : "Ask guardian..."} disabled={isTyping} className="input-field" style={{ fontSize: 'var(--text-sm)', padding: '8px 12px' }} />
+              <button type="submit" disabled={isTyping || !chatInput.trim()} className="glow-button glow-button--solid" style={{ padding: '0 12px', minWidth: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Send size={14} />
+              </button>
+            </form>
+          </section>
+        )}
       </div>
 
       {/* --- ADD TASK MODAL OVERLAY --- */}

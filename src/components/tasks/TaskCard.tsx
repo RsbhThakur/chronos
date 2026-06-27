@@ -115,7 +115,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           style={{
             borderLeft: `4px solid ${priorityColors[task.priority] || 'var(--glass-border)'}`,
             padding: compact ? 'var(--space-3)' : 'var(--space-4)',
-            minHeight: compact ? 'auto' : '150px',
+            minHeight: compact ? 'auto' : '100px',
             cursor: 'pointer',
           }}
           onClick={() => onEdit(task)}
@@ -161,25 +161,6 @@ export const TaskCard: React.FC<TaskCardProps> = ({
               </span>
             </div>
           </div>
-
-          {/* Middle Section: Description (truncated to 2 lines) */}
-          {!compact && task.description && (
-            <p
-              className="w-full text-secondary"
-              style={{
-                fontSize: 'var(--text-sm)',
-                margin: 'var(--space-2) 0',
-                display: '-webkit-box',
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: 'vertical',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                color: 'var(--text-secondary)',
-              }}
-            >
-              {task.description}
-            </p>
-          )}
 
           {/* Subtasks Progress Bar */}
           {totalSubtasks > 0 && !compact && (
@@ -303,41 +284,6 @@ export const TaskCard: React.FC<TaskCardProps> = ({
                 </button>
               )}
 
-              <button
-                onClick={() => onEdit(task)}
-                className="flex items-center justify-center"
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--text-secondary)',
-                  cursor: 'pointer',
-                  padding: '2px',
-                  transition: 'color var(--transition-fast)',
-                }}
-                title="Edit Task"
-                onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--neon-cyan)')}
-                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
-              >
-                <Edit2 size={14} />
-              </button>
-
-              <button
-                onClick={() => onDelete(task.id)}
-                className="flex items-center justify-center"
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--text-secondary)',
-                  cursor: 'pointer',
-                  padding: '2px',
-                  transition: 'color var(--transition-fast)',
-                }}
-                title="Delete Task"
-                onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--neon-red)')}
-                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
-              >
-                <Trash2 size={14} />
-              </button>
             </div>
           </div>
         </motion.div>
