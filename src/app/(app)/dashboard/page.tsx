@@ -366,8 +366,8 @@ export default function DashboardPage() {
 
       {/* --- ADD TASK MODAL OVERLAY --- */}
       {showAddModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', backdropFilter: 'blur(4px)' }}>
-          <form onSubmit={handleAddTask} className="glass-card" style={{ padding: 'var(--space-6)', maxWidth: '500px', width: '100%', display: 'flex', flexDirection: 'column', gap: '16px', border: '1px solid var(--neon-cyan)', boxShadow: '0 0 20px var(--neon-cyan-glow)' }}>
+        <div onClick={() => setShowAddModal(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', backdropFilter: 'blur(4px)' }}>
+          <form onSubmit={handleAddTask} onClick={(e) => e.stopPropagation()} className="glass-card" style={{ padding: 'var(--space-6)', maxWidth: '500px', width: '100%', display: 'flex', flexDirection: 'column', gap: '16px', border: '1px solid var(--neon-cyan)', boxShadow: '0 0 20px var(--neon-cyan-glow)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h2 className="neon-text-cyan font-display" style={{ fontSize: 'var(--text-lg)', fontWeight: 'bold' }}>Create Guard Task</h2>
               <button type="button" onClick={() => setShowAddModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
@@ -423,10 +423,10 @@ export default function DashboardPage() {
 
       {/* --- TASK DETAIL / EDIT MODAL OVERLAY --- */}
       {activeTask && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', backdropFilter: 'blur(4px)' }}>
+        <div onClick={() => setActiveTask(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', backdropFilter: 'blur(4px)' }}>
           {isEditing ? (
             /* Editing Form Mode */
-            <form onSubmit={handleSaveEdit} className="glass-card" style={{ padding: 'var(--space-6)', maxWidth: '500px', width: '100%', display: 'flex', flexDirection: 'column', gap: '16px', border: '1px solid var(--neon-cyan)', boxShadow: '0 0 20px var(--neon-cyan-glow)' }}>
+            <form onSubmit={handleSaveEdit} onClick={(e) => e.stopPropagation()} className="glass-card" style={{ padding: 'var(--space-6)', maxWidth: '500px', width: '100%', display: 'flex', flexDirection: 'column', gap: '16px', border: '1px solid var(--neon-cyan)', boxShadow: '0 0 20px var(--neon-cyan-glow)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h2 className="neon-text-cyan font-display" style={{ fontSize: 'var(--text-lg)', fontWeight: 'bold' }}>Edit Task Details</h2>
                 <button type="button" onClick={() => setIsEditing(false)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
@@ -484,7 +484,7 @@ export default function DashboardPage() {
             </form>
           ) : (
             /* Read-Only Details View Mode */
-            <div className="glass-card" style={{ padding: 'var(--space-6)', maxWidth: '550px', width: '100%', display: 'flex', flexDirection: 'column', gap: '16px', border: '1px solid var(--neon-purple)', boxShadow: '0 0 20px var(--neon-purple-glow)' }}>
+            <div onClick={(e) => e.stopPropagation()} className="glass-card" style={{ padding: 'var(--space-6)', maxWidth: '550px', width: '100%', display: 'flex', flexDirection: 'column', gap: '16px', border: '1px solid var(--neon-purple)', boxShadow: '0 0 20px var(--neon-purple-glow)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
                 <div>
                   <span className="badge badge--cyan" style={{ marginBottom: '8px' }}>{activeTask.category}</span>
