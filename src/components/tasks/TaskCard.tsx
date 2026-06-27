@@ -84,6 +84,8 @@ export const TaskCard: React.FC<TaskCardProps> = ({
     low: 'var(--neon-green)',
   };
 
+  const [isHovered, setIsHovered] = useState(false);
+
   // Subtask calculations
   const subtasks = task.subtasks || [];
   const totalSubtasks = subtasks.length;
@@ -107,7 +109,6 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.3 } }}
-          whileHover={{ scale: 1.02 }}
           transition={{ type: 'spring', stiffness: 300, damping: 25 }}
           className={`glass-card relative flex flex-col justify-between w-full ${
             task.rescuePlan ? 'animate-rescue' : ''
@@ -117,7 +118,12 @@ export const TaskCard: React.FC<TaskCardProps> = ({
             padding: compact ? 'var(--space-3)' : 'var(--space-4)',
             minHeight: compact ? 'auto' : '100px',
             cursor: 'pointer',
+            borderColor: isHovered ? 'var(--neon-cyan)' : 'var(--glass-border)',
+            boxShadow: isHovered ? '0 0 15px rgba(0, 229, 255, 0.15)' : 'none',
+            transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
           }}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
           onClick={() => onEdit(task)}
         >
           {/* Top Row: Title + Priority Badge */}

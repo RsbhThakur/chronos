@@ -39,13 +39,16 @@ export default function DashboardPage() {
   const [editDeadline, setEditDeadline] = useState('');
 
   // AI Chat Sidebar states
-  const [showChatSidebar, setShowChatSidebar] = useState(false);
+  const [showChatSidebar, setShowChatSidebar] = useState(true);
   const [chatMessages, setChatMessages] = useState<{ sender: 'user' | 'ai'; text: string }[]>([
     { sender: 'ai', text: `Systems online. I am your Chronos AI Time Guardian for this session. Let me know if you need to optimize your task schedules.` }
   ]);
   const [chatInput, setChatInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const chatRef = useRef<HTMLDivElement>(null);
+  const chatToggleButtonRef = useRef<HTMLButtonElement>(null);
+  const headerChatToggleRef = useRef<HTMLButtonElement>(null);
 
   // Scroll chat to bottom on new messages
   useEffect(() => {
@@ -53,6 +56,26 @@ export default function DashboardPage() {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
   }, [chatMessages]);
+
+  // Close chat on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        chatRef.current &&
+        !chatRef.current.contains(event.target as Node) &&
+        (!chatToggleButtonRef.current || !chatToggleButtonRef.current.contains(event.target as Node)) &&
+        (!headerChatToggleRef.current || !headerChatToggleRef.current.contains(event.target as Node))
+      ) {
+        setShowChatSidebar(false);
+      }
+    };
+    if (showChatSidebar) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showChatSidebar]);
 
   // Welcome message refresh when persona changes
   useEffect(() => {
@@ -321,6 +344,7 @@ export default function DashboardPage() {
           </div>
 
           <button
+            ref={headerChatToggleRef}
             onClick={() => setShowChatSidebar(!showChatSidebar)}
             className={`glow-button ${showChatSidebar ? 'glow-button--solid' : ''}`}
             style={{
@@ -372,41 +396,92 @@ export default function DashboardPage() {
             />
           </div>
         </section>
+      </div>
 
-        {/* Right Column: AI Chat Sidebar */}
-        {showChatSidebar && (
-          <section className="glass-card" style={{ width: '360px', padding: '20px', display: 'flex', flexDirection: 'column', overflow: 'hidden', flexShrink: 0, minHeight: 0 }}>
-            {/* Chat Header */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingBottom: '12px', borderBottom: '1px solid var(--glass-border)', marginBottom: '12px', flexShrink: 0 }}>
+      {/* Floating AI Chat Overlay (fixed Support Drawer) */}
+      {showChatSidebar && (
+        <section
+          ref={chatRef}
+          className="glass-card"
+          style={{
+            position: 'fixed',
+            bottom: '100px',
+            right: '24px',
+            width: '360px',
+            height: '520px',
+            padding: '20px',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            zIndex: 1000,
+            boxShadow: '0 0 30px rgba(0, 229, 255, 0.25)',
+            border: '1px solid var(--neon-cyan)',
+            background: 'rgba(10, 10, 20, 0.95)',
+            backdropFilter: 'blur(20px)',
+          }}
+        >
+          {/* Chat Header */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', paddingBottom: '12px', borderBottom: '1px solid var(--glass-border)', marginBottom: '12px', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'var(--neon-cyan)', boxShadow: '0 0 8px var(--neon-cyan-glow)' }} />
               <h3 style={{ fontSize: 'var(--text-sm)', fontWeight: 'bold', fontFamily: 'var(--font-display)', letterSpacing: '1px', margin: 0 }}>AI TIME GUARDIAN</h3>
             </div>
+            <button onClick={() => setShowChatSidebar(false)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+              <X size={16} />
+            </button>
+          </div>
 
-            {/* Messages List */}
-            <div ref={chatContainerRef} style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', paddingRight: '4px', marginBottom: '12px', minHeight: 0 }}>
-              {chatMessages.map((msg, idx) => (
-                <div key={idx} style={{ alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start', maxWidth: '85%', background: msg.sender === 'user' ? 'rgba(0, 229, 255, 0.08)' : 'rgba(255,255,255,0.03)', border: msg.sender === 'user' ? '1px solid rgba(0, 229, 255, 0.2)' : '1px solid var(--glass-border)', padding: '10px 14px', borderRadius: msg.sender === 'user' ? '14px 14px 2px 14px' : '14px 14px 14px 2px', fontSize: 'var(--text-sm)', color: msg.sender === 'user' ? 'var(--text-primary)' : 'var(--text-secondary)', lineHeight: '1.5' }}>
-                  {msg.text || (
-                    <span style={{ display: 'inline-flex', gap: '4px', alignItems: 'center' }}>
-                      <span style={{ width: '4px', height: '4px', background: 'var(--neon-cyan)', borderRadius: '50%', animation: 'pulse-neon 1s infinite' }} />
-                      <span style={{ width: '4px', height: '4px', background: 'var(--neon-cyan)', borderRadius: '50%', animation: 'pulse-neon 1s infinite 0.2s' }} />
-                      <span style={{ width: '4px', height: '4px', background: 'var(--neon-cyan)', borderRadius: '50%', animation: 'pulse-neon 1s infinite 0.4s' }} />
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
+          {/* Messages List */}
+          <div ref={chatContainerRef} style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', paddingRight: '4px', marginBottom: '12px', minHeight: 0 }}>
+            {chatMessages.map((msg, idx) => (
+              <div key={idx} style={{ alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start', maxWidth: '85%', background: msg.sender === 'user' ? 'rgba(0, 229, 255, 0.08)' : 'rgba(255,255,255,0.03)', border: msg.sender === 'user' ? '1px solid rgba(0, 229, 255, 0.2)' : '1px solid var(--glass-border)', padding: '10px 14px', borderRadius: msg.sender === 'user' ? '14px 14px 2px 14px' : '14px 14px 14px 2px', fontSize: 'var(--text-sm)', color: msg.sender === 'user' ? 'var(--text-primary)' : 'var(--text-secondary)', lineHeight: '1.5' }}>
+                {msg.text || (
+                  <span style={{ display: 'inline-flex', gap: '4px', alignItems: 'center' }}>
+                    <span style={{ width: '4px', height: '4px', background: 'var(--neon-cyan)', borderRadius: '50%', animation: 'pulse-neon 1s infinite' }} />
+                    <span style={{ width: '4px', height: '4px', background: 'var(--neon-cyan)', borderRadius: '50%', animation: 'pulse-neon 1s infinite 0.2s' }} />
+                    <span style={{ width: '4px', height: '4px', background: 'var(--neon-cyan)', borderRadius: '50%', animation: 'pulse-neon 1s infinite 0.4s' }} />
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
 
-            {/* Chat Form */}
-            <form onSubmit={handleSendChat} style={{ display: 'flex', gap: '8px', borderTop: '1px solid var(--glass-border)', paddingTop: '12px', flexShrink: 0 }}>
-              <input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder={isTyping ? "Streaming response..." : "Ask guardian..."} disabled={isTyping} className="input-field" style={{ fontSize: 'var(--text-sm)', padding: '8px 12px' }} />
-              <button type="submit" disabled={isTyping || !chatInput.trim()} className="glow-button glow-button--solid" style={{ padding: '0 12px', minWidth: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Send size={14} />
-              </button>
-            </form>
-          </section>
-        )}
-      </div>
+          {/* Chat Form */}
+          <form onSubmit={handleSendChat} style={{ display: 'flex', gap: '8px', borderTop: '1px solid var(--glass-border)', paddingTop: '12px', flexShrink: 0 }}>
+            <input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} placeholder={isTyping ? "Streaming response..." : "Ask guardian..."} disabled={isTyping} className="input-field" style={{ fontSize: 'var(--text-sm)', padding: '8px 12px' }} />
+            <button type="submit" disabled={isTyping || !chatInput.trim()} className="glow-button glow-button--solid" style={{ padding: '0 12px', minWidth: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Send size={14} />
+            </button>
+          </form>
+        </section>
+      )}
+
+      {/* Floating AI Chat Bubble Trigger (visible when sidebar is closed) */}
+      {!showChatSidebar && (
+        <button
+          ref={chatToggleButtonRef}
+          onClick={() => setShowChatSidebar(true)}
+          className="glow-button glow-button--solid"
+          style={{
+            position: 'fixed',
+            bottom: '24px',
+            right: '24px',
+            width: '56px',
+            height: '56px',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            boxShadow: '0 0 20px var(--neon-cyan-glow)',
+            border: '1px solid var(--neon-cyan)',
+            background: 'rgba(10, 10, 20, 0.95)',
+            cursor: 'pointer',
+          }}
+        >
+          <Sparkles size={24} className="neon-text-cyan" />
+        </button>
+      )}
 
       {/* --- ADD TASK MODAL OVERLAY --- */}
       {showAddModal && (

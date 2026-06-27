@@ -96,10 +96,10 @@ export const TaskKanban: React.FC<TaskKanbanProps> = ({
               height: '100%',
               display: 'flex',
               flexDirection: 'column',
-              background: 'var(--bg-secondary)',
+              background: isDraggedOver ? 'rgba(0, 229, 255, 0.03)' : 'transparent',
               borderRadius: 'var(--radius-lg)',
-              padding: 'var(--space-4)',
-              border: isDraggedOver ? '2px dashed var(--neon-cyan)' : '1px solid var(--glass-border)',
+              padding: 'var(--space-2)',
+              border: isDraggedOver ? '2px dashed var(--neon-cyan)' : '2px solid transparent',
               boxShadow: isDraggedOver ? '0 0 15px var(--neon-cyan-glow)' : 'none',
               transition: 'all var(--transition-base)',
               boxSizing: 'border-box'
@@ -110,7 +110,6 @@ export const TaskKanban: React.FC<TaskKanbanProps> = ({
               className="flex justify-between items-center w-full"
               style={{
                 marginBottom: 'var(--space-4)',
-                borderBottom: '1px solid var(--glass-border)',
                 paddingBottom: 'var(--space-2)',
                 flexShrink: 0
               }}
