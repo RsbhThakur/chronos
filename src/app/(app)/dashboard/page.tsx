@@ -44,11 +44,13 @@ export default function DashboardPage() {
   ]);
   const [chatInput, setChatInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const chatBottomRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   // Scroll chat to bottom on new messages
   useEffect(() => {
-    chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
   }, [chatMessages]);
 
   // Welcome message refresh when persona changes
@@ -331,7 +333,7 @@ export default function DashboardPage() {
         </section>
 
         {/* Right Column: AI Chat Sidebar */}
-        <section className="glass-card" style={{ width: '360px', padding: 'var(--space-4)', display: 'flex', flexDirection: 'column', minHeight: '600px', maxHeight: '700px' }}>
+        <section className="glass-card" style={{ width: '360px', padding: 'var(--space-4)', display: 'flex', flexDirection: 'column', height: '650px' }}>
           {/* Chat Header */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingBottom: '12px', borderBottom: '1px solid var(--glass-border)', marginBottom: '12px' }}>
             <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'var(--neon-cyan)', boxShadow: '0 0 8px var(--neon-cyan-glow)' }} />
@@ -339,7 +341,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Messages List */}
-          <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', paddingRight: '4px', marginBottom: '12px' }}>
+          <div ref={chatContainerRef} style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', paddingRight: '4px', marginBottom: '12px' }}>
             {chatMessages.map((msg, idx) => (
               <div key={idx} style={{ alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start', maxWidth: '85%', background: msg.sender === 'user' ? 'rgba(0, 229, 255, 0.08)' : 'rgba(255,255,255,0.03)', border: msg.sender === 'user' ? '1px solid rgba(0, 229, 255, 0.2)' : '1px solid var(--glass-border)', padding: '10px 14px', borderRadius: msg.sender === 'user' ? '14px 14px 2px 14px' : '14px 14px 14px 2px', fontSize: 'var(--text-sm)', color: msg.sender === 'user' ? 'var(--text-primary)' : 'var(--text-secondary)', lineHeight: '1.5' }}>
                 {msg.text || (
@@ -351,7 +353,6 @@ export default function DashboardPage() {
                 )}
               </div>
             ))}
-            <div ref={chatBottomRef} />
           </div>
 
           {/* Chat Form */}
