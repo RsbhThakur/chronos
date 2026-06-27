@@ -276,21 +276,24 @@ export default function DashboardPage() {
       overflow: 'hidden',
       background: 'var(--bg-primary)',
       color: 'var(--text-primary)',
-      padding: '24px 24px 90px 24px',
+      padding: '0 0 90px 0',
       display: 'flex',
       flexDirection: 'column',
       boxSizing: 'border-box'
     }}>
-      {/* Header Panel / Navigation Bar */}
-      <header className="glass-card" style={{
+      {/* Header Panel / Navigation Bar — full-bleed edge-to-edge */}
+      <header style={{
         padding: '12px 24px',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: '20px',
+        marginBottom: '0',
         flexShrink: 0,
-        background: 'rgba(10, 10, 20, 0.4)',
-        border: '1px solid var(--glass-border)'
+        background: 'rgba(8, 8, 18, 0.85)',
+        backdropFilter: 'blur(16px)',
+        borderBottom: '1px solid var(--glass-border)',
+        boxShadow: '0 1px 24px rgba(0,0,0,0.35)',
+        zIndex: 50,
       }}>
         {/* Brand & Persona Info */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
@@ -387,7 +390,8 @@ export default function DashboardPage() {
         gap: '24px',
         overflow: 'hidden',
         minHeight: 0,
-        alignItems: 'stretch'
+        alignItems: 'stretch',
+        padding: '44px 24px 0 24px',
       }}>
         {/* Left Column: Kanban Board (Sleek and borderless) */}
         <section style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0, minHeight: 0 }}>
