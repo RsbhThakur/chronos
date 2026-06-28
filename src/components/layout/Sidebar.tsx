@@ -13,6 +13,7 @@ interface SidebarProps {
   isOpen: boolean;
   isMobile: boolean;
   onClose: () => void;
+  isCollapsed?: boolean;
 }
 
 const navItems = [
@@ -23,7 +24,7 @@ const navItems = [
   { href: '/settings',  label: 'Settings',  icon: Settings },
 ];
 
-export const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose, isCollapsed = false }) => {
   const pathname = usePathname();
   const { gamification } = useDemo();
 
@@ -32,7 +33,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) =
 
   const sidebarContent = (
     <div style={{
-      width: '240px',
+      width: isCollapsed ? '64px' : '240px',
       height: '100%',
       background: 'rgba(8, 8, 18, 0.95)',
       borderRight: '1px solid var(--glass-border)',
@@ -40,6 +41,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) =
       flexDirection: 'column',
       backdropFilter: 'blur(20px)',
       flexShrink: 0,
+      transition: 'width 0.2s ease',
     }}>
       {/* Brand header (mobile only - desktop has TopBar) */}
       {isMobile && (
@@ -54,7 +56,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) =
       )}
 
       {/* Nav Items */}
-      <nav style={{ flex: 1, padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+      <nav style={{ flex: 1, padding: isCollapsed ? '16px 8px' : '16px 12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
         {navItems.map(({ href, label, icon: Icon }) => {
           const isActive = pathname === href || pathname.startsWith(href + '/');
           return (
@@ -62,13 +64,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) =
               key={href}
               href={href}
               onClick={isMobile ? onClose : undefined}
+              title={isCollapsed ? label : undefined}
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '12px',
-                padding: '10px 14px',
+                justifyContent: isCollapsed ? 'center' : 'flex-start',
+                gap: isCollapsed ? '0' : '12px',
+                padding: isCollapsed ? '10px 0' : '10px 14px',
                 borderRadius: 'var(--radius-md)',
-                borderLeft: isActive ? '3px solid var(--neon-cyan)' : '3px solid transparent',
+                borderLeft: !isCollapsed && isActive ? '3px solid var(--neon-cyan)' : '3px solid transparent',
                 background: isActive ? 'rgba(0, 229, 255, 0.08)' : 'transparent',
                 color: isActive ? 'var(--neon-cyan)' : 'var(--text-secondary)',
                 fontSize: 'var(--text-sm)',
@@ -89,39 +93,48 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose }) =
                 }
               }}
             >
-              <Icon size={17} />
-              <span>{label}</span>
+              <Icon size={17} style={{ flexShrink: 0 }} />
+              {!isCollapsed && <span>{label}</span>}
             </Link>
           );
         })}
       </nav>
 
       {/* Gamification Bar */}
-      <div style={{ padding: '16px', borderTop: '1px solid var(--glass-border)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-          <Zap size={14} style={{ color: 'var(--neon-cyan)' }} />
-          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-            Level <strong style={{ color: 'var(--text-primary)' }}>{gamification.level}</strong>
-          </span>
-          <span style={{ marginLeft: 'auto', fontSize: '10px', color: 'var(--text-tertiary)' }}>
-            {xpPercent}/{nextLevelXp} XP
-          </span>
-        </div>
-        {/* XP progress bar */}
-        <div style={{ height: '4px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
-          <div style={{
-            height: '100%',
-            width: `${xpPercent}%`,
-            background: 'linear-gradient(90deg, var(--neon-cyan), var(--neon-purple))',
-            transition: 'width 0.6s ease',
-          }} />
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '10px' }}>
-          <Star size={12} style={{ color: 'var(--neon-amber)' }} />
-          <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>
-            {gamification.streak > 0 ? `🔥 ${gamification.streak} day streak` : 'Start your streak!'}
-          </span>
-        </div>
+      <div style={{ padding: isCollapsed ? '16px 8px' : '16px', borderTop: '1px solid var(--glass-border)' }}>
+        {isCollapsed ? (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }} title={`Level ${gamification.level} (${xpPercent} XP)`}>
+            <Zap size={15} style={{ color: 'var(--neon-cyan)' }} />
+            <span style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--text-primary)' }}>L{gamification.level}</span>
+          </div>
+        ) : (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+              <Zap size={14} style={{ color: 'var(--neon-cyan)' }} />
+              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
+                Level <strong style={{ color: 'var(--text-primary)' }}>{gamification.level}</strong>
+              </span>
+              <span style={{ marginLeft: 'auto', fontSize: '10px', color: 'var(--text-tertiary)' }}>
+                {xpPercent}/{nextLevelXp} XP
+              </span>
+            </div>
+            {/* XP progress bar */}
+            <div style={{ height: '4px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
+              <div style={{
+                height: '100%',
+                width: `${xpPercent}%`,
+                background: 'linear-gradient(90deg, var(--neon-cyan), var(--neon-purple))',
+                transition: 'width 0.6s ease',
+              }} />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '10px' }}>
+              <Star size={12} style={{ color: 'var(--neon-amber)' }} />
+              <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>
+                {gamification.streak > 0 ? `🔥 ${gamification.streak} day streak` : 'Start your streak!'}
+              </span>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

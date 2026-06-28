@@ -14,11 +14,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { isOpen: isPaletteOpen, open: openPalette, close: closePalette, toggle: togglePalette } = useCommandPalette();
 
   const [isMobile, setIsMobile] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Responsive breakpoint detection
   useEffect(() => {
-    const checkSize = () => setIsMobile(window.innerWidth < 768);
+    const checkSize = () => {
+      setIsMobile(window.innerWidth < 768);
+      setIsCollapsed(window.innerWidth >= 768 && window.innerWidth < 1024);
+    };
     checkSize();
     window.addEventListener('resize', checkSize);
     return () => window.removeEventListener('resize', checkSize);
@@ -76,6 +80,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <Sidebar
           isOpen={isMobile ? sidebarOpen : true}
           isMobile={isMobile}
+          isCollapsed={isCollapsed}
           onClose={() => setSidebarOpen(false)}
         />
 
