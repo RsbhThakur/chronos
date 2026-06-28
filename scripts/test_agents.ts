@@ -1,33 +1,16 @@
+import './setup-env';
 import test from 'node:test';
 import assert from 'node:assert';
 
-// ==========================================
-// 1. SETUP HERMETIC MOCKS IN REQUIRE.CACHE
-// ==========================================
+// Now load the actual modules under test
+import { getAgentSystemInstruction, generateStructuredContent, ai } from '../src/lib/ai/gemini-client';
 
 let mockGenerateResult: any = { text: '{}' };
 
-const genaiPath = require.resolve('@google/genai');
-require.cache[genaiPath] = {
-  id: genaiPath,
-  filename: genaiPath,
-  loaded: true,
-  exports: {
-    GoogleGenAI: class {
-      models = {
-        generateContent: async (params: any) => {
-          return mockGenerateResult;
-        }
-      };
-      chats = {
-        create: () => ({})
-      };
-    }
-  }
-} as any;
-
-// Now load the actual modules under test
-import { getAgentSystemInstruction, generateStructuredContent } from '../src/lib/ai/gemini-client';
+// Override ai.models.generateContent method directly on singleton for hermetic mocking
+ai.models.generateContent = async (params: any) => {
+  return mockGenerateResult;
+};
 import { RescuePlanSchema, DEFAULT_FALLBACK_RESCUE_PLAN } from '../src/lib/ai/agents/rescue-agent';
 import { GhostWorkerSchema, DEFAULT_FALLBACK_GHOST_WORKER } from '../src/lib/ai/agents/ghost-worker-agent';
 import { DecomposerSchema, DEFAULT_FALLBACK_DECOMPOSITION } from '../src/lib/ai/agents/decomposer-agent';
