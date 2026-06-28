@@ -30,6 +30,7 @@ export interface UserProfile {
   personality: UserPersonality;
   preferences: UserPreferences;
   onboardingCompleted: boolean;
+  fcmToken?: string;
   createdAt: Date;
 }
 
