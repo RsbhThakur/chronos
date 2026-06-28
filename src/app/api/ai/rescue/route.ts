@@ -3,7 +3,7 @@ import { executeToolCall } from '@/lib/ai/tool-executor';
 import { adminDb } from '@/lib/firebase-admin';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-import { RescuePlan } from '@/types';
+import { Task, RescuePlan } from '@/types';
 
 export async function GET(request: Request) {
   try {
@@ -28,7 +28,7 @@ export async function GET(request: Request) {
         deadline: data.deadline?.toDate ? data.deadline.toDate() : new Date(data.deadline),
         createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt),
         completedAt: data.completedAt?.toDate ? data.completedAt.toDate() : (data.completedAt ? new Date(data.completedAt) : null)
-      };
+      } as Task;
     });
 
     const activeRescuePlans = tasks

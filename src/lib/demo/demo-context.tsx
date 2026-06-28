@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useState, useEffect, useRef } from 'react';
-import { UserMode, UserProfile, Task, Goal, Habit, DailyAnalytics } from '@/types';
+import { UserMode, UserProfile, Task, Goal, Habit, DailyAnalytics, RescueSeverity } from '@/types';
 import { demoUsers, getDemoTasks, demoGoals, demoHabits, demoGamification, generateDemoAnalytics, scriptedChatResponses, demoConversations } from './demo-data';
 
 interface DemoContextType {
@@ -342,9 +342,9 @@ export const DemoProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const deadline = new Date(task.deadline);
           const totalMinutesAvailable = Math.max(15, Math.floor((deadline.getTime() - now.getTime()) / 60000));
           
-          let severity = 'yellow' as const;
-          if (totalMinutesAvailable < 60) severity = 'red' as const;
-          else if (totalMinutesAvailable < 120) severity = 'orange' as const;
+          let severity: RescueSeverity = 'yellow';
+          if (totalMinutesAvailable < 60) severity = 'red';
+          else if (totalMinutesAvailable < 120) severity = 'orange';
 
           const planSteps = [
             { id: 'step-1', timeBlock: 'Next 15 mins', action: `Deconstruct & outline: ${task.title}`, estimatedMinutes: 15, tips: 'Isolate critical paths and list core functions.', canBeSkipped: false, completed: false },
