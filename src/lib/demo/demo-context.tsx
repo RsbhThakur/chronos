@@ -315,6 +315,150 @@ export const DemoProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
       }
 
+      if (url.includes('/api/ai/rescue')) {
+        const method = init?.method || 'GET';
+        if (method === 'GET') {
+          const rescuedTasks = state.tasks.filter(t => t.status === 'rescued' && t.rescuePlan);
+          const activeRescuePlans = rescuedTasks.map(t => ({
+            taskId: t.id,
+            taskTitle: t.title,
+            rescuePlan: t.rescuePlan
+          }));
+          return new Response(JSON.stringify({ success: true, activeRescuePlans }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
+
+        if (method === 'POST') {
+          const body = JSON.parse(init?.body as string || '{}');
+          const { taskId } = body;
+          const task = state.tasks.find(t => t.id === taskId);
+          if (!task) {
+            return new Response(JSON.stringify({ success: false, error: 'Task not found' }), { status: 404 });
+          }
+
+          const now = new Date();
+          const deadline = new Date(task.deadline);
+          const totalMinutesAvailable = Math.max(15, Math.floor((deadline.getTime() - now.getTime()) / 60000));
+          
+          let severity = 'yellow' as const;
+          if (totalMinutesAvailable < 60) severity = 'red' as const;
+          else if (totalMinutesAvailable < 120) severity = 'orange' as const;
+
+          const planSteps = [
+            { id: 'step-1', timeBlock: 'Next 15 mins', action: `Deconstruct & outline: ${task.title}`, estimatedMinutes: 15, tips: 'Isolate critical paths and list core functions.', canBeSkipped: false, completed: false },
+            { id: 'step-2', timeBlock: 'Next 30 mins', action: `Rapid prototyping & logic implementation`, estimatedMinutes: 30, tips: 'Focus on minimal viable code blocks. Avoid refactoring.', canBeSkipped: false, completed: false },
+            { id: 'step-3', timeBlock: 'Next 15 mins', action: `Quick verification & safety checks`, estimatedMinutes: 15, tips: 'Ensure edge-cases compile. No comprehensive unit tests.', canBeSkipped: true, completed: false }
+          ];
+
+          const rescuePlan = {
+            severity,
+            totalMinutesAvailable,
+            totalMinutesNeeded: 60,
+            feasible: totalMinutesAvailable >= 60,
+            plan: planSteps,
+            sacrifices: ['Detailed visual styling', 'Extensive error logging and analytics track hooks'],
+            motivationalMessage: 'Focus on progress over perfection. Let\'s conquer this step-by-step!',
+            checkpoints: [
+              { time: 'T+15m', milestone: 'Requirements locked', reached: false },
+              { time: 'T+45m', milestone: 'Core implementation compiles', reached: false }
+            ],
+            activatedAt: now,
+            completedSteps: 0
+          };
+
+          await updateTask(taskId, { status: 'rescued', rescuePlan });
+
+          return new Response(JSON.stringify({ success: true, rescuePlan }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
+
+        if (method === 'PATCH') {
+          const body = JSON.parse(init?.body as string || '{}');
+          const { taskId, stepId, completed } = body;
+          const task = state.tasks.find(t => t.id === taskId);
+          if (!task || !task.rescuePlan) {
+            return new Response(JSON.stringify({ success: false, error: 'Task or rescue plan not found' }), { status: 404 });
+          }
+
+          const updatedSteps = task.rescuePlan.plan.map((step: any) => {
+            if (step.id === stepId) {
+              return { ...step, completed };
+            }
+            return step;
+          });
+
+          const completedCount = updatedSteps.filter((s: any) => s.completed).length;
+
+          const updatedRescuePlan = {
+            ...task.rescuePlan,
+            plan: updatedSteps,
+            completedSteps: completedCount
+          };
+
+          await updateTask(taskId, { rescuePlan: updatedRescuePlan });
+
+          return new Response(JSON.stringify({ success: true, rescuePlan: updatedRescuePlan }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
+      }
+
+      if (url.includes('/api/ai/ghost-worker')) {
+        const method = init?.method || 'POST';
+        if (method === 'POST') {
+          const body = JSON.parse(init?.body as string || '{}');
+          const { taskId, deliverableType, additionalContext } = body;
+          const task = state.tasks.find(t => t.id === taskId);
+          if (!task) {
+            return new Response(JSON.stringify({ success: false, error: 'Task not found' }), { status: 404 });
+          }
+
+          const output = {
+            type: deliverableType,
+            title: `${deliverableType.toUpperCase()} Draft - ${task.title}`,
+            content: `### Autogenerated ${deliverableType}\n\nThis is a premium ${deliverableType} draft created by **Chronos Ghost Worker Agent** for task **${task.title}**.\n\n#### Context details:\n* Task Title: ${task.title}\n* Additional context: ${additionalContext || 'None provided.'}\n\n#### Content Draft:\nHere is the body content designed automatically around the deliverable requirements. Edit any details or sections that need customization.\n\n\`\`\`\n[PLACEHOLDER] Fill in specific names and links\n\`\`\`\n\nHope this boosts your speed!`,
+            generatedAt: new Date(),
+            approved: false,
+            edits: null
+          };
+
+          await updateTask(taskId, { ghostWorkerOutput: output });
+
+          return new Response(JSON.stringify({ success: true, output }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
+
+        if (method === 'PATCH') {
+          const body = JSON.parse(init?.body as string || '{}');
+          const { taskId, approved, edits } = body;
+          const task = state.tasks.find(t => t.id === taskId);
+          if (!task || !task.ghostWorkerOutput) {
+            return new Response(JSON.stringify({ success: false, error: 'Task or Ghost Worker output not found' }), { status: 404 });
+          }
+
+          const updatedOutput = {
+            ...task.ghostWorkerOutput,
+            approved: approved ?? task.ghostWorkerOutput.approved,
+            edits: edits !== undefined ? edits : task.ghostWorkerOutput.edits,
+            content: edits || task.ghostWorkerOutput.content
+          };
+
+          await updateTask(taskId, { ghostWorkerOutput: updatedOutput });
+
+          return new Response(JSON.stringify({ success: true, output: updatedOutput }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
+      }
+
       // AI Chat simulation endpoint
       if (url.includes('/api/ai/chat')) {
         const body = JSON.parse(init?.body as string || '{}');
