@@ -4,6 +4,7 @@ import React from 'react';
 import { Menu, Search, Bell, LogOut, Cpu, MessageSquare } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useDemo } from '@/hooks/useDemo';
+import { useNotifications } from '@/hooks/useNotifications';
 import { NotificationsDropdown } from './NotificationsDropdown';
 
 interface TopBarProps {
@@ -14,8 +15,16 @@ interface TopBarProps {
 export const TopBar: React.FC<TopBarProps> = ({ onMenuClick, onSearchClick }) => {
   const { user, signOut, isDemo } = useAuth();
   const { gamification } = useDemo();
+  const { unreadCount, requestPermission } = useNotifications(user?.id || '');
   const [showNotifs, setShowNotifs] = React.useState(false);
   const notifsRef = React.useRef<HTMLDivElement>(null);
+
+  // Request notification permissions and register FCM service worker automatically
+  React.useEffect(() => {
+    if (user?.id) {
+      requestPermission();
+    }
+  }, [user?.id]);
 
   // Close notifications on outside click
   React.useEffect(() => {
@@ -140,16 +149,19 @@ export const TopBar: React.FC<TopBarProps> = ({ onMenuClick, onSearchClick }) =>
         >
           <Bell size={18} />
           {/* Unread badge */}
-          <span style={{
-            position: 'absolute', top: '2px', right: '2px',
-            width: '8px', height: '8px',
-            background: 'var(--neon-pink)',
-            borderRadius: '50%',
-            border: '1px solid var(--bg-primary)',
-          }} />
+          {unreadCount > 0 && (
+            <span style={{
+              position: 'absolute', top: '2px', right: '2px',
+              width: '8px', height: '8px',
+              background: 'var(--neon-pink)',
+              borderRadius: '50%',
+              border: '1px solid var(--bg-primary)',
+            }} />
+          )}
         </button>
         {showNotifs && <NotificationsDropdown onClose={() => setShowNotifs(false)} />}
       </div>
+
 
       {/* User avatar + sign out */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
