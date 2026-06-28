@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useTasks } from '@/hooks/useTasks';
 import { useDemo } from '@/hooks/useDemo';
@@ -155,6 +156,7 @@ export default function DashboardPage() {
   const { gamification, isDemo, tasks: demoTasks } = useDemo();
   const [showAddModal, setShowAddModal] = useState(false);
   const [showTour, setShowTour] = useState(false);
+  const router = useRouter();
 
   // Show demo tour once per session when in demo mode
   useEffect(() => {
@@ -270,6 +272,11 @@ export default function DashboardPage() {
                       cursor: 'pointer',
                       transition: 'background 0.15s ease',
                     }}
+                    onClick={() => {
+                      if (task.rescuePlan) {
+                        router.push(`/rescue/${task.id}`);
+                      }
+                    }}
                     onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
                     onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
                   >
@@ -328,7 +335,12 @@ export default function DashboardPage() {
                           Due {new Date(task.deadline).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </div>
                       </div>
-                      <NeonButton variant="pink" size="sm" icon={<Shield size={12} />}>
+                      <NeonButton 
+                        variant="pink" 
+                        size="sm" 
+                        icon={<Shield size={12} />}
+                        onClick={() => router.push(`/rescue/${task.id}`)}
+                      >
                         Rescue Mode
                       </NeonButton>
                     </div>
