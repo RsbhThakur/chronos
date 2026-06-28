@@ -518,6 +518,249 @@ Here's your compressed plan:
         });
       }
 
+      // Intercept GET /api/analytics
+      if (url.includes('/api/analytics') && !url.includes('/api/analytics/log') && !url.includes('/api/analytics/export')) {
+        const { searchParams } = new URL(url, window.location.origin);
+        const startDate = searchParams.get('startDate');
+        const endDate = searchParams.get('endDate');
+
+        let filtered = [...state.analytics];
+        if (startDate) {
+          filtered = filtered.filter(d => d.date >= startDate);
+        }
+        if (endDate) {
+          filtered = filtered.filter(d => d.date <= endDate);
+        }
+
+        return new Response(JSON.stringify({ success: true, analytics: filtered }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Intercept POST /api/analytics/log
+      if (url.includes('/api/analytics/log')) {
+        const body = JSON.parse(init?.body as string || '{}');
+        const { event, value } = body;
+        const todayStr = new Date().toISOString().split('T')[0];
+
+        let updatedAnalytics = [...state.analytics];
+        let todayIdx = updatedAnalytics.findIndex(d => d.date === todayStr);
+
+        let todayData = todayIdx >= 0 ? { ...updatedAnalytics[todayIdx] } : {
+          date: todayStr,
+          tasksCompleted: 0,
+          tasksCreated: 0,
+          focusMinutes: 0,
+          rescueModeActivations: 0,
+          productivityScore: 0,
+          bottlenecksDetected: [],
+        };
+
+        if (event === 'task_completed' || event === 'tasksCompleted') {
+          todayData.tasksCompleted = (todayData.tasksCompleted || 0) + 1;
+        } else if (event === 'task_created' || event === 'tasksCreated') {
+          todayData.tasksCreated = (todayData.tasksCreated || 0) + 1;
+        } else if (event === 'rescue_activated' || event === 'rescueModeActivations') {
+          todayData.rescueModeActivations = (todayData.rescueModeActivations || 0) + 1;
+        } else if (event === 'focus_minutes' || event === 'focusMinutes') {
+          const minutes = typeof value === 'number' ? value : 25;
+          todayData.focusMinutes = (todayData.focusMinutes || 0) + minutes;
+        }
+
+        const calculatedScore = Math.min(
+          100,
+          (todayData.tasksCompleted * 15) + Math.floor(todayData.focusMinutes / 3) + (todayData.rescueModeActivations * 10)
+        );
+        todayData.productivityScore = calculatedScore > 0 ? calculatedScore : 0;
+
+        if (todayIdx >= 0) {
+          updatedAnalytics[todayIdx] = todayData;
+        } else {
+          updatedAnalytics.push(todayData);
+        }
+
+        setAnalytics(updatedAnalytics);
+
+        return new Response(JSON.stringify({ success: true, date: todayStr, analytics: todayData }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Intercept GET /api/analytics/export
+      if (url.includes('/api/analytics/export')) {
+        const jsonString = JSON.stringify(state.analytics, null, 2);
+        return new Response(jsonString, {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            'Content-Disposition': 'attachment; filename="chronos-productivity-export.json"',
+          },
+        });
+      }
+
+      // Intercept GET /api/ai/analyze
+      if (url.includes('/api/ai/analyze')) {
+        const mode = state.currentMode;
+        const tomorrow = new Date();
+        const forecasts = [];
+        const riskLevels: Record<string, string[]> = {
+          student: ['low', 'high', 'critical', 'medium', 'low', 'low', 'medium'],
+          professional: ['medium', 'medium', 'high', 'low', 'low', 'low', 'medium'],
+          entrepreneur: ['high', 'critical', 'high', 'medium', 'low', 'low', 'critical'],
+        };
+        const reasons: Record<string, string[]> = {
+          student: [
+            'Normal focus hours allocated.',
+            'Upcoming Machine Learning assignment deadline.',
+            'Critical exam prep deadline collision.',
+            'Post-deadline decompression period.',
+            'Light lecture load.',
+            'Weekend rest block.',
+            'Weekly syllabus readings start.',
+          ],
+          professional: [
+            'Routine sprint planning sessions.',
+            'Daily standup and backlog backlog syncs.',
+            'Mid-week release validation deadline.',
+            'Post-release monitoring and syncs.',
+            'Focus Friday and deep work hours.',
+            'Weekend off-duty cycle.',
+            'Product design alignment workshops.',
+          ],
+          entrepreneur: [
+            'Investor outreach checklist items.',
+            'Investor Pitch Deck final review deadline.',
+            'Financial model submission crunch.',
+            'Hiring strategy interviews scheduling.',
+            'Deep strategic outline block.',
+            'Weekend founder strategy block.',
+            'Major product MVP release review.',
+          ],
+        };
+        const tasksCount: Record<string, number[]> = {
+          student: [2, 5, 8, 3, 1, 0, 3],
+          professional: [3, 4, 6, 2, 2, 0, 4],
+          entrepreneur: [5, 7, 6, 4, 2, 1, 6],
+        };
+        const recommendations: Record<string, string[]> = {
+          student: [
+            'Maintain standard study habits.',
+            'Activate Rescue Mode or decompose ML task sub-milestones.',
+            'Utilize visual focus blocks and mute messaging apps.',
+            'Log focus hours and catch up on sleep targets.',
+            'Complete pre-readings to avoid weekend cramming.',
+            'Take a clean digital detox break.',
+            'List 3 high-priority tasks to start the week.',
+          ],
+          professional: [
+            'Block out calendar hours for async coding.',
+            'Decline optional synchronization slots.',
+            'Focus strictly on compiling deliverables.',
+            'Verify QA status before making code deployments.',
+            'Use Ghost Worker output to draft quick release notes.',
+            'Completely disconnect from corporate slack channels.',
+            'Plan key milestones during Sunday evening review.',
+          ],
+          entrepreneur: [
+            'Delegate administrative tickets to secondary pipelines.',
+            'Initiate Rescue Mode and leverage Ghost Worker draft structures.',
+            'Cancel lower-priority partner chats.',
+            'Block out focus time before noon.',
+            'Refine the MVP landing page assets.',
+            'Formulate next-week strategic roadmap blocks.',
+            'Re-examine system metrics and telemetry loops.',
+          ],
+        };
+
+        for (let i = 0; i < 7; i++) {
+          const d = new Date(tomorrow);
+          d.setDate(tomorrow.getDate() + i);
+          forecasts.push({
+            date: d.toISOString().split('T')[0],
+            riskLevel: riskLevels[mode][i],
+            reason: reasons[mode][i],
+            taskCount: tasksCount[mode][i],
+            recommendedAction: recommendations[mode][i],
+          });
+        }
+
+        const insights = mode === 'student' ? [
+          { type: 'achievement', title: 'Clutch Study Streak Active', description: 'You completed 4 high-priority lecture tasks in the last 48 hours!', metric: 92, trend: 'up' },
+          { type: 'warning', title: 'Crunch Period Detected', description: 'Two critical academic deadlines are due within the next 72 hours.', metric: 3, trend: 'up' },
+          { type: 'recommendation', title: 'Activate Rescue Protocol', description: 'Leverage Rescue Mode on your Machine Learning assignment to optimize focus blocks.', metric: 15, trend: 'stable' },
+          { type: 'pattern', title: 'Midnight Focus Peaks', description: 'Your highest focus-minutes occur between 10 PM and 2 AM. Align tasks accordingly.', metric: 84, trend: 'up' }
+        ] : mode === 'professional' ? [
+          { type: 'achievement', title: 'Sprint Velocity Unlocked', description: 'You checked off all key engineering milestones ahead of your weekly release.', metric: 98, trend: 'up' },
+          { type: 'warning', title: 'Context-Switching Drag', description: 'Heavy meeting clusters are causing frequent gaps in focus blocks.', metric: 45, trend: 'down' },
+          { type: 'recommendation', title: 'Utilize Ghost Worker Studio', description: 'Draft release newsletters and agenda items with AI to shave 90 focus-minutes.', metric: 90, trend: 'stable' },
+          { type: 'pattern', title: 'Morning Code Velocity', description: 'Most code tasks are completed before lunch. Protect mornings for deep work.', metric: 76, trend: 'up' }
+        ] : [
+          { type: 'achievement', title: 'Founder Velocity Surge', description: 'You completed 12 founder strategy milestones today, boosting XP by +120!', metric: 120, trend: 'up' },
+          { type: 'warning', title: 'Decision Paralysis Alert', description: 'High task density is stalling progression across several marketing drafts.', metric: 8, trend: 'up' },
+          { type: 'recommendation', title: 'Decompose Goals Rapidly', description: 'Feed large investor outreach milestones into the Decomposer to extract quick subtasks.', metric: 40, trend: 'stable' },
+          { type: 'pattern', title: 'Sunday Preparation Power', description: 'Tasks scheduled on Sunday evenings have a 95% execution success rate.', metric: 95, trend: 'up' }
+        ];
+
+        const report = mode === 'student' ? `### ⚡ Chronos Time Warp Analysis — Student Mode
+
+Based on your academic telemetry over the past 30 days, we have mapped out your predicted workload and study velocity.
+
+#### 🎯 Performance Diagnostics
+- **Syllabus Progress**: Excellent velocity on minor assignments (+15% score increase).
+- **Procrastination Penalty**: Your focus is concentrated within 6 hours of assignments.
+- **Midnight Peak**: 65% of study hours are logged between 10 PM and 2 AM.
+
+#### ⏳ Predicted Academic Crunch
+Our Time Warp model predicts a **Critical Bottleneck in 2 Days**. There are **8 distinct syllabus tasks** converging on your calendar.
+
+#### 💡 Chronos Recommendation
+1. **Engage Rescue Mode** on the Machine Learning task immediately.
+2. **Decompress your study block** by moving 90 focus minutes of research tasks to Friday morning.
+3. Protect your peak late-night focus hours by muting slack and social notifications.` : mode === 'professional' ? `### ⚡ Chronos Time Warp Analysis — Professional Mode
+
+Based on your workspace telemetry and sprint velocity logs, we have analyzed your upcoming code release cycle.
+
+#### 🎯 Performance Diagnostics
+- **Sprint Completion**: 92% completion efficiency on direct engineering tickets.
+- **Meeting Drag**: Synchronous standups and design reviews account for a 40-minute drag on your core block.
+- **Focus Efficiency**: Focus hours are stable but highly fragmented on Wednesdays.
+
+#### ⏳ Predicted Workspace Crunch
+Our model forecasts a **High Bottleneck in 3 Days** due to a release validation deadline.
+
+#### 💡 Chronos Recommendation
+1. Protect your **Focus Friday** block. Decline auxiliary check-ins.
+2. Use **Ghost Worker Studio** to automate agenda drafting for the upcoming design walkthrough.
+3. Delegate non-critical QA tickets to early-morning blocks to secure a solid afternoon focus phase.` : `### ⚡ Chronos Time Warp Analysis — Founder Mode
+
+Founder velocity analytics have processed your strategic pipeline and stakeholder outreach logs.
+
+#### 🎯 Performance Diagnostics
+- **Execution Rate**: Exceptionally high execution velocity on pitching and collateral design.
+- **Task Proliferation**: High density of general management task items is threatening strategic deep-dives.
+- **Aesthetic Velocity**: Over 300 focus minutes spent editing visual slide details.
+
+#### ⏳ Predicted Startup Crunch
+Our model predicts a **Critical Bottleneck Tomorrow** as your *Investor Pitch Deck* final reviews collide with *Financial Model Submission*.
+
+#### 💡 Chronos Recommendation
+1. **Activate Rescue Mode** on the Investor Pitch Deck checklist.
+2. Delegate all minor administrative agenda items to your team or automate drafts using **Ghost Worker Studio**.
+3. Safeguard your peak focus morning slot (9 AM - 12 PM) for deep financial modeling, skipping other minor reviews.`;
+
+        return new Response(JSON.stringify({
+          success: true,
+          forecasts,
+          insights,
+          weeklyReport: report
+        }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
       return originalFetch.apply(this, arguments as any);
     };
 
