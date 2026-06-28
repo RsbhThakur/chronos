@@ -138,9 +138,11 @@ async function main() {
   
   if (!vertexOk || !firebaseOk) {
     console.log('\n⚠️ Some environment variables need adjustment. Please check the logs above.');
+    cleanup();
     process.exit(1);
   } else {
     console.log('\n🎉 ALL CORE SERVICES AUTHENTICATED SUCCESSFULLY!');
+    cleanup();
     process.exit(0);
   }
 }
