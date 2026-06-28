@@ -13,6 +13,7 @@ interface TaskKanbanProps {
   onTaskComplete?: (taskId: string) => void;
   onTaskDelete?: (taskId: string) => void;
   onTaskRescue?: (taskId: string) => void;
+  onTaskGhostWorker?: (task: Task) => void;
   onAddTaskClick?: () => void;
 }
 
@@ -30,6 +31,7 @@ export const TaskKanban: React.FC<TaskKanbanProps> = ({
   onTaskComplete,
   onTaskDelete,
   onTaskRescue,
+  onTaskGhostWorker,
   onAddTaskClick,
 }) => {
   const [draggedOverCol, setDraggedOverCol] = useState<TaskStatus | null>(null);
@@ -152,6 +154,7 @@ export const TaskKanban: React.FC<TaskKanbanProps> = ({
                       onCardClick={onTaskClick}
                       onDelete={onTaskDelete || (() => {})}
                       onRescue={onTaskRescue || (() => {})}
+                      onGhostWorker={onTaskGhostWorker}
                       onHoverChange={(hovered) => setHoveredTaskId(hovered ? task.id : null)}
                       isHoveredSibling={hoveredTaskId !== null && hoveredTaskId !== task.id}
                     />

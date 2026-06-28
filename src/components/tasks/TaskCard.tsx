@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Edit2, Trash2, Zap, Sparkles, AlertTriangle } from 'lucide-react';
+import { Check, Edit2, Trash2, Zap, Sparkles, AlertTriangle, Ghost } from 'lucide-react';
 import { Task } from '@/types';
 
 interface TaskCardProps {
@@ -11,6 +11,7 @@ interface TaskCardProps {
   onEdit: (task: Task) => void;
   onDelete: (taskId: string) => void;
   onRescue: (taskId: string) => void;
+  onGhostWorker?: (task: Task) => void;
   onCardClick?: (task: Task) => void;
   onHoverChange?: (hovered: boolean) => void;
   isHoveredSibling?: boolean;
@@ -26,6 +27,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   isHoveredSibling = false,
   onDelete,
   onRescue,
+  onGhostWorker,
   compact = false,
 }) => {
   const [timeLeftStr, setTimeLeftStr] = useState('');
@@ -321,6 +323,44 @@ export const TaskCard: React.FC<TaskCardProps> = ({
                   onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
                 >
                   <Zap size={15} />
+                </button>
+              )}
+
+              {task.status !== 'completed' && task.rescuePlan && (
+                <button
+                  onClick={() => onRescue(task.id)}
+                  className="flex items-center justify-center animate-pulse-neon"
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--neon-pink)',
+                    cursor: 'pointer',
+                    padding: '2px',
+                    transition: 'color var(--transition-fast)',
+                  }}
+                  title="View Active Rescue Focus"
+                >
+                  <Zap size={15} />
+                </button>
+              )}
+
+              {task.status !== 'completed' && onGhostWorker && (
+                <button
+                  onClick={() => onGhostWorker(task)}
+                  className="flex items-center justify-center"
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    padding: '2px',
+                    transition: 'color var(--transition-fast)',
+                  }}
+                  title="Draft Deliverables with Ghost Worker"
+                  onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--neon-purple)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
+                >
+                  <Ghost size={15} />
                 </button>
               )}
 
