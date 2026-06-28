@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useTasks } from '@/hooks/useTasks';
 import { useDemo } from '@/hooks/useDemo';
@@ -8,6 +9,7 @@ import { useToast } from '@/components/ui/Toast';
 import { NeonButton } from '@/components/ui/NeonButton';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { TaskKanban } from '@/components/tasks/TaskKanban';
+import { GhostWorkerConsole } from '@/components/ghost/GhostWorkerConsole';
 import { Task, TaskPriority, TaskStatus } from '@/types';
 import { Plus, Search, LayoutGrid, List, Calendar as CalendarIcon, Filter, Clock, AlertTriangle } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -190,12 +192,14 @@ export default function TasksPage() {
   const { tasks, loading, createTask, updateTask, completeTask, deleteTask } = useTasks(user?.id || '');
   const { tasks: demoTasks, isDemo } = useDemo();
   const { showToast } = useToast();
+  const router = useRouter();
 
   const [view, setView] = useState<ViewMode>('board');
   const [search, setSearch] = useState('');
   const [filterPriority, setFilterPriority] = useState<TaskPriority | 'all'>('all');
   const [filterStatus, setFilterStatus] = useState<TaskStatus | 'all'>('all');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [activeGhostTask, setActiveGhostTask] = useState<Task | null>(null);
 
   const allTasks = isDemo ? demoTasks : tasks;
 
@@ -293,7 +297,8 @@ export default function TasksPage() {
               onTaskEdit={() => {}}
               onTaskComplete={handleComplete}
               onTaskDelete={handleDelete}
-              onTaskRescue={() => {}}
+              onTaskRescue={(id) => router.push(`/rescue/${id}`)}
+              onTaskGhostWorker={(task) => setActiveGhostTask(task)}
               onAddTaskClick={() => setShowAddModal(true)}
             />
           </div>
@@ -314,6 +319,16 @@ export default function TasksPage() {
 
       <AnimatePresence>
         {showAddModal && <AddTaskModal onClose={() => setShowAddModal(false)} onCreate={handleCreate} />}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {activeGhostTask && (
+          <GhostWorkerConsole
+            task={activeGhostTask}
+            isOpen={true}
+            onClose={() => setActiveGhostTask(null)}
+          />
+        )}
       </AnimatePresence>
     </div>
   );
