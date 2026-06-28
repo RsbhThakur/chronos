@@ -7,6 +7,7 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { TopBar } from '@/components/layout/TopBar';
 import { CommandPalette } from '@/components/layout/CommandPalette';
 import { useCommandPalette } from '@/hooks/useCommandPalette';
+import { AIChatSidebar } from '@/components/chat/AIChatSidebar';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, loading, isDemo } = useAuth();
@@ -16,6 +17,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [isMobile, setIsMobile] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
 
   // Responsive breakpoint detection
   useEffect(() => {
@@ -26,6 +28,20 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     checkSize();
     window.addEventListener('resize', checkSize);
     return () => window.removeEventListener('resize', checkSize);
+  }, []);
+
+  // Expose chat toggle bindings globally
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).toggleAIChat = () => setChatOpen((prev) => !prev);
+      (window as any).openAIChat = () => setChatOpen(true);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        delete (window as any).toggleAIChat;
+        delete (window as any).openAIChat;
+      }
+    };
   }, []);
 
   // Auth guard
@@ -95,6 +111,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         }}>
           {children}
         </main>
+
+        {/* Global AI Chat Sidebar */}
+        <AIChatSidebar
+          isOpen={chatOpen}
+          onToggle={() => setChatOpen(v => !v)}
+          userId={user?.id || 'demo-user'}
+        />
       </div>
 
       {/* Command Palette */}

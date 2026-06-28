@@ -149,7 +149,7 @@ export async function POST(req: NextRequest) {
             contents: contents,
             config: {
               systemInstruction,
-              tools: coreAgentTools,
+              tools: coreAgentTools as any,
               safetySettings: defaultSafetySettings,
             }
           });

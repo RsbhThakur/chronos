@@ -54,135 +54,7 @@ const buildForecast = (tasks: Task[]) => {
   return days;
 };
 
-// ─── AI Chat Panel ────────────────────────────────────────────────────────────
-const AIChatPanel: React.FC<{ isOpen: boolean; onToggle: () => void }> = ({ isOpen, onToggle }) => {
-  const [messages, setMessages] = useState<{ sender: 'user' | 'ai'; text: string }[]>([
-    { sender: 'ai', text: 'Systems online. I am Chronos — your AI Time Guardian. How can I help you optimize your schedule?' }
-  ]);
-  const [input, setInput] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (containerRef.current) containerRef.current.scrollTop = containerRef.current.scrollHeight;
-  }, [messages]);
-
-  const sendMessage = async () => {
-    if (!input.trim()) return;
-    const userMsg = input.trim();
-    setInput('');
-    setMessages((m) => [...m, { sender: 'user', text: userMsg }]);
-    setIsTyping(true);
-    setTimeout(() => {
-      setMessages((m) => [...m, { sender: 'ai', text: `I've noted your request: "${userMsg}". Analyzing your current workload to provide the best guidance...` }]);
-      setIsTyping(false);
-    }, 1200);
-  };
-
-  return (
-    <>
-      {/* Floating toggle button */}
-      <button
-        id="ai-chat-toggle"
-        data-tour="ai-chat"
-        onClick={onToggle}
-        style={{
-          position: 'fixed', bottom: '24px', right: '24px',
-          width: '52px', height: '52px', borderRadius: '50%',
-          background: 'linear-gradient(135deg, var(--neon-cyan), var(--neon-purple))',
-          border: 'none', cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 4px 20px rgba(0, 229, 255, 0.3)',
-          zIndex: 1001,
-          transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-        }}
-        onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.08)'; e.currentTarget.style.boxShadow = '0 8px 28px rgba(0, 229, 255, 0.45)'; }}
-        onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(0, 229, 255, 0.3)'; }}
-      >
-        {isOpen ? <X size={20} color="#000" /> : <MessageCircle size={20} color="#000" />}
-      </button>
-
-      {/* Chat drawer */}
-      <AnimatePresence>
-        {isOpen && (
-          <>
-            {/* Backdrop scrim */}
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={onToggle}
-              style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(2px)', zIndex: 999 }}
-            />
-            <motion.div
-              data-tour="ai-guardian"
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 20, scale: 0.95 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 26 }}
-              style={{
-                position: 'fixed', bottom: '88px', right: '24px',
-                width: '360px', height: '480px',
-                background: 'rgba(10, 10, 22, 0.97)',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid var(--glass-border)',
-                borderRadius: 'var(--radius-xl)',
-                boxShadow: '0 20px 60px rgba(0,0,0,0.6), 0 0 40px rgba(0, 229, 255, 0.05)',
-                zIndex: 1000,
-                display: 'flex', flexDirection: 'column',
-                overflow: 'hidden',
-              }}
-            >
-              {/* Header */}
-              <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--glass-border)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--neon-cyan), var(--neon-purple))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Sparkles size={14} color="#000" />
-                </div>
-                <div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontWeight: 700, color: 'var(--text-primary)' }}>Chronos AI</div>
-                  <div style={{ fontSize: '10px', color: 'var(--neon-green)' }}>● Online</div>
-                </div>
-              </div>
-
-              {/* Messages */}
-              <div ref={containerRef} style={{ flex: 1, overflowY: 'auto', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {messages.map((msg, i) => (
-                  <div key={i} style={{ display: 'flex', justifyContent: msg.sender === 'user' ? 'flex-end' : 'flex-start' }}>
-                    <div style={{
-                      maxWidth: '80%', padding: '8px 12px', borderRadius: msg.sender === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px',
-                      background: msg.sender === 'user' ? 'rgba(0, 229, 255, 0.15)' : 'rgba(255,255,255,0.04)',
-                      border: `1px solid ${msg.sender === 'user' ? 'rgba(0,229,255,0.3)' : 'var(--glass-border)'}`,
-                      fontSize: 'var(--text-xs)', color: 'var(--text-primary)', lineHeight: 1.5,
-                    }}>
-                      {msg.text}
-                    </div>
-                  </div>
-                ))}
-                {isTyping && (
-                  <div style={{ display: 'flex', gap: '4px', padding: '8px 12px', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--glass-border)', borderRadius: '12px 12px 12px 2px', width: 'fit-content' }}>
-                    {[0, 1, 2].map((i) => <div key={i} style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'var(--neon-cyan)', animation: `pulse-neon 1.2s ${i * 0.2}s infinite` }} />)}
-                  </div>
-                )}
-              </div>
-
-              {/* Input */}
-              <div style={{ padding: '12px 16px', borderTop: '1px solid var(--glass-border)', display: 'flex', gap: '8px' }}>
-                <input
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-                  placeholder="Ask Chronos anything..."
-                  style={{ flex: 1, background: 'rgba(255,255,255,0.04)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-md)', padding: '8px 12px', color: 'var(--text-primary)', fontSize: 'var(--text-xs)', outline: 'none', fontFamily: 'inherit' }}
-                />
-                <button onClick={sendMessage} style={{ background: 'var(--neon-cyan)', border: 'none', borderRadius: 'var(--radius-md)', padding: '8px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Send size={13} color="#000" />
-                </button>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-    </>
-  );
-};
 
 // ─── Add Task Modal ───────────────────────────────────────────────────────────
 const AddTaskModal: React.FC<{ onClose: () => void; onCreate: (data: Partial<Task>) => Promise<void> }> = ({ onClose, onCreate }) => {
@@ -282,7 +154,6 @@ export default function DashboardPage() {
   const { tasks, loading, error, createTask, completeTask, deleteTask } = useTasks(user?.id || '');
   const { gamification, isDemo, tasks: demoTasks } = useDemo();
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showChat, setShowChat] = useState(false);
   const [showTour, setShowTour] = useState(false);
 
   // Show demo tour once per session when in demo mode
@@ -512,8 +383,30 @@ export default function DashboardPage() {
         {showAddModal && <AddTaskModal onClose={() => setShowAddModal(false)} onCreate={handleCreateTask} />}
       </AnimatePresence>
 
-      {/* AI Chat */}
-      <AIChatPanel isOpen={showChat} onToggle={() => setShowChat((v) => !v)} />
+      {/* Floating AI Chat Bubble Trigger */}
+      <button
+        id="ai-chat-toggle"
+        data-tour="ai-chat"
+        onClick={() => {
+          if (typeof window !== 'undefined' && (window as any).toggleAIChat) {
+            (window as any).toggleAIChat();
+          }
+        }}
+        style={{
+          position: 'fixed', bottom: '24px', right: '24px',
+          width: '52px', height: '52px', borderRadius: '50%',
+          background: 'linear-gradient(135deg, var(--neon-cyan), var(--neon-purple))',
+          border: 'none', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 4px 20px rgba(0, 229, 255, 0.3)',
+          zIndex: 499, // below layout chat sidebar
+          transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.08)'; e.currentTarget.style.boxShadow = '0 8px 28px rgba(0, 229, 255, 0.45)'; }}
+        onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(0, 229, 255, 0.3)'; }}
+      >
+        <MessageCircle size={20} color="#000" />
+      </button>
 
       {/* Demo Tour */}
       <DemoTour isActive={showTour} onComplete={handleTourComplete} />

@@ -16,7 +16,7 @@ interface CommandPaletteProps {
 
 interface PaletteItem {
   id: string;
-  type: 'page' | 'task' | 'action';
+  type: 'page' | 'task' | 'action' | 'ai';
   label: string;
   sublabel?: string;
   icon: React.ReactNode;
@@ -38,6 +38,13 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
 
   const navigate = useCallback((href: string) => { router.push(href); onClose(); }, [router, onClose]);
 
+  const triggerChat = (prompt: string) => {
+    if (typeof window !== 'undefined' && (window as any).triggerAIChat) {
+      (window as any).triggerAIChat(prompt);
+    }
+    onClose();
+  };
+
   // Static items: pages + actions
   const staticItems: PaletteItem[] = [
     { id: 'pg-dash',      type: 'page',   label: 'Dashboard',     sublabel: 'Overview & today\'s priorities', icon: <LayoutDashboard size={14} />, action: () => navigate('/dashboard'), keywords: 'home overview' },
@@ -47,6 +54,16 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
     { id: 'pg-settings',  type: 'page',   label: 'Settings',      sublabel: 'Profile, preferences, integrations', icon: <Settings size={14} />,  action: () => navigate('/settings'),  keywords: 'profile account' },
     { id: 'act-new',      type: 'action', label: 'New Task',       sublabel: 'Create a new task',              icon: <Plus size={14} />,            action: () => { onNewTask?.(); onClose(); }, keywords: 'create add' },
     { id: 'act-signout',  type: 'action', label: 'Sign Out',       sublabel: 'End your session',               icon: <LogOut size={14} />,          action: () => { signOut(); onClose(); }, keywords: 'logout exit' },
+  ];
+
+  // AI commands
+  const aiItems: PaletteItem[] = [
+    { id: 'ai-plan',      type: 'ai', label: 'Plan my day',         sublabel: 'Let Chronos organize today\'s schedule', icon: <Zap size={14} style={{ color: 'var(--neon-cyan)' }} />, action: () => triggerChat('Plan my day'), keywords: 'schedule task morning routine list' },
+    { id: 'ai-next',      type: 'ai', label: 'What should I do next?', sublabel: 'Query the guardian for your immediate priority', icon: <Zap size={14} style={{ color: 'var(--neon-cyan)' }} />, action: () => triggerChat('What should I do next?'), keywords: 'todo urgent focus' },
+    { id: 'ai-decompose', type: 'ai', label: 'Break down a goal',   sublabel: 'Decompose a milestone into action items', icon: <Zap size={14} style={{ color: 'var(--neon-cyan)' }} />, action: () => triggerChat('Break down a goal'), keywords: 'goal project decompose task' },
+    { id: 'ai-rescue',    type: 'ai', label: 'Start Rescue Mode',   sublabel: 'Auto-compose a schedule rescue plan', icon: <Zap size={14} style={{ color: 'var(--neon-pink)' }} />, action: () => triggerChat('Start Rescue Mode'), keywords: 'rescue panic alert deadline' },
+    { id: 'ai-draft',     type: 'ai', label: 'Generate draft',      sublabel: 'Write an email or summary using Ghost Worker', icon: <Zap size={14} style={{ color: 'var(--neon-purple)' }} />, action: () => triggerChat('Generate draft'), keywords: 'ghost draft email write content' },
+    { id: 'ai-insights',  type: 'ai', label: 'Show analytics insights', sublabel: 'Fetch AI productivity bottleneck reports', icon: <Zap size={14} style={{ color: 'var(--neon-green)' }} />, action: () => triggerChat('Show productivity insights'), keywords: 'insights forecast bottleneck' },
   ];
 
   // Dynamic task items from real/demo data
@@ -60,7 +77,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
     keywords: t.title + ' ' + t.category + ' ' + t.tags.join(' '),
   }));
 
-  const allItems = [...staticItems, ...taskItems];
+  const allItems = [...staticItems, ...aiItems, ...taskItems];
 
   // Filter
   const filtered = query.trim()
@@ -69,7 +86,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
           .toLowerCase()
           .includes(query.toLowerCase())
       )
-    : staticItems;
+    : [...staticItems, ...aiItems];
 
   // Reset on open
   useEffect(() => {
@@ -97,6 +114,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
     page:   'var(--neon-cyan)',
     action: 'var(--neon-purple)',
     task:   'var(--neon-amber)',
+    ai:     'var(--neon-cyan)',
   };
 
   return (

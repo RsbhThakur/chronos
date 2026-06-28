@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Menu, Search, Bell, LogOut, Cpu } from 'lucide-react';
+import { Menu, Search, Bell, LogOut, Cpu, MessageSquare } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useDemo } from '@/hooks/useDemo';
 import { NotificationsDropdown } from './NotificationsDropdown';
@@ -103,6 +103,26 @@ export const TopBar: React.FC<TopBarProps> = ({ onMenuClick, onSearchClick }) =>
           background: 'rgba(255,255,255,0.06)', border: '1px solid var(--glass-border)',
           borderRadius: '4px', padding: '1px 5px', fontSize: '10px', color: 'var(--text-tertiary)',
         }}>⌘K</kbd>
+      </button>
+
+      {/* AI Chat Button */}
+      <button
+        id="topbar-chat-btn"
+        onClick={() => {
+          if (typeof window !== 'undefined' && (window as any).toggleAIChat) {
+            (window as any).toggleAIChat();
+          }
+        }}
+        style={{
+          background: 'none', border: 'none',
+          cursor: 'pointer', color: 'var(--text-secondary)', padding: '6px',
+          borderRadius: 'var(--radius-sm)', display: 'flex',
+        }}
+        onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
+        onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
+        title="Toggle AI Guardian Chat"
+      >
+        <MessageSquare size={18} />
       </button>
 
       {/* Notification Bell */}
