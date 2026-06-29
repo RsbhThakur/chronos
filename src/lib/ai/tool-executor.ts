@@ -267,7 +267,7 @@ async function toolActivateRescueMode(args: any, userId: string) {
 
   const prompt = `Task: ${taskData.title}
 Description: ${taskData.description}
-Subtasks remaining: ${JSON.stringify(taskData.subtasks.filter(s => !s.completed))}
+Subtasks remaining: ${JSON.stringify((taskData.subtasks || []).filter(s => !s.completed))}
 Current Time: ${now.toISOString()}
 Deadline: ${deadlineDate.toISOString()}
 Total Minutes Available: ${totalMinutesAvailable}`;
