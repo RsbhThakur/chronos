@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useResponsive } from '@/hooks/useResponsive';
 
 interface ProductivityRingProps {
   completed: number;
@@ -15,6 +16,7 @@ export const ProductivityRing: React.FC<ProductivityRingProps> = ({
   xpEarned,
   size = 120,
 }) => {
+  const { isMobile } = useResponsive();
   const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
   const radius = (size - 16) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -23,7 +25,15 @@ export const ProductivityRing: React.FC<ProductivityRingProps> = ({
   const ringColor = percentage >= 80 ? 'var(--neon-green)' : percentage >= 50 ? 'var(--neon-cyan)' : 'var(--neon-amber)';
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+    <div style={{
+      display: 'flex',
+      flexDirection: isMobile ? 'column' : 'row',
+      alignItems: 'center',
+      justifyContent: isMobile ? 'center' : 'flex-start',
+      gap: isMobile ? '12px' : '20px',
+      textAlign: isMobile ? 'center' : 'left',
+      width: '100%'
+    }}>
       {/* SVG Ring */}
       <div style={{ position: 'relative', flexShrink: 0 }}>
         <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>

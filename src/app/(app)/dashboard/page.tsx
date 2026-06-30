@@ -365,7 +365,17 @@ export default function DashboardPage() {
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {rescueAlerts.map((task) => (
-                    <div key={task.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'rgba(236,72,153,0.06)', border: '1px solid rgba(236,72,153,0.2)', borderRadius: 'var(--radius-md)' }}>
+                    <div key={task.id} style={{
+                      display: 'flex',
+                      flexDirection: isMobile ? 'column' : 'row',
+                      alignItems: isMobile ? 'stretch' : 'center',
+                      justifyContent: 'space-between',
+                      gap: isMobile ? '10px' : '20px',
+                      padding: '10px 14px',
+                      background: 'rgba(236,72,153,0.06)',
+                      border: '1px solid rgba(236,72,153,0.2)',
+                      borderRadius: 'var(--radius-md)'
+                    }}>
                       <div>
                         <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-primary)', fontWeight: 600 }}>{task.title}</div>
                         <div style={{ fontSize: '10px', color: 'var(--neon-pink)', marginTop: '2px' }}>
@@ -377,6 +387,7 @@ export default function DashboardPage() {
                         size="sm" 
                         icon={<Shield size={12} />}
                         onClick={() => router.push(`/rescue/${task.id}`)}
+                        fullWidth={isMobile}
                       >
                         Rescue Mode
                       </NeonButton>

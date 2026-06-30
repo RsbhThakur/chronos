@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Shield, Clock, Flame, Target } from 'lucide-react';
 import { Task } from '@/types';
+import { useResponsive } from '@/hooks/useResponsive';
 
 interface StatusBarProps {
   tasks: Task[];
@@ -14,12 +15,13 @@ const formatCountdown = (deadline: Date): { text: string; urgency: 'normal' | 'a
   if (ms <= 0) return { text: 'Overdue', urgency: 'red' };
   const h = Math.floor(ms / 3600000);
   const m = Math.floor((ms % 3600000) / 60000);
-  if (h < 1) return { text: `${m}m remaining`, urgency: 'red' };
-  if (h < 6) return { text: `${h}h ${m}m remaining`, urgency: 'amber' };
-  return { text: `${h}h ${m}m remaining`, urgency: 'normal' };
+  if (h < 1) return { text: `${m}m left`, urgency: 'red' };
+  if (h < 6) return { text: `${h}h remaining`, urgency: 'amber' };
+  return { text: `${h}h remaining`, urgency: 'normal' };
 };
 
 export const StatusBar: React.FC<StatusBarProps> = ({ tasks, streak }) => {
+  const { isMobile } = useResponsive();
   const [, setTick] = useState(0);
 
   // Re-render every minute to keep countdown live
@@ -49,58 +51,94 @@ export const StatusBar: React.FC<StatusBarProps> = ({ tasks, streak }) => {
 
   return (
     <div style={{
-      display: 'flex',
-      alignItems: 'center',
+      display: isMobile ? 'grid' : 'flex',
+      gridTemplateColumns: isMobile ? '1fr 1fr' : undefined,
+      alignItems: 'stretch',
       gap: '0',
       background: 'rgba(8, 8, 18, 0.6)',
       borderBottom: '1px solid var(--glass-border)',
       backdropFilter: 'blur(12px)',
       flexShrink: 0,
-      overflowX: 'auto',
+      overflowX: isMobile ? 'hidden' : 'auto',
     }}>
       {/* Rescue count */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRight: '1px solid var(--glass-border)', flexShrink: 0 }}>
-        <div style={{ position: 'relative' }}>
-          <Shield size={15} style={{ color: rescueTasks.length > 0 ? 'var(--neon-pink)' : 'var(--text-tertiary)' }} />
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        padding: isMobile ? '8px 12px' : '10px 20px',
+        borderRight: '1px solid var(--glass-border)',
+        borderBottom: isMobile ? '1px solid var(--glass-border)' : 'none',
+        flexShrink: 0,
+        minWidth: 0,
+      }}>
+        <div style={{ position: 'relative', flexShrink: 0 }}>
+          <Shield size={14} style={{ color: rescueTasks.length > 0 ? 'var(--neon-pink)' : 'var(--text-tertiary)' }} />
           {rescueTasks.length > 0 && (
             <span style={{ position: 'absolute', top: '-4px', right: '-6px', width: '8px', height: '8px', background: 'var(--neon-pink)', borderRadius: '50%', animation: 'pulse-neon 1.5s infinite' }} />
           )}
         </div>
-        <span style={{ fontSize: 'var(--text-xs)', color: rescueTasks.length > 0 ? 'var(--neon-pink)' : 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>
-          {rescueTasks.length > 0 ? `${rescueTasks.length} Rescue Active` : 'No Rescues'}
+        <span style={{ fontSize: 'var(--text-xs)', color: rescueTasks.length > 0 ? 'var(--neon-pink)' : 'var(--text-tertiary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {rescueTasks.length > 0 ? `${rescueTasks.length} Rescue` : 'No Rescues'}
         </span>
       </div>
 
       {/* Next deadline */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRight: '1px solid var(--glass-border)', flex: 1, minWidth: 0 }}>
-        <Clock size={15} style={{ color: urgencyColor, flexShrink: 0 }} />
-        <div style={{ minWidth: 0 }}>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        padding: isMobile ? '8px 12px' : '10px 20px',
+        borderRight: isMobile ? 'none' : '1px solid var(--glass-border)',
+        borderBottom: isMobile ? '1px solid var(--glass-border)' : 'none',
+        flex: isMobile ? undefined : 1,
+        minWidth: 0,
+      }}>
+        <Clock size={14} style={{ color: urgencyColor, flexShrink: 0 }} />
+        <div style={{ minWidth: 0, flex: 1 }}>
           {nextDeadline ? (
             <>
-              <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', display: 'block' }}>NEXT DEADLINE</span>
-              <span style={{ fontSize: 'var(--text-xs)', color: urgencyColor, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' }}>
+              <span style={{ fontSize: '9px', color: 'var(--text-tertiary)', display: 'block', lineHeight: 1.1 }}>NEXT DUE</span>
+              <span style={{ fontSize: '10px', color: urgencyColor, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' }}>
                 {nextDeadline.title} · {countdownText}
               </span>
             </>
           ) : (
-            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>No upcoming deadlines 🎉</span>
+            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {isMobile ? 'No deadlines' : 'No deadlines 🎉'}
+            </span>
           )}
         </div>
       </div>
 
       {/* Completed today */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRight: '1px solid var(--glass-border)', flexShrink: 0 }}>
-        <Target size={15} style={{ color: 'var(--neon-green)' }} />
-        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
-          <strong style={{ color: 'var(--neon-green)' }}>{completedToday}</strong> done today
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        padding: isMobile ? '8px 12px' : '10px 20px',
+        borderRight: '1px solid var(--glass-border)',
+        flexShrink: 0,
+        minWidth: 0,
+      }}>
+        <Target size={14} style={{ color: 'var(--neon-green)', flexShrink: 0 }} />
+        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <strong style={{ color: 'var(--neon-green)' }}>{completedToday}</strong> {isMobile ? 'done' : 'done today'}
         </span>
       </div>
 
       {/* Streak */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', flexShrink: 0 }}>
-        <Flame size={15} style={{ color: 'var(--neon-amber)', animation: streak > 0 ? 'pulse-neon 1.5s infinite' : undefined }} />
-        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
-          <strong style={{ color: 'var(--neon-amber)' }}>{streak}</strong> day streak
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        padding: isMobile ? '8px 12px' : '10px 20px',
+        flexShrink: 0,
+        minWidth: 0,
+      }}>
+        <Flame size={14} style={{ color: 'var(--neon-amber)', flexShrink: 0, animation: streak > 0 ? 'pulse-neon 1.5s infinite' : undefined }} />
+        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <strong style={{ color: 'var(--neon-amber)' }}>{streak}</strong> {isMobile ? 'streak' : 'day streak'}
         </span>
       </div>
     </div>

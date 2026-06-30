@@ -18,6 +18,8 @@ export interface UserPreferences {
   ghostWorkerEnabled: boolean;
   rescueModeEnabled: boolean;
   voiceEnabled: boolean;
+  gmailEnabled?: boolean;
+  calendarSyncEnabled?: boolean;
   notificationChannels: NotificationChannel[];
 }
 
