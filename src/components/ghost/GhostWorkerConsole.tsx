@@ -13,6 +13,42 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const convertMarkdownToHtml = (md: string) => {
+  if (!md) return '';
+  
+  // Basic escaping for HTML structure safely
+  let html = md;
+  
+  // Headers
+  html = html.replace(/^### (.*$)/gim, '<h3 style="color: #00e5ff; font-family: system-ui, -apple-system, sans-serif; font-size: 16px; font-weight: 700; margin-top: 20px; margin-bottom: 8px;">$1</h3>');
+  html = html.replace(/^## (.*$)/gim, '<h2 style="color: #a855f7; font-family: system-ui, -apple-system, sans-serif; font-size: 18px; font-weight: 700; margin-top: 24px; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 6px;">$1</h2>');
+  html = html.replace(/^# (.*$)/gim, '<h1 style="color: #ff007f; font-family: system-ui, -apple-system, sans-serif; font-size: 22px; font-weight: 800; margin-top: 28px; margin-bottom: 16px;">$1</h1>');
+  
+  // Images: ![alt](url)
+  html = html.replace(/!\[(.*?)\]\((.*?)\)/g, '<div style="margin: 16px 0; text-align: center;"><img src="$2" alt="$1" style="max-width: 100%; height: auto; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 4px 20px rgba(0,0,0,0.3);" /></div>');
+  
+  // Links: [text](url)
+  html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" style="color: #00e5ff; text-decoration: underline;">$1</a>');
+  
+  // Bold
+  html = html.replace(/\*\*(.*?)\*\*/g, '<strong style="color: #00e5ff; font-weight: 700;">$1</strong>');
+  
+  // List items
+  html = html.replace(/^\s*[\*\-]\s+(.*$)/gim, '<li style="color: #cbd5e1; font-family: system-ui, -apple-system, sans-serif; font-size: 14px; margin-bottom: 6px; list-style-type: square; margin-left: 20px;">$1</li>');
+  
+  // Split paragraphs
+  const paragraphs = html.split(/\n{2,}/g);
+  const formattedParagraphs = paragraphs.map(p => {
+    const trimmed = p.trim();
+    if (trimmed.startsWith('<h') || trimmed.startsWith('<div') || trimmed.startsWith('<li')) {
+      return trimmed;
+    }
+    return `<p style="color: #cbd5e1; font-family: system-ui, -apple-system, sans-serif; font-size: 14px; line-height: 1.6; margin: 0 0 12px 0;">${trimmed.replace(/\n/g, '<br />')}</p>`;
+  });
+  
+  return `<div style="background-color: #05050a; padding: 24px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); color: #cbd5e1; font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 0 auto;">${formattedParagraphs.join('\n')}</div>`;
+};
+
 interface GhostWorkerConsoleProps {
   task: Task;
   isOpen: boolean;
@@ -116,16 +152,16 @@ export const GhostWorkerConsole: React.FC<GhostWorkerConsoleProps> = ({
         if (googleAccessToken) {
           // Attempt Gmail draft insertion
           try {
-            // Basic raw MIME formation
+            // Rich HTML MIME formation using convertMarkdownToHtml
             const toStr = recipientEmail ? `To: ${recipientEmail}\r\n` : '';
-            const emailBody = draftContent.replace(/\n/g, '<br />'); // Basic formatting conversion
+            const emailHtml = convertMarkdownToHtml(draftContent);
             const subject = draftTitle || `Deliverable Draft for: ${task.title}`;
             const mimeMessage = [
               toStr +
               `Subject: ${subject}\r\n` +
               'Content-Type: text/html; charset=utf-8\r\n' +
               'MIME-Version: 1.0\r\n\r\n' +
-              `<div>${emailBody}</div>`
+              emailHtml
             ].join('\r\n');
 
             const base64SafeMime = btoa(unescape(encodeURIComponent(mimeMessage)))
@@ -180,47 +216,151 @@ export const GhostWorkerConsole: React.FC<GhostWorkerConsoleProps> = ({
   };
 
   // Premium, lightweight custom markdown parser to avoid external dependencies
+  const parseInlineElements = (text: string): React.ReactNode[] => {
+    if (!text) return [];
+    // Regular expression to match bold text, links, and images
+    const regex = /(!\[.*?\]\(.*?\)|\[.*?\]\(.*?\)|\*\*.*?\*\*)/g;
+    const parts = text.split(regex);
+    
+    return parts.map((part, index) => {
+      if (part.startsWith('![') && part.endsWith(')')) {
+        const match = part.match(/!\[(.*?)\]\((.*?)\)/);
+        if (match) {
+          const [, alt, url] = match;
+          return (
+            <span key={index} style={{ display: 'block', margin: '14px 0', textAlign: 'center' }}>
+              <img
+                src={url}
+                alt={alt}
+                style={{
+                  maxWidth: '100%',
+                  height: 'auto',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+                }}
+              />
+            </span>
+          );
+        }
+      } else if (part.startsWith('[') && part.endsWith(')')) {
+        const match = part.match(/\[(.*?)\]\((.*?)\)/);
+        if (match) {
+          const [, label, url] = match;
+          return (
+            <a
+              key={index}
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: 'var(--neon-cyan)', textDecoration: 'underline' }}
+            >
+              {label}
+            </a>
+          );
+        }
+      } else if (part.startsWith('**') && part.endsWith('**')) {
+        const boldText = part.slice(2, -2);
+        return (
+          <strong key={index} style={{ color: 'var(--neon-cyan)', fontWeight: 700 }}>
+            {boldText}
+          </strong>
+        );
+      }
+      
+      return part;
+    });
+  };
+
   const parseMarkdown = (md: string) => {
     if (!md) return <span style={{ color: 'var(--text-tertiary)' }}>No draft generated yet. Fill context and press Generate.</span>;
     
-    return md.split('\n').map((line, i) => {
+    const lines = md.split('\n');
+    const elements: React.ReactNode[] = [];
+    
+    let inList = false;
+    let listItems: React.ReactNode[] = [];
+
+    const flushList = (key: number) => {
+      if (listItems.length > 0) {
+        elements.push(
+          <ul key={`list-${key}`} style={{ margin: '0 0 12px 0', paddingLeft: '16px', listStyleType: 'square' }}>
+            {listItems}
+          </ul>
+        );
+        listItems = [];
+        inList = false;
+      }
+    };
+
+    lines.forEach((line, i) => {
+      const trimmed = line.trim();
+
+      // Check list items
+      if (trimmed.startsWith('* ') || trimmed.startsWith('- ')) {
+        inList = true;
+        const itemContent = line.replace(/^\s*[\*\-]\s+/, '');
+        listItems.push(
+          <li key={`li-${i}`} style={{ color: 'var(--text-secondary)', fontSize: 'var(--text-xs)', marginBottom: '4px', lineHeight: 1.5 }}>
+            {parseInlineElements(itemContent)}
+          </li>
+        );
+        return;
+      } else {
+        flushList(i);
+      }
+
       // Headers
-      if (line.startsWith('### ')) {
-        return <h4 key={i} style={{ color: 'var(--neon-cyan)', fontSize: 'var(--text-sm)', fontWeight: 700, marginTop: '16px', marginBottom: '8px', fontFamily: 'var(--font-display)' }}>{line.slice(4)}</h4>;
-      }
-      if (line.startsWith('#### ')) {
-        return <h5 key={i} style={{ color: 'var(--neon-pink)', fontSize: '11px', fontWeight: 600, marginTop: '12px', marginBottom: '6px' }}>{line.slice(5)}</h5>;
-      }
-      
-      // Bullets
-      if (line.startsWith('* ') || line.startsWith('- ')) {
-        return (
-          <div key={i} style={{ display: 'flex', gap: '8px', fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', paddingLeft: '8px', marginBottom: '4px' }}>
-            <span style={{ color: 'var(--neon-pink)' }}>•</span>
-            <span>{line.slice(2)}</span>
-          </div>
+      if (line.startsWith('# ')) {
+        elements.push(
+          <h2 key={i} style={{ color: 'var(--neon-pink)', fontSize: 'var(--text-md)', fontWeight: 800, marginTop: '20px', marginBottom: '10px', fontFamily: 'var(--font-display)' }}>
+            {parseInlineElements(line.slice(2))}
+          </h2>
+        );
+      } else if (line.startsWith('## ')) {
+        elements.push(
+          <h3 key={i} style={{ color: 'var(--neon-purple)', fontSize: 'var(--text-sm)', fontWeight: 700, marginTop: '16px', marginBottom: '8px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '4px', fontFamily: 'var(--font-display)' }}>
+            {parseInlineElements(line.slice(3))}
+          </h3>
+        );
+      } else if (line.startsWith('### ')) {
+        elements.push(
+          <h4 key={i} style={{ color: 'var(--neon-cyan)', fontSize: 'var(--text-xs)', fontWeight: 700, marginTop: '14px', marginBottom: '6px', fontFamily: 'var(--font-display)' }}>
+            {parseInlineElements(line.slice(4))}
+          </h4>
+        );
+      } else if (line.startsWith('#### ')) {
+        elements.push(
+          <h5 key={i} style={{ color: 'var(--neon-pink)', fontSize: '10px', fontWeight: 600, marginTop: '10px', marginBottom: '4px' }}>
+            {parseInlineElements(line.slice(5))}
+          </h5>
         );
       }
       
       // Codeblocks
-      if (line.startsWith('```')) {
-        return null; // Strip raw marker
+      else if (line.startsWith('```')) {
+        return; // Strip raw marker
       }
 
       // Empty line
-      if (line.trim() === '') {
-        return <div key={i} style={{ height: '8px' }} />;
+      else if (trimmed === '') {
+        elements.push(<div key={i} style={{ height: '8px' }} />);
       }
 
-      // Normal text / Bold conversion
-      let textContent: React.ReactNode = line;
-      if (line.includes('**')) {
-        const parts = line.split('**');
-        textContent = parts.map((part, index) => i % 2 === 1 ? <strong key={index} style={{ color: 'var(--neon-cyan)' }}>{part}</strong> : part);
+      // Paragraph / normal text
+      else {
+        elements.push(
+          <p key={i} style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', margin: '0 0 6px', lineHeight: 1.6 }}>
+            {parseInlineElements(line)}
+          </p>
+        );
       }
-
-      return <p key={i} style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', margin: '0 0 6px', lineHeight: 1.5 }}>{textContent}</p>;
     });
+
+    // Flush any remaining list items at the end
+    flushList(lines.length);
+
+    return elements;
   };
 
   const types = [
