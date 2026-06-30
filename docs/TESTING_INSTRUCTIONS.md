@@ -203,10 +203,10 @@ gcloud services enable aiplatform.googleapis.com \
     run.googleapis.com \
     cloudbuild.googleapis.com \
     containerregistry.googleapis.com \
-    calendar.googleapis.com \
+    calendar-json.googleapis.com \
     gmail.googleapis.com \
     tasks.googleapis.com \
-    --project=stiri
+    --project=stiri-api
 ```
 
 ### Step 5.3: Set Up Firebase Services
@@ -257,7 +257,7 @@ gcloud services enable aiplatform.googleapis.com \
 Submit your container build directly to GCP Cloud Build under the `stiri` project. This reads the local `Dockerfile` and `cloudbuild.yaml` configurations to compile your Next.js project into a lightweight standalone container and host it on Google Cloud Run.
 
 ```bash
-gcloud builds submit --config cloudbuild.yaml --project=stiri
+gcloud builds submit --config cloudbuild.yaml --project=stiri-api
 ```
 
 ### Step 5.7: Set Production Environment Variables
