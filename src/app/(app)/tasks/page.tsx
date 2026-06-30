@@ -264,19 +264,19 @@ export default function TasksPage() {
 
         {/* Priority filter */}
         <select value={filterPriority} onChange={(e) => setFilterPriority(e.target.value as TaskPriority | 'all')} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-md)', padding: '7px 10px', color: 'var(--text-secondary)', fontSize: 'var(--text-xs)', outline: 'none', cursor: 'pointer' }}>
-          <option value="all">All Priorities</option>
-          <option value="critical">Critical</option>
-          <option value="high">High</option>
-          <option value="medium">Medium</option>
-          <option value="low">Low</option>
+          <option value="all" style={{ background: '#0a0a14', color: 'var(--text-primary)' }}>All Priorities</option>
+          <option value="critical" style={{ background: '#0a0a14', color: 'var(--text-primary)' }}>Critical</option>
+          <option value="high" style={{ background: '#0a0a14', color: 'var(--text-primary)' }}>High</option>
+          <option value="medium" style={{ background: '#0a0a14', color: 'var(--text-primary)' }}>Medium</option>
+          <option value="low" style={{ background: '#0a0a14', color: 'var(--text-primary)' }}>Low</option>
         </select>
 
         {/* Status filter */}
         <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value as TaskStatus | 'all')} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-md)', padding: '7px 10px', color: 'var(--text-secondary)', fontSize: 'var(--text-xs)', outline: 'none', cursor: 'pointer' }}>
-          <option value="all">All Status</option>
-          <option value="todo">Todo</option>
-          <option value="in_progress">In Progress</option>
-          <option value="completed">Completed</option>
+          <option value="all" style={{ background: '#0a0a14', color: 'var(--text-primary)' }}>All Status</option>
+          <option value="todo" style={{ background: '#0a0a14', color: 'var(--text-primary)' }}>Todo</option>
+          <option value="in_progress" style={{ background: '#0a0a14', color: 'var(--text-primary)' }}>In Progress</option>
+          <option value="completed" style={{ background: '#0a0a14', color: 'var(--text-primary)' }}>Completed</option>
         </select>
 
         <div style={{ marginLeft: 'auto' }}>

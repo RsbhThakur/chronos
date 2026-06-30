@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Camera, X, RefreshCw, CheckCircle, Loader2 } from 'lucide-react';
+import { Camera, X, RefreshCw, CheckCircle, Loader2, Upload } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
 import { NeonButton } from '@/components/ui/NeonButton';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -21,6 +21,7 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
   const { showToast } = useToast();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
   const [hasCamera, setHasCamera] = useState(false);
@@ -29,6 +30,10 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
+
+  // Dual tab state: 'upload' is default (excellent for desktop-first), 'camera' is backup
+  const [activeTab, setActiveTab] = useState<'camera' | 'upload'>('upload');
+  const [isDragging, setIsDragging] = useState(false);
 
   // Start Camera Stream
   const startCamera = async () => {
@@ -52,8 +57,9 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
       setCameraActive(false);
       showToast({
         type: 'error',
-        message: 'Could not access camera. Ensure permissions are granted.',
+        message: 'Could not access camera. Ensure permissions are granted or use the file upload instead.',
       });
+      setActiveTab('upload');
     }
   };
 
@@ -66,16 +72,21 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
     setCameraActive(false);
   };
 
+  // React to open/close and tab switching
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && activeTab === 'camera') {
       startCamera();
     } else {
       stopCamera();
+    }
+  }, [isOpen, activeTab]);
+
+  useEffect(() => {
+    if (!isOpen) {
       setCapturedImage(null);
       setSuggestions([]);
       setSelectedIndices(new Set());
     }
-    return () => stopCamera();
   }, [isOpen]);
 
   // Capture Snapshot
@@ -137,6 +148,48 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
     }
   };
 
+  // Upload/Drag Handler
+  const processFile = (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      showToast({ type: 'error', message: 'Please upload an image file (PNG, JPG, WEBP).' });
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64Data = reader.result as string;
+      setCapturedImage(base64Data);
+      stopCamera();
+      sendToScanAPI(base64Data);
+    };
+    reader.onerror = () => {
+      showToast({ type: 'error', message: 'Failed to read image file.' });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) processFile(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) processFile(file);
+  };
+
   // Toggle suggestion selection
   const toggleSelect = (index: number) => {
     const next = new Set(selectedIndices);
@@ -161,7 +214,9 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
     setCapturedImage(null);
     setSuggestions([]);
     setSelectedIndices(new Set());
-    startCamera();
+    if (activeTab === 'camera') {
+      startCamera();
+    }
   };
 
   if (!isOpen) return null;
@@ -206,12 +261,56 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
           }}
         >
           <span style={{ fontSize: 'var(--text-sm)', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Camera size={16} className="neon-text-cyan" /> Camera Scanner
+            <Camera size={16} className="neon-text-cyan" /> Camera & Document Scanner
           </span>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>
             <X size={18} />
           </button>
         </div>
+
+        {/* Dual Mode Switcher (Tab selection) */}
+        {!capturedImage && (
+          <div style={{ display: 'flex', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--glass-border)' }}>
+            <button
+              onClick={() => setActiveTab('upload')}
+              style={{
+                flex: 1,
+                padding: '12px',
+                background: activeTab === 'upload' ? 'rgba(0, 229, 255, 0.08)' : 'transparent',
+                border: 'none',
+                borderBottom: activeTab === 'upload' ? '2px solid var(--neon-cyan)' : 'none',
+                color: activeTab === 'upload' ? 'var(--neon-cyan)' : 'var(--text-secondary)',
+                fontSize: '11px',
+                fontWeight: 'bold',
+                fontFamily: 'var(--font-jetbrains-mono), monospace',
+                letterSpacing: '1px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              DRAG & DROP UPLOAD
+            </button>
+            <button
+              onClick={() => setActiveTab('camera')}
+              style={{
+                flex: 1,
+                padding: '12px',
+                background: activeTab === 'camera' ? 'rgba(0, 229, 255, 0.08)' : 'transparent',
+                border: 'none',
+                borderBottom: activeTab === 'camera' ? '2px solid var(--neon-cyan)' : 'none',
+                color: activeTab === 'camera' ? 'var(--neon-cyan)' : 'var(--text-secondary)',
+                fontSize: '11px',
+                fontWeight: 'bold',
+                fontFamily: 'var(--font-jetbrains-mono), monospace',
+                letterSpacing: '1px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              WEBCAM CAPTURE
+            </button>
+          </div>
+        )}
 
         {/* Scan Body */}
         <div style={{ flex: 1, position: 'relative', overflowY: 'auto', display: 'flex', flexDirection: 'column', minHeight: '320px', background: '#020205' }}>
@@ -219,7 +318,7 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
           <canvas ref={canvasRef} style={{ display: 'none' }} />
 
           {/* Active Camera Feed */}
-          {cameraActive && !capturedImage && (
+          {activeTab === 'camera' && cameraActive && !capturedImage && (
             <div style={{ width: '100%', position: 'relative', flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
               <video
                 ref={videoRef}
@@ -238,6 +337,67 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
                   boxShadow: '0 0 0 9999px rgba(0,0,0,0.4)',
                 }}
               />
+            </div>
+          )}
+
+          {/* Drag and Drop File Upload Area */}
+          {activeTab === 'upload' && !capturedImage && (
+            <div
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+              style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '40px',
+                border: `2px dashed ${isDragging ? 'var(--neon-cyan)' : 'var(--glass-border)'}`,
+                borderRadius: 'var(--radius-md)',
+                margin: '20px',
+                background: isDragging ? 'rgba(0, 229, 255, 0.04)' : 'rgba(255,255,255,0.01)',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                minHeight: '260px',
+                boxShadow: isDragging ? '0 0 15px rgba(0, 229, 255, 0.1) inset' : 'none',
+              }}
+            >
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept="image/*"
+                style={{ display: 'none' }}
+              />
+              <motion.div
+                animate={{ y: isDragging ? -5 : 0 }}
+                style={{
+                  width: '64px',
+                  height: '64px',
+                  borderRadius: '50%',
+                  background: 'rgba(255,255,255,0.02)',
+                  border: '1px solid var(--glass-border)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '16px',
+                  color: isDragging ? 'var(--neon-cyan)' : 'var(--text-secondary)',
+                  boxShadow: isDragging ? '0 0 20px rgba(0, 229, 255, 0.2)' : 'none',
+                }}
+              >
+                <Upload size={24} className={isDragging ? 'neon-text-cyan' : ''} />
+              </motion.div>
+              <h3 style={{ fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 8px 0', textAlign: 'center' }}>
+                {isDragging ? 'Drop Image Here!' : 'Drag & Drop Task Image'}
+              </h3>
+              <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', margin: '0 0 4px 0', textAlign: 'center' }}>
+                or <span style={{ color: 'var(--neon-cyan)', textDecoration: 'underline' }}>browse files</span> on your computer
+              </p>
+              <span style={{ fontSize: '9px', color: 'var(--text-tertiary)', letterSpacing: '0.5px' }}>
+                Supports PNG, JPG, JPEG, or WEBP (Max 10MB)
+              </span>
             </div>
           )}
 
@@ -261,7 +421,7 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
                   <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', fontWeight: 600 }}>Extracted Suggestions Checklist:</span>
                   {suggestions.length === 0 ? (
                     <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: 'var(--text-xs)' }}>
-                      No tasks were detected. Try taking another shot with clear, readable text.
+                      No tasks were detected. Try taking another shot or uploading a file with clearer, readable text.
                     </div>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -333,17 +493,24 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
             background: 'rgba(10, 10, 22, 0.98)',
           }}
         >
-          {cameraActive && !capturedImage ? (
+          {activeTab === 'camera' && cameraActive && !capturedImage ? (
             <>
               <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>Align document text inside the scanner border</span>
               <NeonButton variant="cyan" size="sm" icon={<Camera size={14} />} onClick={captureSnapshot}>
                 Capture Snapshot
               </NeonButton>
             </>
+          ) : activeTab === 'upload' && !capturedImage ? (
+            <>
+              <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>Or switch to Webcam Capture at the top to take a picture</span>
+              <NeonButton variant="cyan" size="sm" onClick={() => fileInputRef.current?.click()} icon={<Upload size={14} />}>
+                Browse File
+              </NeonButton>
+            </>
           ) : (
             <>
               <NeonButton variant="purple" size="sm" onClick={retakeSnapshot} disabled={isLoading} icon={<RefreshCw size={12} />}>
-                Retake Photo
+                Reset / Retake
               </NeonButton>
               {suggestions.length > 0 && (
                 <NeonButton variant="cyan" size="sm" onClick={handleAddTasks} disabled={isLoading || selectedIndices.size === 0} icon={<CheckCircle size={12} />}>
