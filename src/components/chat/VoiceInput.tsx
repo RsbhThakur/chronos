@@ -48,13 +48,18 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
         };
 
         recognition.onerror = (event: any) => {
-          console.error('[VoiceInput] Speech recognition error:', event.error);
+          if (event.error === 'no-speech') {
+            console.warn('[VoiceInput] Speech recognition timeout (no speech detected).');
+          } else {
+            console.error('[VoiceInput] Speech recognition error:', event.error);
+          }
+
           if (event.error === 'not-allowed') {
             showToast({
               type: 'error',
               message: 'Microphone permission denied. Enable it in your browser settings.',
             });
-          } else if (event.error !== 'aborted') {
+          } else if (event.error !== 'aborted' && event.error !== 'no-speech') {
             showToast({
               type: 'error',
               message: 'Speech recognition error: ' + event.error,
