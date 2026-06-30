@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Plus, MoveRight, HelpCircle, CheckCircle } from 'lucide-react';
 import { Task, TaskStatus } from '@/types';
 import { TaskCard } from './TaskCard';
+import { useResponsive } from '@/hooks/useResponsive';
 
 interface TaskKanbanProps {
   tasks: Task[];
@@ -34,6 +35,8 @@ export const TaskKanban: React.FC<TaskKanbanProps> = ({
   onTaskGhostWorker,
   onAddTaskClick,
 }) => {
+  const { isMobile } = useResponsive();
+  const [activeColTab, setActiveColTab] = useState<TaskStatus>('todo');
   const [draggedOverCol, setDraggedOverCol] = useState<TaskStatus | null>(null);
   const [hoveredTaskId, setHoveredTaskId] = useState<string | null>(null);
 
@@ -75,161 +78,222 @@ export const TaskKanban: React.FC<TaskKanbanProps> = ({
   };
 
   return (
-    <div
-      className="flex w-full gap-6"
-      style={{
-        height: '100%',
-        overflowX: 'auto',
-        paddingBottom: 'var(--space-4)',
-        alignItems: 'stretch',
-        justifyContent: 'flex-start',
-      }}
-    >
-      {columns.map((col) => {
-        const colTasks = getTasksByStatus(col.id);
-        const isDraggedOver = draggedOverCol === col.id;
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', overflow: 'hidden' }}>
+      {/* Mobile Column Navigation Tabs */}
+      {isMobile && (
+        <div style={{
+          display: 'flex',
+          background: 'rgba(8, 8, 18, 0.4)',
+          border: '1px solid var(--glass-border)',
+          borderRadius: 'var(--radius-lg)',
+          padding: '4px',
+          gap: '4px',
+          marginBottom: '14px',
+          flexShrink: 0
+        }}>
+          {columns.map((col) => {
+            const colTasks = getTasksByStatus(col.id);
+            const isActive = activeColTab === col.id;
+            return (
+              <button
+                key={col.id}
+                onClick={() => setActiveColTab(col.id)}
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  padding: '8px 4px',
+                  border: 'none',
+                  borderRadius: 'var(--radius-md)',
+                  background: isActive ? 'rgba(0, 229, 255, 0.08)' : 'transparent',
+                  color: isActive ? 'var(--neon-cyan)' : 'var(--text-secondary)',
+                  fontWeight: isActive ? 600 : 400,
+                  fontSize: '11px',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                <span>{col.title}</span>
+                <span className={`badge ${col.badgeClass}`} style={{
+                  fontSize: '9px',
+                  padding: '1px 5px',
+                  lineHeight: 1,
+                  background: isActive ? undefined : 'rgba(255,255,255,0.02)',
+                  borderColor: isActive ? undefined : 'rgba(255,255,255,0.05)',
+                  color: isActive ? undefined : 'var(--text-tertiary)'
+                }}>
+                  {colTasks.length}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
-        return (
-          <div
-            key={col.id}
-            onDragOver={(e) => handleDragOver(e, col.id)}
-            onDragLeave={handleDragLeave}
-            onDrop={(e) => handleDrop(e, col.id)}
-            className="flex-col w-full"
-            style={{
-              flex: '1 0 320px',
-              maxWidth: '450px',
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              background: isDraggedOver ? 'rgba(0, 229, 255, 0.03)' : 'transparent',
-              borderRadius: 'var(--radius-lg)',
-              padding: 'var(--space-2)',
-              border: isDraggedOver ? '2px dashed var(--neon-cyan)' : '2px solid transparent',
-              boxShadow: isDraggedOver ? '0 0 15px var(--neon-cyan-glow)' : 'none',
-              transition: 'all var(--transition-base)',
-              boxSizing: 'border-box'
-            }}
-          >
-            {/* Column Header */}
-            <div
-              className="flex justify-between items-center w-full"
-              style={{
-                marginBottom: 'var(--space-4)',
-                paddingBottom: 'var(--space-2)',
-                flexShrink: 0
-              }}
-            >
-              <h3 className="font-display font-semibold tracking-wide" style={{ fontSize: 'var(--text-md)' }}>
-                {col.title}
-              </h3>
-              <span className={`badge ${col.badgeClass}`} style={{ fontSize: 'var(--text-xs)' }}>
-                {colTasks.length}
-              </span>
-            </div>
+      {/* Kanban Board Grid */}
+      <div
+        className="flex w-full gap-6"
+        style={{
+          flex: 1,
+          display: 'flex',
+          height: '100%',
+          overflowX: isMobile ? 'hidden' : 'auto',
+          paddingBottom: 'var(--space-4)',
+          alignItems: 'stretch',
+          justifyContent: 'flex-start',
+        }}
+      >
+        {columns
+          .filter((col) => !isMobile || col.id === activeColTab)
+          .map((col) => {
+            const colTasks = getTasksByStatus(col.id);
+            const isDraggedOver = draggedOverCol === col.id;
 
-            {/* Column Body: Task cards list */}
-            <div
-              className="flex-col gap-3 w-full"
-              style={{
-                flex: 1,
-                display: 'flex',
-                overflowY: 'auto',
-                paddingRight: '12px',
-                paddingBottom: 'var(--space-4)',
-                minHeight: 0
-              }}
-            >
-              {colTasks.length > 0 ? (
-                colTasks.map((task) => (
-                  <div
-                    key={task.id}
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, task.id)}
-                  >
-                    <TaskCard
-                      task={task}
-                      onComplete={onTaskComplete || (() => onTaskUpdate(task.id, { status: 'completed' }))}
-                      onEdit={onTaskEdit || onTaskClick}
-                      onCardClick={onTaskClick}
-                      onDelete={onTaskDelete || (() => {})}
-                      onRescue={onTaskRescue || (() => {})}
-                      onGhostWorker={onTaskGhostWorker}
-                      onHoverChange={(hovered) => setHoveredTaskId(hovered ? task.id : null)}
-                      isHoveredSibling={hoveredTaskId !== null && hoveredTaskId !== task.id}
-                    />
-                  </div>
-                ))
-              ) : (
-                /* Empty Column State */
+            return (
+              <div
+                key={col.id}
+                onDragOver={(e) => handleDragOver(e, col.id)}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, col.id)}
+                className="flex-col w-full"
+                style={{
+                  flex: isMobile ? '1 1 100%' : '1 0 320px',
+                  maxWidth: isMobile ? '100%' : '450px',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  background: isDraggedOver ? 'rgba(0, 229, 255, 0.03)' : 'transparent',
+                  borderRadius: 'var(--radius-lg)',
+                  padding: isMobile ? 'var(--space-1)' : 'var(--space-2)',
+                  border: isDraggedOver ? '2px dashed var(--neon-cyan)' : '2px solid transparent',
+                  boxShadow: isDraggedOver ? '0 0 15px var(--neon-cyan-glow)' : 'none',
+                  transition: 'all var(--transition-base)',
+                  boxSizing: 'border-box'
+                }}
+              >
+                {/* Column Header */}
                 <div
-                  className="flex-col items-center justify-center w-full"
+                  className="flex justify-between items-center w-full"
                   style={{
-                    display: 'flex',
-                    flex: '1',
-                    color: 'var(--text-tertiary)',
-                    fontSize: 'var(--text-sm)',
-                    border: '1px dashed var(--glass-border)',
-                    borderRadius: 'var(--radius-md)',
-                    background: 'rgba(255, 255, 255, 0.01)',
-                    padding: 'var(--space-4)',
-                    textAlign: 'center',
+                    marginBottom: 'var(--space-4)',
+                    paddingBottom: 'var(--space-2)',
+                    flexShrink: 0
                   }}
                 >
-                  {col.id === 'todo' && <HelpCircle size={40} style={{ opacity: 0.3, marginBottom: 'var(--space-2)' }} />}
-                  {col.id === 'in_progress' && <MoveRight size={40} style={{ opacity: 0.3, marginBottom: 'var(--space-2)' }} />}
-                  {col.id === 'completed' && <CheckCircle size={40} style={{ opacity: 0.3, marginBottom: 'var(--space-2)' }} />}
-                  <span>{`No ${col.title.toLowerCase()} tasks`}</span>
+                  <h3 className="font-display font-semibold tracking-wide" style={{ fontSize: 'var(--text-md)' }}>
+                    {col.title}
+                  </h3>
+                  <span className={`badge ${col.badgeClass}`} style={{ fontSize: 'var(--text-xs)' }}>
+                    {colTasks.length}
+                  </span>
                 </div>
-              )}
-            </div>
 
-            {/* Column Footer: Docked Add Task Button */}
-            {col.id === 'todo' && onAddTaskClick && (
-              <div style={{ padding: '8px 0 4px 0', flexShrink: 0 }}>
-                <button
-                  onClick={onAddTaskClick}
-                  className="glass-card"
+                {/* Column Body: Task cards list */}
+                <div
+                  className="flex-col gap-3 w-full"
                   style={{
-                    width: '100%',
-                    padding: '10px',
+                    flex: 1,
                     display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    border: '1px dashed rgba(0, 229, 255, 0.4)',
-                    background: 'rgba(0, 229, 255, 0.02)',
-                    color: 'var(--neon-cyan)',
-                    fontSize: 'var(--text-xs)',
-                    fontWeight: '600',
-                    letterSpacing: '0.5px',
-                    borderRadius: 'var(--radius-md)',
-                    cursor: 'pointer',
-                    transition: 'all var(--transition-fast)',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(0, 229, 255, 0.08)';
-                    e.currentTarget.style.borderStyle = 'solid';
-                    e.currentTarget.style.borderColor = 'var(--neon-cyan)';
-                    e.currentTarget.style.boxShadow = '0 0 15px rgba(0, 229, 255, 0.2)';
-                    e.currentTarget.style.color = '#fff';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgba(0, 229, 255, 0.02)';
-                    e.currentTarget.style.borderStyle = 'dashed';
-                    e.currentTarget.style.borderColor = 'rgba(0, 229, 255, 0.4)';
-                    e.currentTarget.style.boxShadow = 'none';
-                    e.currentTarget.style.color = 'var(--neon-cyan)';
+                    overflowY: 'auto',
+                    paddingRight: isMobile ? '4px' : '12px',
+                    paddingBottom: 'var(--space-4)',
+                    minHeight: 0
                   }}
                 >
-                  <Plus size={14} />
-                  <span>ADD NEW TASK</span>
-                </button>
+                  {colTasks.length > 0 ? (
+                    colTasks.map((task) => (
+                      <div
+                        key={task.id}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, task.id)}
+                      >
+                        <TaskCard
+                          task={task}
+                          onComplete={onTaskComplete || (() => onTaskUpdate(task.id, { status: 'completed' }))}
+                          onEdit={onTaskEdit || onTaskClick}
+                          onCardClick={onTaskClick}
+                          onDelete={onTaskDelete || (() => {})}
+                          onRescue={onTaskRescue || (() => {})}
+                          onGhostWorker={onTaskGhostWorker}
+                          onHoverChange={(hovered) => setHoveredTaskId(hovered ? task.id : null)}
+                          isHoveredSibling={hoveredTaskId !== null && hoveredTaskId !== task.id}
+                        />
+                      </div>
+                    ))
+                  ) : (
+                    /* Empty Column State */
+                    <div
+                      className="flex-col items-center justify-center w-full"
+                      style={{
+                        display: 'flex',
+                        flex: '1',
+                        color: 'var(--text-tertiary)',
+                        fontSize: 'var(--text-sm)',
+                        border: '1px dashed var(--glass-border)',
+                        borderRadius: 'var(--radius-md)',
+                        background: 'rgba(255, 255, 255, 0.01)',
+                        padding: 'var(--space-4)',
+                        textAlign: 'center',
+                      }}
+                    >
+                      {col.id === 'todo' && <HelpCircle size={40} style={{ opacity: 0.3, marginBottom: 'var(--space-2)' }} />}
+                      {col.id === 'in_progress' && <MoveRight size={40} style={{ opacity: 0.3, marginBottom: 'var(--space-2)' }} />}
+                      {col.id === 'completed' && <CheckCircle size={40} style={{ opacity: 0.3, marginBottom: 'var(--space-2)' }} />}
+                      <span>{`No ${col.title.toLowerCase()} tasks`}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Column Footer: Docked Add Task Button */}
+                {col.id === 'todo' && onAddTaskClick && (
+                  <div style={{ padding: '8px 0 4px 0', flexShrink: 0 }}>
+                    <button
+                      onClick={onAddTaskClick}
+                      className="glass-card"
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        border: '1px dashed rgba(0, 229, 255, 0.4)',
+                        background: 'rgba(0, 229, 255, 0.02)',
+                        color: 'var(--neon-cyan)',
+                        fontSize: 'var(--text-xs)',
+                        fontWeight: '600',
+                        letterSpacing: '0.5px',
+                        borderRadius: 'var(--radius-md)',
+                        cursor: 'pointer',
+                        transition: 'all var(--transition-fast)',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(0, 229, 255, 0.08)';
+                        e.currentTarget.style.borderStyle = 'solid';
+                        e.currentTarget.style.borderColor = 'var(--neon-cyan)';
+                        e.currentTarget.style.boxShadow = '0 0 15px rgba(0, 229, 255, 0.2)';
+                        e.currentTarget.style.color = '#fff';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(0, 229, 255, 0.02)';
+                        e.currentTarget.style.borderStyle = 'dashed';
+                        e.currentTarget.style.borderColor = 'rgba(0, 229, 255, 0.4)';
+                        e.currentTarget.style.boxShadow = 'none';
+                        e.currentTarget.style.color = 'var(--neon-cyan)';
+                      }}
+                    >
+                      <Plus size={14} />
+                      <span>ADD NEW TASK</span>
+                    </button>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        );
-      })}
+            );
+          })}
+      </div>
     </div>
   );
 };

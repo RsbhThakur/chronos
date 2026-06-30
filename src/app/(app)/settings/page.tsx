@@ -54,31 +54,47 @@ export default function SettingsPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const [gmailConnected, setGmailConnected] = useState(false);
+  const [calendarConnected, setCalendarConnected] = useState(false);
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const persisted = localStorage.getItem('chronos_gmail_connected');
-      if (persisted !== null) {
-        setGmailConnected(persisted === 'true');
-      } else {
-        setGmailConnected(!!user);
-      }
-    }
-  }, [user]);
-
-  const handleConnectGmail = () => {
-    if (gmailConnected) {
-      setGmailConnected(false);
-      localStorage.setItem('chronos_gmail_connected', 'false');
-      showToast({ type: 'info', message: 'Gmail integration disconnected.' });
+  const updateIntegrationSetting = async (key: 'gmailEnabled' | 'calendarSyncEnabled', val: boolean) => {
+    if (key === 'gmailEnabled') {
+      setGmailConnected(val);
     } else {
-      showToast({ type: 'info', message: 'Connecting to Gmail via Google OAuth...' });
-      setTimeout(() => {
-        setGmailConnected(true);
-        localStorage.setItem('chronos_gmail_connected', 'true');
-        showToast({ type: 'success', message: 'Gmail connected successfully! Automated task extraction is now active.' });
-      }, 1200);
+      setCalendarConnected(val);
     }
+
+    const currentPreferences = user?.preferences || {
+      gamificationEnabled: true,
+      ghostWorkerEnabled: false,
+      rescueModeEnabled: false,
+      voiceEnabled: false,
+      notificationChannels: [],
+    };
+
+    const updatedPreferences = {
+      ...currentPreferences,
+      [key]: val,
+    };
+
+    if (!isDemo && user?.id) {
+      try {
+        const docRef = doc(clientDb, 'users', user.id);
+        await updateDoc(docRef, {
+          preferences: updatedPreferences,
+        });
+        showToast({ type: 'success', message: `${key === 'gmailEnabled' ? 'Gmail' : 'Google Calendar'} preference auto-saved.` });
+      } catch (err) {
+        console.error('Failed to auto-save preference:', err);
+        showToast({ type: 'error', message: 'Failed to auto-save changes.' });
+      }
+    } else {
+      await updateDemoUser({ preferences: updatedPreferences });
+      showToast({ type: 'success', message: `${key === 'gmailEnabled' ? 'Gmail' : 'Google Calendar'} preference saved (Demo Mode).` });
+    }
+  };
+
+  const handleConnectGmail = async () => {
+    await updateIntegrationSetting('gmailEnabled', !gmailConnected);
   };
 
   // Feature toggles state
@@ -107,6 +123,8 @@ export default function SettingsPage() {
         voice:         user.preferences?.voiceEnabled         ?? false,
         cameraScam:    localStorage.getItem('chronos_camera_scan_enabled') === 'true',
       });
+      setGmailConnected(user.preferences?.gmailEnabled ?? false);
+      setCalendarConnected(user.preferences?.calendarSyncEnabled ?? false);
 
       const channels = user.preferences?.notificationChannels || [];
       setNotifs({
@@ -453,9 +471,9 @@ export default function SettingsPage() {
       case 'integrations':
         return (
           <div>
-            <SettingRow label="Google Calendar" description={user ? 'Connected via Google OAuth' : 'Not connected'}>
-              <NeonButton variant={user ? 'green' : 'cyan'} size="sm" onClick={() => showToast({ type: 'info', message: 'Calendar sync available after Google sign-in.' })}>
-                {user ? 'Connected' : 'Connect'}
+            <SettingRow label="Google Calendar" description={calendarConnected ? 'Calendar sync is active' : 'Sync upcoming deadlines to your calendar'}>
+              <NeonButton variant={calendarConnected ? 'green' : 'cyan'} size="sm" onClick={() => updateIntegrationSetting('calendarSyncEnabled', !calendarConnected)}>
+                {calendarConnected ? 'Connected' : 'Connect'}
               </NeonButton>
             </SettingRow>
             <SettingRow label="Gmail" description={gmailConnected ? 'Connected to read emails and extract tasks automatically' : 'Read emails to extract tasks automatically'}>
