@@ -111,6 +111,36 @@ Chronos features a premium **Glassmorphic Cyberpunk Dark Mode** design with smoo
 
 ---
 
+## 📸 Visual Walkthrough & Interface Gallery
+
+Since we are submitting this project for direct, interactive jury evaluation rather than a passive recorded walkthrough video, we have included high-resolution screenshots captured during our verification runs to showcase the premium dark-cyberpunk glassmorphic experience:
+
+### 1. 🌌 Onboarding & Landing
+The entryway into the Chronos ecosystem. Here, the user selects their dedicated persona (Student, Professional, or Entrepreneur) which customizes their system prompts, seed states, and dashboard themes.
+![Onboarding & Landing](public/screenshots/01_landing_page.png)
+
+### 2. ⚡ The Time Guardian Cockpit (Dashboard)
+A premium dark-cyberpunk layout displaying active Kanban tasks, long-term goals, customizable productivity habits, and the real-time AI analytics forecaster.
+![Chronos Main Cockpit](public/screenshots/05_dashboard_demo.png)
+
+### 3. 🚨 Interactive Rescue Mode (The Guardian Intercept)
+When activated, the multi-page dashboard transitions seamlessly into a locked-down, single-focus **Action Center**. The Rescue Agent parses available time blocks, drops non-critical tasks ("Sacrifices"), and compiles a minute-by-minute survival schedule.
+![Rescue Mode Active](public/screenshots/08_rescue_action_center.png)
+
+### 4. 👻 Ghost Worker Studio
+Tell the companion to handle redundant work (like drafting presentations, email updates, or code scaffolding) in the background. The Ghost Worker drafts deliverables and populates a secure side-panel preview environment for 1-click edits.
+![Ghost Worker Draft Panel](public/screenshots/11_ghost_worker_generated_draft.png)
+
+### 5. 💬 Real-Time Conversational AI Assistant
+Our custom-engineered safe markdown and code-block parser. It processes token streams in real-time, completely replacing unsafe custom regex parse blocks to eliminate HTML-injection vectors.
+![AI Assistant Chat Sidebar](public/screenshots/12_chat_sidebar_open.png)
+
+### 📊 6. Time Warp Analytics
+Provides linear cognitive bottleneck prediction up to 7 days in advance based on historic velocity, streaks, and sleep trackers.
+![Time Warp Analytical Suite](public/screenshots/15_analytics_main.png)
+
+---
+
 ## 💻 Technical Implementation
 
 ### 🧱 Tech Stack
@@ -207,11 +237,27 @@ Chronos is optimized for automated deployment on **Google Cloud Run** using **Cl
 
 ## 👥 Evaluation Guide
 
-To allow judges to thoroughly evaluate Chronos' deep features without requiring tedious account setup, API integrations, or real task completion cycles:
-* **Interactive Demo Mode**: Click **"Try Demo Mode"** on the onboarding screen.
-* Select one of the three personas (**Student**, **Professional**, or **Entrepreneur**).
-* This instantly hydrates your session with rich, active preset collections representing realistic states: active Kanban task boards, multiple ongoing goals, mock Google Calendar events, historic performance data for Time Warp, and custom accountability feedback.
-* **Test the Rescue Mode**: Click the glowing **Rescue Mode** toggle inside the header. Watch the layout transition seamlessly, observe the computed schedule, and witness how tasks rearrange to shield your priority deadline instantly!
+> [!IMPORTANT]
+> **NO VIDEO SUBMISSION NOTE**: Because we are submitting this project for direct, interactive jury evaluation rather than a passive recorded walkthrough video, we have engineered two distinct, fully-supported runtime modes so that judges can easily audit every single layer of the Chronos multi-agent ecosystem.
+> 
+> * **🔐 1. Live Google Authentication (The Complete Production Experience)**
+>   * Click **"Sign In with Google"** on the landing screen.
+>   * This initiates a real-time **Google OAuth 2.0 sequence** linked directly to the application's secure Firestore backend.
+>   * **Features Accessed**: Grants full, live reading and writing sync across your production **Google Calendar**, **Google Tasks**, and **Gmail drafts**. Every decomposed goal milestone, scheduled rescue time-block, and Ghost Worker drafted item compiles and synchronizes with your real Google account immediately.
+>   * *Best for: Auditing live API data-pipelines and standard production compliance.*
+> 
+> * **🧠 2. Interactive Demo Mode (Instant Sandbox Evaluation)**
+>   * Click **"Try Demo Mode"** on the onboarding landing page.
+>   * **Features Accessed**: Bypasses all authentication constraints and instantly hydrates an **extensive, pre-populated mock database** representing highly complex usage history.
+>   * *Best for: Speed-running the application's features (Time Warp predictive ML bottleneck graphs, fully hydrated Kanban boards, ready-to-test habits, active Rescue triggers) inside a localized sandbox in under 60 seconds without any external setup or Google permissions.*
+
+### 🛠️ Quick Walkthrough Checklist for Evaluation (Demo Mode)
+
+1. Select one of our tailored workspace personas (**Student**, **Professional**, or **Entrepreneur**).
+2. Observe how the application shell instantly re-themes and populates with realistic preset states, task deadlines, and performance history.
+3. **Trigger Rescue Mode**: Click the glowing neon **Rescue Mode** toggle inside the header. Watch the layout lock down into the glassmorphic focus sandbox. Inspect the minute-by-minute action block compiled by the Rescue Agent, evaluate the non-critical "Sacrifices" dropped to save time, and complete a sub-step to watch the telemetry progress update instantly.
+4. **Inspect Time Warp**: Navigate to the analytics suite. Review the cognitive load bottleneck predictions calculated 7 days out based on historic completion patterns.
+5. **Engage the AI Agent**: Click the bottom-right glowing AI chat bubble. Ask Chronos to *"smart decompose my goal to prepare a presentation"* or query active task states to audit the live multi-agent tool execution loop.
 
 ---
 
