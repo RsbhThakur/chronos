@@ -80,7 +80,7 @@ Chronos adapts its interface structure, seed data, and agent prompts to match th
 Rescue Mode is Chronos’ flagship innovation. It is an emergency intercept system for high-pressure situations:
 
 * **Interactive Focusing State**: Activating Rescue Mode locks down the standard multi-page layout. It replaces distraction with a glassmorphic, single-focus **Action Center Sandbox**. The user is shielded from other folders, lists, and notifications.
-* **Autonomous Schedule Compression**: The **Rescue Planner Agent (Gemini 1.5 Pro)** is passed the user's available time, active subtasks, and target deadline. It calculates remaining minutes, filters out non-critical elements, and returns a high-density, minute-by-minute action plan.
+* **Autonomous Schedule Compression**: The **Rescue Planner Agent (Gemini 3.1 Pro)** is passed the user's available time, active subtasks, and target deadline. It calculates remaining minutes, filters out non-critical elements, and returns a high-density, minute-by-minute action plan.
 * **Automated Sacrifice Analysis**: Chronos determines what tasks can be safely postponed or skipped (e.g., "Postpone grocery run to tomorrow" or "Cancel non-critical sync") and highlights them clearly, reducing cognitive burden.
 * **Direct Google Calendar Hydration**: The generated action plan is automatically synchronized with the user's Google Calendar as colored focus blocks, securing the time block visually on all of their devices.
 
@@ -126,7 +126,7 @@ A major source of procrastination is not knowing where to begin. The **AI Decomp
 ### 🎤 6. Multi-Modal Vision & Voice OCR Engine
 Capturing tasks should be effortless:
 
-* **Vision OCR Engine (Gemini 1.5 Flash)**: Upload pictures of physical notes, whiteboard brainstorms, or exam schedules. Chronos extracts headings, lists, and dates, turning them into digital Kanban tasks in seconds.
+* **Vision OCR Engine (Gemini 3.5 Flash)**: Upload pictures of physical notes, whiteboard brainstorms, or exam schedules. Chronos extracts headings, lists, and dates, turning them into digital Kanban tasks in seconds.
 * **Glassmorphic Voice HUD**: Communicate directly with Chronos using natural voice inputs. Real-time audio waveform animations provide feedback as you dictate tasks or query status.
 
 ---
@@ -162,16 +162,16 @@ Chronos is a deep showcase of the **Google Developer Cloud Ecosystem**, utilizin
 ├──────────────────────────┬───────────────────────────┬─────────────────────────────────┤
 │    GOOGLE AI ENGINE      │     FIREBASE BACKEND      │     GCP CLOUD INFRASTRUCTURE    │
 ├──────────────────────────┼───────────────────────────┼─────────────────────────────────┤
-│  • Gemini 1.5 Flash      │  • Firebase Auth          │  • Google Cloud Run (Hosting)   │
-│  • Gemini 1.5 Pro        │  • Cloud Firestore        │  • Google Cloud Build (CI/CD)   │
+│  • Gemini 3.5 Flash      │  • Firebase Auth          │  • Google Cloud Run (Hosting)   │
+│  • Gemini 3.1 Pro        │  • Cloud Firestore        │  • Google Cloud Build (CI/CD)   │
 │  • Structured Outputs    │  • Cloud Messaging (FCM)  │  • Google Workspace APIs        │
 │  • Function Calling      │  • Admin SDK Core         │    (Calendar, Gmail, Tasks)     │
 └──────────────────────────┴───────────────────────────┴─────────────────────────────────┘
 ```
 
 ### 🧠 1. Google AI & Gemini Suite
-* **Gemini 1.5 Flash**: Serves as the core chatbot agent, handling rapid voice inputs, vision-based OCR scans, and fast analytical forecasting.
-* **Gemini 1.5 Pro**: Handles complex multi-variable optimizations (Rescue Mode compressed scheduling) and creative draft generation (Ghost Worker deliverables).
+* **Gemini 3.5 Flash**: Serves as the core chatbot agent, handling rapid voice inputs, vision-based OCR scans, and fast analytical forecasting.
+* **Gemini 3.1 Pro**: Handles complex multi-variable optimizations (Rescue Mode compressed scheduling) and creative draft generation (Ghost Worker deliverables).
 * **Gemini Function Calling (14 Active Tools)**: Connects the Gemini LLM directly to our core systems, enabling the AI to search, create, update, and delete tasks, goals, habits, and user preferences autonomously.
 * **Gemini Structured Output**: Guarantees that AI-generated rescue schedules, task lists, and forecasts match our database schemas exactly.
 * **Google AI Studio**: Powered prompt engineering, testing, system prompt modeling, and safety parameter tuning.
