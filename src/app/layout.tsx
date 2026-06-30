@@ -31,6 +31,21 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable} ${orbitron.variable}`}>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.__FIREBASE_CONFIG__ = {
+              apiKey: "${process.env.NEXT_PUBLIC_FIREBASE_API_KEY || ''}",
+              authDomain: "${process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || ''}",
+              projectId: "${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || ''}",
+              storageBucket: "${process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || ''}",
+              messagingSenderId: "${process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || ''}",
+              appId: "${process.env.NEXT_PUBLIC_FIREBASE_APP_ID || ''}",
+              vapidKey: "${process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY || ''}"
+            };`
+          }}
+        />
+      </head>
       <body>
         <Providers>
           {children}

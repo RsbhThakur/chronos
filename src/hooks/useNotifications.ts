@@ -111,7 +111,7 @@ export const useNotifications = (userId: string) => {
 
         // Register Service Worker and retrieve Token
         if (messaging && 'serviceWorker' in navigator) {
-          const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
+          const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY || (typeof window !== 'undefined' ? (window as any).__FIREBASE_CONFIG__?.vapidKey : '');
           if (!vapidKey) {
             console.warn('[useNotifications] VAPID key is missing in environment. Push registration skipped.');
             return true;
