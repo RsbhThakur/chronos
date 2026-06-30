@@ -28,16 +28,16 @@ export async function executeToolCall(
 
   switch (toolName) {
     case 'createTask':
-      return await toolCreateTask(args, userId);
+      return await toolCreateTask(args, userId, session);
     
     case 'updateTask':
-      return await toolUpdateTask(args, userId);
+      return await toolUpdateTask(args, userId, session);
 
     case 'completeTask':
-      return await toolCompleteTask(args, userId);
+      return await toolCompleteTask(args, userId, session);
 
     case 'deleteTask':
-      return await toolDeleteTask(args, userId);
+      return await toolDeleteTask(args, userId, session);
 
     case 'listTasks':
       return await toolListTasks(args, userId);
@@ -63,6 +63,12 @@ export async function executeToolCall(
     case 'createCalendarEvent':
       return await toolCreateCalendarEvent(args, session);
 
+    case 'deleteCalendarEvent':
+      return await toolDeleteCalendarEvent(args, session);
+
+    case 'updateCalendarEvent':
+      return await toolUpdateCalendarEvent(args, session);
+
     case 'createGoal':
       return await toolCreateGoal(args, userId);
 
@@ -78,7 +84,7 @@ export async function executeToolCall(
 // TOOL IMPLEMENTATIONS
 // ==========================================
 
-async function toolCreateTask(args: any, userId: string) {
+async function toolCreateTask(args: any, userId: string, session: any) {
   const taskId = uuidv4();
   const taskRef = adminDb.collection('users').doc(userId).collection('tasks').doc(taskId);
 
@@ -110,6 +116,37 @@ async function toolCreateTask(args: any, userId: string) {
 
   // Convert Date objects to Firestore friendly format/Dates
   await taskRef.set(newTask);
+
+  // Sync to Google Calendar if enabled
+  try {
+    const userDoc = await adminDb.collection('users').doc(userId).get();
+    const userData = userDoc.exists ? userDoc.data() : null;
+    const calendarSyncEnabled = userData?.preferences?.calendarSyncEnabled === true;
+
+    if (calendarSyncEnabled && session?.accessToken) {
+      const deadlineDate = newTask.deadline;
+      const startTime = deadlineDate.toISOString();
+      const estimatedMinutes = newTask.estimatedMinutes || 30;
+      const endTime = new Date(deadlineDate.getTime() + estimatedMinutes * 60 * 1000).toISOString();
+
+      const calendarResult = await toolCreateCalendarEvent({
+        title: newTask.title,
+        startTime,
+        endTime,
+        description: newTask.description || '',
+      }, session);
+
+      if (calendarResult.success && calendarResult.eventId) {
+        await taskRef.update({
+          calendarEventId: calendarResult.eventId
+        });
+        console.log(`[toolCreateTask] Automatically synced task ${taskId} to Google Calendar. Event ID: ${calendarResult.eventId}`);
+      }
+    }
+  } catch (calendarErr) {
+    console.error('[toolCreateTask] Automatically syncing task to Google Calendar failed:', calendarErr);
+  }
+
   return { success: true, taskId, message: `Task created: ${newTask.title}` };
 }
 
