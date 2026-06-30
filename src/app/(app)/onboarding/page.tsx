@@ -13,7 +13,7 @@ import { db as clientDb } from '@/lib/firebase';
 export default function OnboardingPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const { isDemo } = useDemo();
+  const { isDemo, updateDemoUser } = useDemo();
   const { showToast } = useToast();
   const [saving, setSaving] = useState(false);
 
@@ -36,7 +36,13 @@ export default function OnboardingPage() {
         showToast({ type: 'error', message: 'Failed to save preferences. You can update them in Settings.' });
       }
     } else {
-      // Demo user: just show success toast (DemoProvider is read-only)
+      // Demo user: save preferences using updateDemoUser
+      await updateDemoUser({
+        mode:                profileData.mode,
+        personality:         profileData.personality,
+        preferences:         profileData.preferences,
+        onboardingCompleted: true,
+      });
       showToast({ type: 'success', message: "Demo profile configured! Welcome to Chronos 🚀" });
       await new Promise((r) => setTimeout(r, 600));
     }

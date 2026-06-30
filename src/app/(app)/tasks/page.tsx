@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useTasks } from '@/hooks/useTasks';
 import { useDemo } from '@/hooks/useDemo';
@@ -13,6 +13,7 @@ import { GhostWorkerConsole } from '@/components/ghost/GhostWorkerConsole';
 import { Task, TaskPriority, TaskStatus } from '@/types';
 import { Plus, Search, LayoutGrid, List, Calendar as CalendarIcon, Filter, Clock, AlertTriangle } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useResponsive } from '@/hooks/useResponsive';
 
 type ViewMode = 'board' | 'list' | 'calendar';
 
@@ -77,36 +78,74 @@ const CalendarView: React.FC<{ tasks: Task[] }> = ({ tasks }) => {
 };
 
 // ─── List View ────────────────────────────────────────────────────────────────
-const ListView: React.FC<{ tasks: Task[]; onComplete: (id: string) => void; onDelete: (id: string) => void }> = ({ tasks, onComplete, onDelete }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+const ListView: React.FC<{ tasks: Task[]; onComplete: (id: string) => void; onDelete: (id: string) => void; isMobile?: boolean }> = ({ tasks, onComplete, onDelete, isMobile = false }) => (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '8px' : '2px' }}>
     {/* Header */}
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px 80px 100px 80px', gap: '12px', padding: '8px 14px', fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px', borderBottom: '1px solid var(--glass-border)' }}>
-      <span>Task</span><span>Status</span><span>Priority</span><span>Deadline</span><span>Actions</span>
-    </div>
+    {!isMobile && (
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px 80px 100px 80px', gap: '12px', padding: '8px 14px', fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px', borderBottom: '1px solid var(--glass-border)' }}>
+        <span>Task</span><span>Status</span><span>Priority</span><span>Deadline</span><span>Actions</span>
+      </div>
+    )}
     {tasks.length === 0 ? (
       <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-tertiary)' }}>No tasks found.</div>
     ) : (
-      tasks.map((task, i) => (
-        <motion.div key={task.id} initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { delay: i * 0.03 } }}
-          style={{ display: 'grid', gridTemplateColumns: '1fr 100px 80px 100px 80px', gap: '12px', padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.04)', alignItems: 'center', cursor: 'default' }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
-          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-        >
-          <div>
-            <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{task.title}</div>
-            {task.category && <div style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>{task.category}</div>}
-          </div>
-          <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: 'var(--radius-full)', background: 'rgba(255,255,255,0.06)', color: 'var(--text-secondary)' }}>{statusLabels[task.status]}</span>
-          <span style={{ fontSize: '10px', color: priorityColors[task.priority], fontWeight: 600, textTransform: 'capitalize' }}>{task.priority}</span>
-          <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <Clock size={9} /> {new Date(task.deadline).toLocaleDateString()}
-          </span>
-          <div style={{ display: 'flex', gap: '6px' }}>
-            <button onClick={() => onComplete(task.id)} title="Complete" style={{ background: 'none', border: '1px solid var(--neon-green)', borderRadius: 'var(--radius-sm)', padding: '3px 6px', cursor: 'pointer', color: 'var(--neon-green)', fontSize: '10px' }}>✓</button>
-            <button onClick={() => onDelete(task.id)} title="Delete" style={{ background: 'none', border: '1px solid var(--neon-pink)', borderRadius: 'var(--radius-sm)', padding: '3px 6px', cursor: 'pointer', color: 'var(--neon-pink)', fontSize: '10px' }}>×</button>
-          </div>
-        </motion.div>
-      ))
+      tasks.map((task, i) => {
+        if (isMobile) {
+          return (
+            <motion.div key={task.id} initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { delay: i * 0.03 } }}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+                padding: '12px 14px',
+                background: 'rgba(255,255,255,0.01)',
+                border: '1px solid var(--glass-border)',
+                borderRadius: 'var(--radius-md)',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--text-primary)', wordBreak: 'break-word' }}>{task.title}</div>
+                  {task.category && <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', marginTop: '2px' }}>{task.category}</div>}
+                </div>
+                <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
+                  <button onClick={() => onComplete(task.id)} title="Complete" style={{ background: 'none', border: '1px solid var(--neon-green)', borderRadius: 'var(--radius-sm)', padding: '3px 6px', cursor: 'pointer', color: 'var(--neon-green)', fontSize: '10px' }}>✓</button>
+                  <button onClick={() => onDelete(task.id)} title="Delete" style={{ background: 'none', border: '1px solid var(--neon-pink)', borderRadius: 'var(--radius-sm)', padding: '3px 6px', cursor: 'pointer', color: 'var(--neon-pink)', fontSize: '10px' }}>×</button>
+                </div>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
+                <span style={{ fontSize: '9px', padding: '2px 6px', borderRadius: 'var(--radius-full)', background: 'rgba(255,255,255,0.06)', color: 'var(--text-secondary)' }}>{statusLabels[task.status]}</span>
+                <span style={{ fontSize: '9px', padding: '2px 6px', borderRadius: 'var(--radius-full)', background: `${priorityColors[task.priority]}15`, color: priorityColors[task.priority], fontWeight: 600, textTransform: 'capitalize', border: `1px solid ${priorityColors[task.priority]}30` }}>{task.priority}</span>
+                <span style={{ fontSize: '9px', color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', gap: '3px', marginLeft: 'auto' }}>
+                  <Clock size={9} /> {new Date(task.deadline).toLocaleDateString()}
+                </span>
+              </div>
+            </motion.div>
+          );
+        }
+
+        return (
+          <motion.div key={task.id} initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { delay: i * 0.03 } }}
+            style={{ display: 'grid', gridTemplateColumns: '1fr 100px 80px 100px 80px', gap: '12px', padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.04)', alignItems: 'center', cursor: 'default' }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+          >
+            <div>
+              <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{task.title}</div>
+              {task.category && <div style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>{task.category}</div>}
+            </div>
+            <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: 'var(--radius-full)', background: 'rgba(255,255,255,0.06)', color: 'var(--text-secondary)' }}>{statusLabels[task.status]}</span>
+            <span style={{ fontSize: '10px', color: priorityColors[task.priority], fontWeight: 600, textTransform: 'capitalize' }}>{task.priority}</span>
+            <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Clock size={9} /> {new Date(task.deadline).toLocaleDateString()}
+            </span>
+            <div style={{ display: 'flex', gap: '6px' }}>
+              <button onClick={() => onComplete(task.id)} title="Complete" style={{ background: 'none', border: '1px solid var(--neon-green)', borderRadius: 'var(--radius-sm)', padding: '3px 6px', cursor: 'pointer', color: 'var(--neon-green)', fontSize: '10px' }}>✓</button>
+              <button onClick={() => onDelete(task.id)} title="Delete" style={{ background: 'none', border: '1px solid var(--neon-pink)', borderRadius: 'var(--radius-sm)', padding: '3px 6px', cursor: 'pointer', color: 'var(--neon-pink)', fontSize: '10px' }}>×</button>
+            </div>
+          </motion.div>
+        );
+      })
     )}
   </div>
 );
@@ -189,10 +228,13 @@ const AddTaskModal: React.FC<{ onClose: () => void; onCreate: (d: Partial<Task>)
 // ─── Tasks Page ───────────────────────────────────────────────────────────────
 export default function TasksPage() {
   const { user } = useAuth();
+  const { isMobile, isTablet } = useResponsive();
   const { tasks, loading, createTask, updateTask, completeTask, deleteTask } = useTasks(user?.id || '');
   const { tasks: demoTasks, isDemo } = useDemo();
   const { showToast } = useToast();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const goalIdParam = searchParams.get('goalId');
 
   const [view, setView] = useState<ViewMode>('board');
   const [search, setSearch] = useState('');
@@ -207,6 +249,7 @@ export default function TasksPage() {
     if (search && !t.title.toLowerCase().includes(search.toLowerCase())) return false;
     if (filterPriority !== 'all' && t.priority !== filterPriority) return false;
     if (filterStatus !== 'all' && t.status !== filterStatus) return false;
+    if (goalIdParam && t.parentGoalId !== goalIdParam) return false;
     return true;
   });
 
@@ -246,7 +289,7 @@ export default function TasksPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       {/* Top bar */}
-      <div data-tour="task-board" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px 24px', borderBottom: '1px solid var(--glass-border)', flexShrink: 0, flexWrap: 'wrap' }}>
+      <div data-tour="task-board" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: isMobile ? '12px 16px' : '16px 24px', borderBottom: '1px solid var(--glass-border)', flexShrink: 0, flexWrap: 'wrap' }}>
         {/* View switcher */}
         <div style={{ display: 'flex', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
           {viewBtns.map(({ mode, icon, label }) => (
@@ -289,7 +332,7 @@ export default function TasksPage() {
         {loading && !isDemo ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-tertiary)', fontSize: 'var(--text-sm)' }}>Loading tasks...</div>
         ) : view === 'board' ? (
-          <div style={{ flex: 1, overflow: 'hidden', padding: '20px 24px 90px' }}>
+          <div style={{ flex: 1, overflow: 'hidden', padding: isMobile ? '12px 12px 90px' : '20px 24px 90px' }}>
             <TaskKanban
               tasks={filtered}
               onTaskUpdate={async (id, updates) => { if (!isDemo) await updateTask(id, updates); }}
@@ -303,13 +346,13 @@ export default function TasksPage() {
             />
           </div>
         ) : view === 'list' ? (
-          <div style={{ flex: 1, overflow: 'auto', padding: '0 24px 90px' }}>
+          <div style={{ flex: 1, overflow: 'auto', padding: isMobile ? '0 12px 90px' : '0 24px 90px' }}>
             <GlassCard padding="sm" hoverable={false} style={{ marginTop: '16px' }}>
-              <ListView tasks={filtered} onComplete={handleComplete} onDelete={handleDelete} />
+              <ListView tasks={filtered} onComplete={handleComplete} onDelete={handleDelete} isMobile={isMobile} />
             </GlassCard>
           </div>
         ) : (
-          <div style={{ flex: 1, overflow: 'auto', padding: '20px 24px 90px' }}>
+          <div style={{ flex: 1, overflow: 'auto', padding: isMobile ? '12px 12px 90px' : '20px 24px 90px' }}>
             <GlassCard padding="md" hoverable={false}>
               <CalendarView tasks={filtered} />
             </GlassCard>

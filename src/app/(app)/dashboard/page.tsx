@@ -8,6 +8,7 @@ import { useDemo } from '@/hooks/useDemo';
 import { useToast } from '@/components/ui/Toast';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { NeonButton } from '@/components/ui/NeonButton';
+import { useResponsive } from '@/hooks/useResponsive';
 import { StatusBar } from '@/components/dashboard/StatusBar';
 import { ProductivityRing } from '@/components/dashboard/ProductivityRing';
 import { BottleneckForecast } from '@/components/dashboard/BottleneckForecast';
@@ -152,6 +153,7 @@ const AddTaskModal: React.FC<{ onClose: () => void; onCreate: (data: Partial<Tas
 // ─── Dashboard Page ───────────────────────────────────────────────────────────
 export default function DashboardPage() {
   const { user } = useAuth();
+  const { isMobile } = useResponsive();
   const { tasks, loading, error, createTask, completeTask, deleteTask } = useTasks(user?.id || '');
   const { gamification, isDemo, tasks: demoTasks } = useDemo();
   const [showAddModal, setShowAddModal] = useState(false);
@@ -256,7 +258,7 @@ export default function DashboardPage() {
       <StatusBar tasks={allTasks} streak={gamificationState.streak} />
 
       {/* Main content area */}
-      <div style={{ flex: 1, overflow: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <div style={{ flex: 1, overflow: 'auto', padding: isMobile ? '16px' : '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
         {error && (
           <div style={{ background: 'rgba(236,72,153,0.1)', border: '1px solid var(--neon-pink)', borderRadius: 'var(--radius-md)', padding: '12px 16px', color: 'var(--neon-pink)', fontSize: 'var(--text-sm)' }}>
             {error}
@@ -264,7 +266,7 @@ export default function DashboardPage() {
         )}
 
         {/* Row 1: Today's Focus + Productivity Ring */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '20px', alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 300px', gap: '20px', alignItems: 'start' }}>
 
           {/* Today's Focus / Priorities */}
           <GlassCard padding="md" hoverable={false} animate data-tour="task-board">
@@ -387,7 +389,7 @@ export default function DashboardPage() {
         </AnimatePresence>
 
         {/* Row 3: Bottleneck Forecast + Gamification */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '20px' }}>
           <GlassCard padding="md" hoverable={false} animate>
             <BottleneckForecast days={forecast} />
           </GlassCard>

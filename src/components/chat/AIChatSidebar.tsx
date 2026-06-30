@@ -14,6 +14,8 @@ interface AIChatSidebarProps {
   isOpen: boolean;
   onToggle: () => void;
   userId: string;
+  isMobile?: boolean;
+  isTablet?: boolean;
 }
 
 // Simple regex-based markdown formatter
@@ -55,6 +57,8 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
   isOpen,
   onToggle,
   userId,
+  isMobile = false,
+  isTablet = false,
 }) => {
   const { messages, sendMessage, isStreaming, clearChat, conversationId } = useAIChat(userId);
   const { createTask } = useTasks(userId);
@@ -145,9 +149,26 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
     { label: '📊 Insights', prompt: 'Show productivity insights' },
   ];
 
+  const isOverlay = isMobile || isTablet;
+
   return (
     <>
       <AnimatePresence>
+        {isOpen && isOverlay && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onToggle}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0, 0, 0, 0.6)',
+              backdropFilter: 'blur(4px)',
+              zIndex: 499,
+            }}
+          />
+        )}
         {isOpen && (
           <motion.div
             initial={{ x: 380, opacity: 0.9 }}
@@ -163,7 +184,10 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
               flexDirection: 'column',
               backdropFilter: 'blur(20px)',
               zIndex: 500,
-              position: 'relative',
+              position: isOverlay ? 'fixed' : 'relative',
+              right: isOverlay ? 0 : undefined,
+              top: isOverlay ? 0 : undefined,
+              bottom: isOverlay ? 0 : undefined,
               flexShrink: 0,
               boxShadow: '-10px 0 30px rgba(0,0,0,0.5)',
             }}

@@ -82,7 +82,7 @@ export const TaskKanban: React.FC<TaskKanbanProps> = ({
         overflowX: 'auto',
         paddingBottom: 'var(--space-4)',
         alignItems: 'stretch',
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
       }}
     >
       {columns.map((col) => {

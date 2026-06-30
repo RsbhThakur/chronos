@@ -8,6 +8,7 @@ import { TopBar } from '@/components/layout/TopBar';
 import { CommandPalette } from '@/components/layout/CommandPalette';
 import { useCommandPalette } from '@/hooks/useCommandPalette';
 import { AIChatSidebar } from '@/components/chat/AIChatSidebar';
+import { useResponsive } from '@/hooks/useResponsive';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, loading, isDemo } = useAuth();
@@ -15,21 +16,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { isOpen: isPaletteOpen, open: openPalette, close: closePalette, toggle: togglePalette } = useCommandPalette();
 
-  const [isMobile, setIsMobile] = useState(false);
+  const { isMobile, isTablet } = useResponsive();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
 
-  // Responsive breakpoint detection
+  // Sync collapsible layout with tablet viewport size
   useEffect(() => {
-    const checkSize = () => {
-      setIsMobile(window.innerWidth < 768);
-      setIsCollapsed(window.innerWidth >= 768 && window.innerWidth < 1024);
-    };
-    checkSize();
-    window.addEventListener('resize', checkSize);
-    return () => window.removeEventListener('resize', checkSize);
-  }, []);
+    setIsCollapsed(isTablet);
+  }, [isTablet]);
 
   // Expose chat toggle bindings globally
   useEffect(() => {
@@ -98,6 +93,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           }
         }}
         onSearchClick={togglePalette}
+        isMobile={isMobile}
       />
 
       {/* Body: Sidebar + Content */}
@@ -127,6 +123,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           isOpen={chatOpen}
           onToggle={() => setChatOpen(v => !v)}
           userId={user?.id || 'demo-user'}
+          isMobile={isMobile}
+          isTablet={isTablet}
         />
       </div>
 

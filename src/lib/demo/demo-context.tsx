@@ -29,6 +29,7 @@ interface DemoContextType {
   
   createHabit: (habitInput: Omit<Habit, 'id' | 'userId' | 'streak' | 'completedDates'>) => Promise<Habit>;
   logHabitCompletion: (habitId: string) => Promise<{ habit: Habit; streak: number }>;
+  updateDemoUser: (updates: Partial<UserProfile>) => Promise<UserProfile>;
 }
 
 export const DemoContext = createContext<DemoContextType | undefined>(undefined);
@@ -37,6 +38,51 @@ export const DemoProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isDemo, setIsDemo] = useState<boolean>(false);
   const [currentMode, setCurrentMode] = useState<UserMode>('student');
   const [isSwitching, setIsSwitching] = useState<boolean>(false);
+
+  // Helper to load profile for a mode, using localStorage custom profile if available
+  const getProfileForMode = (mode: UserMode): UserProfile => {
+    if (typeof window === 'undefined') return demoUsers[mode];
+    const storedProfiles = localStorage.getItem('chronos_demo_profiles');
+    if (storedProfiles) {
+      try {
+        const parsed = JSON.parse(storedProfiles);
+        if (parsed[mode]) {
+          const profile = parsed[mode];
+          if (profile.createdAt && typeof profile.createdAt === 'string') {
+            profile.createdAt = new Date(profile.createdAt);
+          }
+          return profile;
+        }
+      } catch (err) {
+        console.error('Failed to parse stored demo profiles:', err);
+      }
+    }
+    return demoUsers[mode];
+  };
+
+  // Active demo user profile state
+  const [demoUser, setDemoUser] = useState<UserProfile>(() => {
+    if (typeof window !== 'undefined') {
+      const persistedMode = localStorage.getItem('chronos_demo_mode_persona') as UserMode || 'student';
+      const storedProfiles = localStorage.getItem('chronos_demo_profiles');
+      if (storedProfiles) {
+        try {
+          const parsed = JSON.parse(storedProfiles);
+          if (parsed[persistedMode]) {
+            const profile = parsed[persistedMode];
+            if (profile.createdAt && typeof profile.createdAt === 'string') {
+              profile.createdAt = new Date(profile.createdAt);
+            }
+            return profile;
+          }
+        } catch (err) {
+          console.error('Failed to parse stored demo profiles on init:', err);
+        }
+      }
+      return demoUsers[persistedMode];
+    }
+    return demoUsers.student;
+  });
   
   // Active demo data states
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -81,6 +127,9 @@ export const DemoProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const persistedDemo = localStorage.getItem('chronos_demo_mode') === 'true';
     const persistedMode = localStorage.getItem('chronos_demo_mode_persona') as UserMode || 'student';
     
+    // Set active demoUser from localStorage or default
+    setDemoUser(getProfileForMode(persistedMode));
+
     if (persistedDemo) {
       setCurrentMode(persistedMode);
       setIsDemo(true);
@@ -1063,6 +1112,9 @@ Our model predicts a **Critical Bottleneck Tomorrow** as your *Investor Pitch De
       setGamification(demoGamification[mode]);
       setAnalytics(generateDemoAnalytics(mode, demoUsers[mode].id));
 
+      // Sync user profile state
+      setDemoUser(getProfileForMode(mode));
+
       setIsSwitching(false);
     }, 200); // 200ms shimmer overlay transition
   };
@@ -1073,6 +1125,9 @@ Our model predicts a **Critical Bottleneck Tomorrow** as your *Investor Pitch De
     setCurrentMode(mode);
     setIsDemo(true);
     
+    // Sync user profile state
+    setDemoUser(getProfileForMode(mode));
+
     // Load datasets
     const defaultTasks = getDemoTasks(mode);
     const customTasks = customTasksRef.current[mode];
@@ -1097,7 +1152,35 @@ Our model predicts a **Critical Bottleneck Tomorrow** as your *Investor Pitch De
     window.location.reload();
   };
 
-  const demoUser = demoUsers[currentMode];
+  const updateDemoUser = async (updates: Partial<UserProfile>) => {
+    const updated = {
+      ...demoUser,
+      ...updates,
+      personality: updates.personality ? {
+        ...demoUser.personality,
+        ...updates.personality
+      } : demoUser.personality,
+      preferences: updates.preferences ? {
+        ...demoUser.preferences,
+        ...updates.preferences
+      } : demoUser.preferences,
+    } as UserProfile;
+
+    const storedProfiles = localStorage.getItem('chronos_demo_profiles');
+    let parsed: Record<string, any> = {};
+    if (storedProfiles) {
+      try {
+        parsed = JSON.parse(storedProfiles);
+      } catch (err) {
+        console.error('Failed to parse stored demo profiles:', err);
+      }
+    }
+    parsed[currentMode] = updated;
+    localStorage.setItem('chronos_demo_profiles', JSON.stringify(parsed));
+
+    setDemoUser(updated);
+    return updated;
+  };
 
   return (
     <DemoContext.Provider
@@ -1122,6 +1205,7 @@ Our model predicts a **Critical Bottleneck Tomorrow** as your *Investor Pitch De
         deleteGoal,
         createHabit,
         logHabitCompletion,
+        updateDemoUser,
       }}
     >
       {children}

@@ -28,6 +28,7 @@ export const useDemo = () => {
       deleteGoal: async () => {},
       createHabit: async () => ({} as any),
       logHabitCompletion: async () => ({} as any),
+      updateDemoUser: async () => ({} as any),
     };
   }
   return context;

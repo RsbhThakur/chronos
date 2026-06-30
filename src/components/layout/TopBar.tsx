@@ -10,9 +10,10 @@ import { NotificationsDropdown } from './NotificationsDropdown';
 interface TopBarProps {
   onMenuClick: () => void;
   onSearchClick: () => void;
+  isMobile?: boolean;
 }
 
-export const TopBar: React.FC<TopBarProps> = ({ onMenuClick, onSearchClick }) => {
+export const TopBar: React.FC<TopBarProps> = ({ onMenuClick, onSearchClick, isMobile = false }) => {
   const { user, signOut, isDemo } = useAuth();
   const { gamification } = useDemo();
   const { unreadCount, requestPermission } = useNotifications(user?.id || '');
@@ -42,8 +43,8 @@ export const TopBar: React.FC<TopBarProps> = ({ onMenuClick, onSearchClick }) =>
       height: '56px',
       display: 'flex',
       alignItems: 'center',
-      gap: '12px',
-      padding: '0 20px',
+      gap: isMobile ? '8px' : '12px',
+      padding: isMobile ? '0 12px' : '0 20px',
       background: 'rgba(8, 8, 18, 0.95)',
       borderBottom: '1px solid var(--glass-border)',
       backdropFilter: 'blur(20px)',
@@ -66,14 +67,16 @@ export const TopBar: React.FC<TopBarProps> = ({ onMenuClick, onSearchClick }) =>
       <span className="neon-text-cyan font-display" style={{ fontSize: 'var(--text-lg)', fontWeight: 900, letterSpacing: '2px', flexShrink: 0 }}>
         CHRONOS
       </span>
-      <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginLeft: '2px' }}>
-        AI Time Guardian
-      </span>
+      {!isMobile && (
+        <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginLeft: '2px' }}>
+          AI Time Guardian
+        </span>
+      )}
 
       {/* Demo badge */}
       {isDemo && (
         <span style={{
-          marginLeft: '8px',
+          marginLeft: isMobile ? '2px' : '8px',
           fontSize: '9px', padding: '2px 8px',
           background: 'rgba(168, 85, 247, 0.15)',
           border: '1px solid rgba(168, 85, 247, 0.4)',
@@ -83,7 +86,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onMenuClick, onSearchClick }) =>
           letterSpacing: '0.5px',
           fontWeight: 600,
         }}>
-          DEMO MODE
+          DEMO
         </span>
       )}
 
@@ -95,23 +98,39 @@ export const TopBar: React.FC<TopBarProps> = ({ onMenuClick, onSearchClick }) =>
         onClick={onSearchClick}
         style={{
           display: 'flex', alignItems: 'center', gap: '8px',
-          padding: '6px 12px',
-          background: 'rgba(255,255,255,0.04)',
-          border: '1px solid var(--glass-border)',
-          borderRadius: 'var(--radius-md)',
+          padding: isMobile ? '6px' : '6px 12px',
+          background: isMobile ? 'none' : 'rgba(255,255,255,0.04)',
+          border: isMobile ? 'none' : '1px solid var(--glass-border)',
+          borderRadius: isMobile ? '50%' : 'var(--radius-md)',
           cursor: 'pointer', color: 'var(--text-tertiary)',
           fontSize: 'var(--text-xs)',
-          transition: 'border-color 0.2s ease',
+          transition: 'all 0.2s ease',
         }}
-        onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--neon-cyan)'}
-        onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--glass-border)'}
+        onMouseEnter={(e) => {
+          if (!isMobile) {
+            e.currentTarget.style.borderColor = 'var(--neon-cyan)';
+          } else {
+            e.currentTarget.style.color = 'var(--text-primary)';
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!isMobile) {
+            e.currentTarget.style.borderColor = 'var(--glass-border)';
+          } else {
+            e.currentTarget.style.color = 'var(--text-tertiary)';
+          }
+        }}
       >
-        <Search size={13} />
-        <span>Search</span>
-        <kbd style={{
-          background: 'rgba(255,255,255,0.06)', border: '1px solid var(--glass-border)',
-          borderRadius: '4px', padding: '1px 5px', fontSize: '10px', color: 'var(--text-tertiary)',
-        }}>⌘K</kbd>
+        <Search size={isMobile ? 18 : 13} />
+        {!isMobile && (
+          <>
+            <span>Search</span>
+            <kbd style={{
+              background: 'rgba(255,255,255,0.06)', border: '1px solid var(--glass-border)',
+              borderRadius: '4px', padding: '1px 5px', fontSize: '10px', color: 'var(--text-tertiary)',
+            }}>⌘K</kbd>
+          </>
+        )}
       </button>
 
       {/* AI Chat Button */}

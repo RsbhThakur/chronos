@@ -46,7 +46,7 @@ const SettingRow: React.FC<{ label: string; description?: string; children: Reac
 export default function SettingsPage() {
   const { user, signOut } = useAuth();
   const router = useRouter();
-  const { isDemo } = useDemo();
+  const { isDemo, updateDemoUser, switchDemoMode } = useDemo();
   const { showToast } = useToast();
   const [activeSection, setActiveSection] = useState<Section>('profile');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -161,6 +161,7 @@ export default function SettingsPage() {
         showToast({ type: 'error', message: 'Failed to auto-save changes.' });
       }
     } else {
+      await updateDemoUser({ preferences: updatedPreferences });
       showToast({ type: 'success', message: 'Settings saved (Demo Mode).' });
     }
   };
@@ -212,6 +213,7 @@ export default function SettingsPage() {
         showToast({ type: 'error', message: 'Failed to auto-save notification settings.' });
       }
     } else {
+      await updateDemoUser({ preferences: updatedPreferences });
       showToast({ type: 'success', message: 'Notification settings saved (Demo Mode).' });
     }
   };
@@ -244,7 +246,28 @@ export default function SettingsPage() {
         showToast({ type: 'error', message: 'Failed to save personality change.' });
       }
     } else {
+      await updateDemoUser({ personality: updatedPersonality });
       showToast({ type: 'success', message: `Personality profile updated in Demo Mode!` });
+    }
+  };
+
+  const updateModeSetting = async (val: UserMode) => {
+    if (!user) return;
+
+    if (!isDemo && user.id) {
+      try {
+        const docRef = doc(clientDb, 'users', user.id);
+        await updateDoc(docRef, {
+          mode: val,
+        });
+        showToast({ type: 'success', message: 'Productivity mode auto-saved!' });
+      } catch (err) {
+        console.error('Failed to auto-save productivity mode:', err);
+        showToast({ type: 'error', message: 'Failed to save mode change.' });
+      }
+    } else {
+      switchDemoMode(val);
+      showToast({ type: 'success', message: 'Productivity mode updated in Demo Mode!' });
     }
   };
 
@@ -300,7 +323,23 @@ export default function SettingsPage() {
             <SettingRow label="Mode" description="Your productivity persona">
               <div style={{ display: 'flex', gap: '6px' }}>
                 {(['student', 'professional', 'entrepreneur'] as UserMode[]).map((m) => (
-                  <span key={m} style={{ fontSize: '10px', padding: '3px 10px', borderRadius: 'var(--radius-full)', border: `1px solid ${user?.mode === m ? 'var(--neon-cyan)' : 'var(--glass-border)'}`, color: user?.mode === m ? 'var(--neon-cyan)' : 'var(--text-tertiary)', textTransform: 'capitalize', cursor: 'default' }}>{m}</span>
+                  <span
+                    key={m}
+                    onClick={() => updateModeSetting(m)}
+                    style={{
+                      fontSize: '10px',
+                      padding: '3px 10px',
+                      borderRadius: 'var(--radius-full)',
+                      border: `1px solid ${user?.mode === m ? 'var(--neon-cyan)' : 'var(--glass-border)'}`,
+                      color: user?.mode === m ? 'var(--neon-cyan)' : 'var(--text-tertiary)',
+                      textTransform: 'capitalize',
+                      cursor: 'pointer',
+                      background: user?.mode === m ? 'rgba(0,229,255,0.06)' : 'transparent',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    {m}
+                  </span>
                 ))}
               </div>
             </SettingRow>
