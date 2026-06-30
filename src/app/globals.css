@@ -318,7 +318,13 @@ a:hover { text-decoration: underline; }
   100% { transform: scale(1); }
 }
 
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 /* Utility classes */
+.animate-spin { animation: spin 1s linear infinite; }
 .animate-pulse-neon { animation: pulse-neon 2s ease-in-out infinite; }
 .animate-float { animation: float 3s ease-in-out infinite; }
 .animate-glow { animation: glow-pulse 2s ease-in-out infinite; }
