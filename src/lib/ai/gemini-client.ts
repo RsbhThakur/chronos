@@ -14,7 +14,7 @@ import { getSystemInstruction as getDecomposerInstruction } from './agents/decom
 // Singleton instance of GoogleGenAI client configured for Vertex AI
 export const ai = new GoogleGenAI({
   vertexai: true,
-  project: process.env.VERTEX_PROJECT_ID,
+  project: process.env.VERTEX_PROJECT_ID || 'placeholder-project-id',
   location: process.env.VERTEX_LOCATION || 'global',
 });
 
