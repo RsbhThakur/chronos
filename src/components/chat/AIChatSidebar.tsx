@@ -95,6 +95,13 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
     setInput('');
   };
 
+  const handleVoiceTranscript = (text: string) => {
+    if (isStreaming || !text.trim()) return;
+    const fullText = input.trim() ? `${input} ${text}` : text;
+    sendMessage(fullText);
+    setInput('');
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -376,7 +383,7 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
                   isActive={voiceActive}
                   onActivate={() => setVoiceActive(true)}
                   onDeactivate={() => setVoiceActive(false)}
-                  onTranscript={(text) => setInput((prev) => (prev ? prev + ' ' + text : text))}
+                  onTranscript={handleVoiceTranscript}
                 />
 
                 <button

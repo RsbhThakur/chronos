@@ -21,6 +21,12 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
   const recognitionRef = useRef<any>(null);
   const [isSupported, setIsSupported] = useState(false);
 
+  // Keep callbacks fresh using a mutable ref to prevent restarting the speech recognition engine
+  const callbacksRef = useRef({ onActivate, onDeactivate, onTranscript });
+  useEffect(() => {
+    callbacksRef.current = { onActivate, onDeactivate, onTranscript };
+  }, [onActivate, onDeactivate, onTranscript]);
+
   // Initialize Speech Recognition
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -35,14 +41,14 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
         recognition.lang = 'en-US';
 
         recognition.onstart = () => {
-          onActivate();
+          callbacksRef.current.onActivate();
         };
 
         recognition.onresult = (event: any) => {
           if (event.results && event.results[0] && event.results[0][0]) {
             const text = event.results[0][0].transcript;
             if (text) {
-              onTranscript(text);
+              callbacksRef.current.onTranscript(text);
             }
           }
         };
@@ -65,17 +71,17 @@ export const VoiceInput: React.FC<VoiceInputProps> = ({
               message: 'Speech recognition error: ' + event.error,
             });
           }
-          onDeactivate();
+          callbacksRef.current.onDeactivate();
         };
 
         recognition.onend = () => {
-          onDeactivate();
+          callbacksRef.current.onDeactivate();
         };
 
         recognitionRef.current = recognition;
       }
     }
-  }, [onActivate, onDeactivate, onTranscript, showToast]);
+  }, [showToast]);
 
   const toggleListening = () => {
     if (!isSupported) {
