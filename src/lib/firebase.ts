@@ -19,49 +19,22 @@ const getFirebaseConfig = () => {
 
 const firebaseConfig = getFirebaseConfig();
 
-let _app: any = null;
-let _auth: any = null;
-let _db: any = null;
+let app: any;
+let auth: any;
+let db: any;
 
-function getClientApp() {
-  if (!_app) {
-    if (getApps().length > 0) {
-      _app = getApp();
-    } else {
-      const config = getFirebaseConfig();
-      // If API key is missing or is the placeholder, log a warning instead of hard crashing on module load
-      if (!config.apiKey || config.apiKey.includes('Placeholder')) {
-        console.warn('Firebase Client SDK is initializing with placeholder credentials.');
-      }
-      _app = initializeApp(config);
-    }
+if (getApps().length > 0) {
+  app = getApp();
+} else {
+  // If API key is missing or is the placeholder, log a warning instead of hard crashing on module load
+  if (!firebaseConfig.apiKey || firebaseConfig.apiKey.includes('Placeholder')) {
+    console.warn('Firebase Client SDK is initializing with placeholder credentials.');
   }
-  return _app;
+  app = initializeApp(firebaseConfig);
 }
 
-const app = new Proxy({} as any, {
-  get(target, prop) {
-    const inst = getClientApp();
-    const val = (inst as any)[prop];
-    return typeof val === 'function' ? val.bind(inst) : val;
-  }
-});
-
-const auth = new Proxy({} as any, {
-  get(target, prop) {
-    if (!_auth) _auth = getAuth(getClientApp());
-    const val = (_auth as any)[prop];
-    return typeof val === 'function' ? val.bind(_auth) : val;
-  }
-});
-
-const db = new Proxy({} as any, {
-  get(target, prop) {
-    if (!_db) _db = getFirestore(getClientApp());
-    const val = (_db as any)[prop];
-    return typeof val === 'function' ? val.bind(_db) : val;
-  }
-});
+auth = getAuth(app);
+db = getFirestore(app);
 
 // Lazy Messaging Init (client-side only)
 let messaging: Messaging | null = null;
