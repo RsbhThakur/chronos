@@ -145,27 +145,27 @@ Since we are submitting this project for direct, interactive jury evaluation rat
 
 ### 1. 🌌 Onboarding & Landing
 The entryway into the Chronos ecosystem. Here, the user selects their dedicated persona (Student, Professional, or Entrepreneur) which customizes their system prompts, seed states, and dashboard themes.
-![Onboarding & Landing](../public/screenshots/01_landing_page.png)
+![Onboarding & Landing](https://github.com/RsbhThakur/chronos/raw/master/public/screenshots/01_landing_page.png)
 
 ### 2. ⚡ The Time Guardian Cockpit (Dashboard)
 A premium dark-cyberpunk layout displaying active Kanban tasks, long-term goals, customizable productivity habits, and the real-time AI analytics forecaster.
-![Chronos Main Cockpit](../public/screenshots/05_dashboard_demo.png)
+![Chronos Main Cockpit](https://github.com/RsbhThakur/chronos/raw/master/public/screenshots/05_dashboard_demo.png)
 
 ### 3. 🚨 Interactive Rescue Mode (The Guardian Intercept)
 When activated, the multi-page dashboard transitions seamlessly into a locked-down, single-focus **Action Center**. The Rescue Agent parses available time blocks, drops non-critical tasks ("Sacrifices"), and compiles a minute-by-minute survival schedule.
-![Rescue Mode Active](../public/screenshots/08_rescue_action_center.png)
+![Rescue Mode Active](https://github.com/RsbhThakur/chronos/raw/master/public/screenshots/08_rescue_action_center.png)
 
 ### 4. 👻 Ghost Worker Studio
 Tell the companion to handle redundant work (like drafting presentations, email updates, or code scaffolding) in the background. The Ghost Worker drafts deliverables and populates a secure side-panel preview environment for 1-click edits.
-![Ghost Worker Draft Panel](../public/screenshots/11_ghost_worker_generated_draft.png)
+![Ghost Worker Draft Panel](https://github.com/RsbhThakur/chronos/raw/master/public/screenshots/11_ghost_worker_generated_draft.png)
 
 ### 5. 💬 Real-Time Conversational AI Assistant
 Our custom-engineered safe markdown and code-block parser. It processes token streams in real-time, completely replacing unsafe custom regex parse blocks to eliminate HTML-injection vectors.
-![AI Assistant Chat Sidebar](../public/screenshots/12_chat_sidebar_open.png)
+![AI Assistant Chat Sidebar](https://github.com/RsbhThakur/chronos/raw/master/public/screenshots/12_chat_sidebar_open.png)
 
 ### 📊 6. Time Warp Analytics
 Provides linear cognitive bottleneck prediction up to 7 days in advance based on historic velocity, streaks, and sleep trackers.
-![Time Warp Analytical Suite](../public/screenshots/15_analytics_main.png)
+![Time Warp Analytical Suite](https://github.com/RsbhThakur/chronos/raw/master/public/screenshots/15_analytics_main.png)
 
 ---
 
