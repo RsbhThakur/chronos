@@ -2,10 +2,27 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const { signIn, signInGuest, startDemo, loading, user, isDemo } = useAuth();
   const [sessionExpired, setSessionExpired] = useState(false);
+  const router = useRouter();
+
+  // Redirect authenticated users or demo sessions
+  useEffect(() => {
+    if (!loading) {
+      if (user) {
+        if (user.onboardingCompleted) {
+          router.push('/dashboard');
+        } else {
+          router.push('/onboarding');
+        }
+      } else if (isDemo) {
+        router.push('/dashboard');
+      }
+    }
+  }, [user, isDemo, loading, router]);
 
   // Auto-trigger demo if param is passed, and detect session expiration
   useEffect(() => {

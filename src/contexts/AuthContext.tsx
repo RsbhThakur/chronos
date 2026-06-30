@@ -112,6 +112,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [session]);
 
+  // Redirect authenticated or demo users away from /login
+  useEffect(() => {
+    if (!loading && pathname === '/login') {
+      if (user) {
+        if (user.onboardingCompleted) {
+          router.push('/dashboard');
+        } else {
+          router.push('/onboarding');
+        }
+      } else if (isDemo) {
+        router.push('/dashboard');
+      }
+    }
+  }, [user, isDemo, loading, pathname, router]);
+
   // 3. Listen to Firebase Auth state change and fetch Firestore profile
   useEffect(() => {
     if (isDemo) return;
