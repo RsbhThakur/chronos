@@ -118,6 +118,25 @@ export const useNotifications = (userId: string) => {
           }
 
           const reg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+          
+          // Wait for service worker to become active and ready to avoid PushManager subscription AbortError
+          await navigator.serviceWorker.ready;
+          if (!reg.active && (reg.installing || reg.waiting)) {
+            const activeSw = reg.installing || reg.waiting;
+            if (activeSw) {
+              await new Promise<void>((resolve) => {
+                const handler = () => {
+                  if (activeSw.state === 'activated') {
+                    activeSw.removeEventListener('statechange', handler);
+                    resolve();
+                  }
+                };
+                activeSw.addEventListener('statechange', handler);
+                setTimeout(resolve, 3000);
+              });
+            }
+          }
+
           const token = await getToken(messaging, {
             serviceWorkerRegistration: reg,
             vapidKey: vapidKey,
