@@ -9,6 +9,7 @@ import { CommandPalette } from '@/components/layout/CommandPalette';
 import { useCommandPalette } from '@/hooks/useCommandPalette';
 import { AIChatSidebar } from '@/components/chat/AIChatSidebar';
 import { useResponsive } from '@/hooks/useResponsive';
+import { ErrorBoundary } from '@/components/layout/ErrorBoundary';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, loading, isDemo } = useAuth();
@@ -106,7 +107,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           onClose={() => setSidebarOpen(false)}
         />
 
-        {/* Main Content */}
         <main style={{
           flex: 1,
           overflow: 'hidden',
@@ -115,7 +115,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           minWidth: 0,
           minHeight: 0,
         }}>
-          {children}
+          <ErrorBoundary>
+            {children}
+          </ErrorBoundary>
         </main>
 
         {/* Global AI Chat Sidebar */}
