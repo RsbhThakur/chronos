@@ -172,12 +172,19 @@ export async function POST(req: NextRequest) {
           let hasFunctionCalls = false;
           let textAccumulated = '';
           const turnFunctionCalls: any[] = [];
+          const modelParts: any[] = [];
 
           for await (const chunk of responseStream) {
             const text = chunk.text;
             if (text) {
               textAccumulated += text;
               sendEvent({ type: 'text', content: text });
+            }
+
+            // Capture raw candidate parts from the stream chunk to preserve peer thought_signatures
+            const parts = chunk.candidates?.[0]?.content?.parts;
+            if (parts && parts.length > 0) {
+              modelParts.push(...parts);
             }
 
             const functionCalls = chunk.functionCalls;
@@ -190,11 +197,11 @@ export async function POST(req: NextRequest) {
           if (hasFunctionCalls && turnFunctionCalls.length > 0) {
             const toolResults: any[] = [];
 
-            // Add model turn representing function calls to contents array
-            // Spreading/passing the full fc object preserves required internal properties like thought_signature
+            // Add model turn representing function calls to contents array.
+            // We use the exact modelParts captured from the stream to preserve critical peer properties like thought_signatures.
             contents.push({
               role: 'model',
-              parts: turnFunctionCalls.map(fc => ({ functionCall: fc }))
+              parts: modelParts.length > 0 ? modelParts : turnFunctionCalls.map(fc => ({ functionCall: fc }))
             });
 
             for (const fc of turnFunctionCalls) {
