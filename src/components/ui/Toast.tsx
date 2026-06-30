@@ -70,7 +70,7 @@ const Toast: React.FC<{ toast: ToastItem; onDismiss: (id: string) => void }> = (
       transition={{ type: 'spring', stiffness: 320, damping: 28 }}
       style={{
         position: 'relative',
-        background: 'var(--bg-glass)',
+        background: 'rgba(14, 14, 24, 0.96)',
         backdropFilter: 'blur(12px)',
         border: `1px solid ${color}40`,
         borderLeft: `3px solid ${color}`,
@@ -79,7 +79,7 @@ const Toast: React.FC<{ toast: ToastItem; onDismiss: (id: string) => void }> = (
         minWidth: '300px',
         maxWidth: '400px',
         overflow: 'hidden',
-        boxShadow: `0 8px 24px rgba(0,0,0,0.4), 0 0 16px ${color}15`,
+        boxShadow: `0 8px 24px rgba(0,0,0,0.5), 0 0 16px ${color}15`,
       }}
     >
       {/* Content */}

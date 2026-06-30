@@ -83,11 +83,11 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({ on
         right: 0,
         marginTop: '8px',
         width: '340px',
-        background: 'var(--bg-glass)',
+        background: 'rgba(14, 14, 24, 0.96)',
         backdropFilter: 'blur(20px)',
         border: '1px solid var(--glass-border)',
         borderRadius: 'var(--radius-lg)',
-        boxShadow: '0 16px 40px rgba(0,0,0,0.5)',
+        boxShadow: '0 16px 40px rgba(0,0,0,0.6)',
         zIndex: 300,
         overflow: 'hidden',
       }}
