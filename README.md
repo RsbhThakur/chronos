@@ -238,7 +238,7 @@ Chronos is optimized for automated deployment on **Google Cloud Run** using **Cl
 ## 👥 Evaluation Guide
 
 > [!IMPORTANT]
-> **NO VIDEO SUBMISSION NOTE**: Because we are submitting this project for direct, interactive jury evaluation rather than a passive recorded walkthrough video, we have engineered two distinct, fully-supported runtime modes so that judges can easily audit every single layer of the Chronos multi-agent ecosystem.
+> We have engineered two distinct, fully-supported runtime modes so that judges can easily audit every single layer of the Chronos multi-agent ecosystem.
 > 
 > * **🔐 1. Live Google Authentication (The Complete Production Experience)**
 >   * Click **"Sign In with Google"** on the landing screen.
