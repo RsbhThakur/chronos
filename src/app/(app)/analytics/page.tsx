@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useDemo } from '@/hooks/useDemo';
+import { useResponsive } from '@/hooks/useResponsive';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { ProgressRing } from '@/components/ui/ProgressRing';
 import { XPBar } from '@/components/gamification/XPBar';
@@ -35,6 +36,7 @@ import { db as clientDb } from '@/lib/firebase';
 
 export default function AnalyticsPage() {
   const { user, isDemo: authDemo } = useAuth();
+  const { isMobile, isTablet } = useResponsive();
   const demoContext = useDemo();
 
   const isDemo = authDemo || demoContext.isDemo;
@@ -306,7 +308,7 @@ export default function AnalyticsPage() {
       style={{
         flex: 1,
         overflow: 'auto',
-        padding: '24px',
+        padding: isMobile ? '16px' : '24px',
         display: 'flex',
         flexDirection: 'column',
         gap: '24px',
@@ -550,7 +552,7 @@ export default function AnalyticsPage() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: '1.4fr 1fr',
+          gridTemplateColumns: isMobile || isTablet ? '1fr' : '1.4fr 1fr',
           gap: '24px',
           alignItems: 'start',
         }}
@@ -611,7 +613,7 @@ export default function AnalyticsPage() {
           </GlassCard>
 
           {/* D. LOWER TWO CHARTS ROW */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }} className="lower-charts-row">
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '20px' }} className="lower-charts-row">
             <GlassCard padding="md" hoverable={false} animate>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
                 <Layers size={16} style={{ color: 'var(--neon-green)' }} />
