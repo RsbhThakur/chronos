@@ -366,11 +366,11 @@ const TaskSummaryModal: React.FC<{
   const [timeLeftStr, setTimeLeftStr] = useState('');
   const [urgency, setUrgency] = useState<'normal' | 'amber' | 'red' | 'overdue'>('normal');
 
-  useEffect(() => {
+  React.useEffect(() => {
     setSubtasks(task.subtasks || []);
   }, [task.subtasks]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     const calculateTimeLeft = () => {
       if (task.status === 'completed') {
         setTimeLeftStr('Completed');
