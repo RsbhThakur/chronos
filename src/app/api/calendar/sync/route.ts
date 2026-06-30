@@ -93,6 +93,12 @@ export async function POST(request: Request) {
       session
     );
 
+    if (result.success && result.eventId) {
+      await adminDb.collection('users').doc(userId).collection('tasks').doc(taskId).update({
+        calendarEventId: result.eventId
+      });
+    }
+
     return NextResponse.json(result);
   } catch (error) {
     const err = error as Error;

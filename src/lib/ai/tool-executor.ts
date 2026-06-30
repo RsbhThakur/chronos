@@ -150,7 +150,7 @@ async function toolCreateTask(args: any, userId: string, session: any) {
   return { success: true, taskId, message: `Task created: ${newTask.title}` };
 }
 
-async function toolUpdateTask(args: any, userId: string) {
+async function toolUpdateTask(args: any, userId: string, session: any) {
   const { taskId, updates } = args;
   if (!taskId) throw new Error('Missing taskId');
 
@@ -158,15 +158,70 @@ async function toolUpdateTask(args: any, userId: string) {
   const taskSnap = await taskRef.get();
   if (!taskSnap.exists) throw new Error('Task not found');
 
+  const oldTask = taskSnap.data() as Task;
+
   const cleanedUpdates: any = { ...updates };
   if (updates.deadline) cleanedUpdates.deadline = new Date(updates.deadline);
   if (updates.completedAt) cleanedUpdates.completedAt = new Date(updates.completedAt);
 
   await taskRef.update(cleanedUpdates);
+
+  // Sync update to Google Calendar
+  try {
+    const userDoc = await adminDb.collection('users').doc(userId).get();
+    const userData = userDoc.exists ? userDoc.data() : null;
+    const calendarSyncEnabled = userData?.preferences?.calendarSyncEnabled === true;
+
+    if (calendarSyncEnabled && session?.accessToken) {
+      const calendarEventId = oldTask.calendarEventId || cleanedUpdates.calendarEventId;
+      const title = cleanedUpdates.title !== undefined ? cleanedUpdates.title : oldTask.title;
+      const description = cleanedUpdates.description !== undefined ? cleanedUpdates.description : oldTask.description;
+      const status = cleanedUpdates.status !== undefined ? cleanedUpdates.status : oldTask.status;
+
+      // Prefix title with ✅ if task is completed
+      const displayTitle = status === 'completed' ? `✅ ${title}` : title;
+
+      const deadlineDate = cleanedUpdates.deadline 
+        ? cleanedUpdates.deadline 
+        : ((oldTask.deadline as any)?.toDate ? (oldTask.deadline as any).toDate() : new Date(oldTask.deadline));
+      const startTime = deadlineDate.toISOString();
+      const estimatedMinutes = cleanedUpdates.estimatedMinutes !== undefined ? cleanedUpdates.estimatedMinutes : (oldTask.estimatedMinutes || 30);
+      const endTime = new Date(deadlineDate.getTime() + estimatedMinutes * 60 * 1000).toISOString();
+
+      if (calendarEventId) {
+        // Update existing calendar event
+        await toolUpdateCalendarEvent({
+          eventId: calendarEventId,
+          title: displayTitle,
+          startTime,
+          endTime,
+          description: description || '',
+        }, session);
+        console.log(`[toolUpdateTask] Updated Google Calendar event ${calendarEventId} for task ${taskId}`);
+      } else {
+        // Create a new calendar event if it didn't exist before
+        const calendarResult = await toolCreateCalendarEvent({
+          title: displayTitle,
+          startTime,
+          endTime,
+          description: description || '',
+        }, session);
+
+        if (calendarResult.success && calendarResult.eventId) {
+          await taskRef.update({
+            calendarEventId: calendarResult.eventId
+          });
+        }
+      }
+    }
+  } catch (calendarErr) {
+    console.error('[toolUpdateTask] Calendar sync update failed:', calendarErr);
+  }
+
   return { success: true, taskId, message: 'Task updated' };
 }
 
-async function toolCompleteTask(args: any, userId: string) {
+async function toolCompleteTask(args: any, userId: string, session: any) {
   const { taskId } = args;
   if (!taskId) throw new Error('Missing taskId');
 
@@ -184,6 +239,51 @@ async function toolCompleteTask(args: any, userId: string) {
     status: 'completed',
     completedAt,
   });
+
+  // Sync completion to Google Calendar by prefixing the event title with a checkmark "✅ "
+  try {
+    const userDoc = await adminDb.collection('users').doc(userId).get();
+    const userData = userDoc.exists ? userDoc.data() : null;
+    const calendarSyncEnabled = userData?.preferences?.calendarSyncEnabled === true;
+
+    if (calendarSyncEnabled && session?.accessToken) {
+      const calendarEventId = taskData.calendarEventId;
+      const title = `✅ ${taskData.title}`;
+      const description = taskData.description || '';
+
+      const deadlineDate = (taskData.deadline as any)?.toDate ? (taskData.deadline as any).toDate() : new Date(taskData.deadline);
+      const startTime = deadlineDate.toISOString();
+      const estimatedMinutes = taskData.estimatedMinutes || 30;
+      const endTime = new Date(deadlineDate.getTime() + estimatedMinutes * 60 * 1000).toISOString();
+
+      if (calendarEventId) {
+        await toolUpdateCalendarEvent({
+          eventId: calendarEventId,
+          title,
+          startTime,
+          endTime,
+          description,
+        }, session);
+        console.log(`[toolCompleteTask] Marked Google Calendar event ${calendarEventId} as completed`);
+      } else {
+        // Create completed calendar event if it didn't exist
+        const calendarResult = await toolCreateCalendarEvent({
+          title,
+          startTime,
+          endTime,
+          description,
+        }, session);
+
+        if (calendarResult.success && calendarResult.eventId) {
+          await taskRef.update({
+            calendarEventId: calendarResult.eventId
+          });
+        }
+      }
+    }
+  } catch (calendarErr) {
+    console.error('[toolCompleteTask] Calendar sync completion failed:', calendarErr);
+  }
 
   // Award XP based on priority: critical=50, high=30, medium=20, low=10
   let xpToAdd = 10;
@@ -204,11 +304,33 @@ async function toolCompleteTask(args: any, userId: string) {
   };
 }
 
-async function toolDeleteTask(args: any, userId: string) {
+async function toolDeleteTask(args: any, userId: string, session: any) {
   const { taskId } = args;
   if (!taskId) throw new Error('Missing taskId');
 
   const taskRef = adminDb.collection('users').doc(userId).collection('tasks').doc(taskId);
+  const taskSnap = await taskRef.get();
+  
+  if (taskSnap.exists) {
+    const taskData = taskSnap.data() as Task;
+    
+    // Sync delete to Google Calendar
+    try {
+      const userDoc = await adminDb.collection('users').doc(userId).get();
+      const userData = userDoc.exists ? userDoc.data() : null;
+      const calendarSyncEnabled = userData?.preferences?.calendarSyncEnabled === true;
+
+      if (calendarSyncEnabled && session?.accessToken && taskData.calendarEventId) {
+        await toolDeleteCalendarEvent({
+          eventId: taskData.calendarEventId
+        }, session);
+        console.log(`[toolDeleteTask] Deleted Google Calendar event ${taskData.calendarEventId} for task ${taskId}`);
+      }
+    } catch (calendarErr) {
+      console.error('[toolDeleteTask] Calendar sync deletion failed:', calendarErr);
+    }
+  }
+
   await taskRef.delete();
   return { success: true, taskId, message: 'Task deleted' };
 }
@@ -695,6 +817,72 @@ async function toolCreateCalendarEvent(args: any, session: any) {
     return { success: false, error: `Google API error: ${err.message || err}` };
   }
 }
+
+async function toolDeleteCalendarEvent(args: any, session: any) {
+  const { eventId } = args;
+  if (!eventId) throw new Error('Missing eventId');
+
+  if (!session || !session.accessToken) {
+    return { success: false, error: 'Google Calendar access token is missing or not linked.' };
+  }
+
+  try {
+    const oauth2Client = new google.auth.OAuth2();
+    oauth2Client.setCredentials({ access_token: session.accessToken });
+    const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+
+    await calendar.events.delete({
+      calendarId: 'primary',
+      eventId: eventId,
+    });
+
+    return {
+      success: true,
+      message: `Calendar event deleted.`
+    };
+  } catch (err: any) {
+    console.error('Google Calendar event deletion failed:', err.message || err);
+    return { success: false, error: `Google API error: ${err.message || err}` };
+  }
+}
+
+async function toolUpdateCalendarEvent(args: any, session: any) {
+  const { eventId, title, startTime, endTime, description } = args;
+  if (!eventId) throw new Error('Missing eventId');
+
+  if (!session || !session.accessToken) {
+    return { success: false, error: 'Google Calendar access token is missing or not linked.' };
+  }
+
+  try {
+    const oauth2Client = new google.auth.OAuth2();
+    oauth2Client.setCredentials({ access_token: session.accessToken });
+    const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+
+    const requestBody: any = {};
+    if (title !== undefined) requestBody.summary = title;
+    if (description !== undefined) requestBody.description = description;
+    if (startTime !== undefined) requestBody.start = { dateTime: startTime };
+    if (endTime !== undefined) requestBody.end = { dateTime: endTime };
+
+    const response = await calendar.events.patch({
+      calendarId: 'primary',
+      eventId: eventId,
+      requestBody,
+    });
+
+    return {
+      success: true,
+      eventId: response.data.id,
+      htmlLink: response.data.htmlLink,
+      message: `Calendar event updated.`
+    };
+  } catch (err: any) {
+    console.error('Google Calendar event update failed:', err.message || err);
+    return { success: false, error: `Google API error: ${err.message || err}` };
+  }
+}
+
 
 async function toolCreateGoal(args: any, userId: string) {
   const goalId = uuidv4();

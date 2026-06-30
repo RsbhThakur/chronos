@@ -45,7 +45,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Missing userId' }, { status: 400 });
     }
 
-    const result = await executeToolCall('createTask', body, userId, null);
+    const session = await getServerSession(authOptions) as { accessToken?: string } | null;
+    const result = await executeToolCall('createTask', body, userId, session);
     if (!result.success) {
       return NextResponse.json({ success: false, error: 'Failed to create task' }, { status: 500 });
     }
@@ -65,43 +66,6 @@ export async function POST(request: Request) {
     const taskSnap = await adminDb.collection('users').doc(userId).collection('tasks').doc(result.taskId).get();
     const createdTask = taskSnap.exists ? taskSnap.data() : null;
 
-    // Automatically sync to Google Calendar if enabled in settings
-    if (createdTask) {
-      try {
-        const userDoc = await adminDb.collection('users').doc(userId).get();
-        const userData = userDoc.exists ? userDoc.data() : null;
-        const calendarSyncEnabled = userData?.preferences?.calendarSyncEnabled === true;
-
-        if (calendarSyncEnabled) {
-          const session = await getServerSession(authOptions) as { accessToken?: string } | null;
-          if (session?.accessToken) {
-            const deadlineDate = createdTask.deadline && typeof createdTask.deadline.toDate === 'function'
-              ? createdTask.deadline.toDate()
-              : new Date(createdTask.deadline);
-
-            const startTime = deadlineDate.toISOString();
-            const estimatedMinutes = createdTask.estimatedMinutes || 30;
-            const endTime = new Date(deadlineDate.getTime() + estimatedMinutes * 60 * 1000).toISOString();
-
-            await executeToolCall(
-              'createCalendarEvent',
-              {
-                title: createdTask.title,
-                startTime,
-                endTime,
-                description: createdTask.description || '',
-              },
-              userId,
-              session
-            );
-            console.log(`[API POST Tasks] Automatically synced task ${result.taskId} to Google Calendar.`);
-          }
-        }
-      } catch (calendarErr) {
-        console.error('[API POST Tasks] Failed to automatically sync task to Google Calendar:', calendarErr);
-      }
-    }
-
     return NextResponse.json({ success: true, task: createdTask, message: result.message });
   } catch (error) {
     const err = error as Error;
@@ -118,11 +82,13 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ success: false, error: 'Missing taskId or userId' }, { status: 400 });
     }
 
+    const session = await getServerSession(authOptions) as { accessToken?: string } | null;
+
     let result;
     if (updates?.status === 'completed') {
-      result = await executeToolCall('completeTask', { taskId }, userId, null);
+      result = await executeToolCall('completeTask', { taskId }, userId, session);
     } else {
-      result = await executeToolCall('updateTask', { taskId, updates }, userId, null);
+      result = await executeToolCall('updateTask', { taskId, updates }, userId, session);
     }
 
     if (!result.success) {
@@ -154,7 +120,8 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ success: false, error: 'Missing taskId or userId' }, { status: 400 });
     }
 
-    const result = await executeToolCall('deleteTask', { taskId }, userId, null);
+    const session = await getServerSession(authOptions) as { accessToken?: string } | null;
+    const result = await executeToolCall('deleteTask', { taskId }, userId, session);
     return NextResponse.json(result);
   } catch (error) {
     const err = error as Error;

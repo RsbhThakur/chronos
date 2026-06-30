@@ -11,7 +11,7 @@ import { GlassCard } from '@/components/ui/GlassCard';
 import { TaskKanban } from '@/components/tasks/TaskKanban';
 import { GhostWorkerConsole } from '@/components/ghost/GhostWorkerConsole';
 import { Task, TaskPriority, TaskStatus } from '@/types';
-import { Plus, Search, LayoutGrid, List, Calendar as CalendarIcon, Filter, Clock, AlertTriangle } from 'lucide-react';
+import { Plus, Search, LayoutGrid, List, Calendar as CalendarIcon, Filter, Clock, AlertTriangle, Check, Edit2, RotateCcw, Zap, Sparkles } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useResponsive } from '@/hooks/useResponsive';
 
@@ -346,6 +346,240 @@ const EditTaskModal: React.FC<{
           <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
             <NeonButton variant="cyan" fullWidth loading={loading} onClick={handleSave}>Save Changes</NeonButton>
             <NeonButton variant="purple" onClick={onClose}>Cancel</NeonButton>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
+// ─── Task Summary Modal ────────────────────────────────────────────────────────
+const TaskSummaryModal: React.FC<{
+  task: Task;
+  onClose: () => void;
+  onEditClick: (task: Task) => void;
+  onCompleteToggle: (id: string) => Promise<void>;
+  onUpdateSubtasks?: (id: string, subtasks: any[]) => Promise<void>;
+}> = ({ task, onClose, onEditClick, onCompleteToggle, onUpdateSubtasks }) => {
+  const { isMobile } = useResponsive();
+  const [subtasks, setSubtasks] = useState(task.subtasks || []);
+  const [timeLeftStr, setTimeLeftStr] = useState('');
+  const [urgency, setUrgency] = useState<'normal' | 'amber' | 'red' | 'overdue'>('normal');
+
+  useEffect(() => {
+    setSubtasks(task.subtasks || []);
+  }, [task.subtasks]);
+
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      if (task.status === 'completed') {
+        setTimeLeftStr('Completed');
+        setUrgency('normal');
+        return;
+      }
+
+      const deadline = new Date(task.deadline);
+      const now = new Date();
+      const diffMs = deadline.getTime() - now.getTime();
+
+      if (diffMs < 0) {
+        setTimeLeftStr('OVERDUE');
+        setUrgency('overdue');
+        return;
+      }
+
+      const diffHrs = diffMs / (1000 * 60 * 60);
+      if (diffHrs >= 24) {
+        setTimeLeftStr(deadline.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }));
+        setUrgency('normal');
+      } else {
+        const totalMinutes = Math.floor(diffMs / 60000);
+        const hrs = Math.floor(totalMinutes / 60);
+        const mins = totalMinutes % 60;
+        setTimeLeftStr(`${hrs}h ${mins}m left`);
+        setUrgency(diffHrs < 2 ? 'red' : 'amber');
+      }
+    };
+
+    calculateTimeLeft();
+    const interval = setInterval(calculateTimeLeft, 30000);
+    return () => clearInterval(interval);
+  }, [task.deadline, task.status]);
+
+  const handleSubtaskToggle = async (subtaskId: string) => {
+    const updated = subtasks.map(st => st.id === subtaskId ? { ...st, completed: !st.completed } : st);
+    setSubtasks(updated);
+    if (onUpdateSubtasks) {
+      await onUpdateSubtasks(task.id, updated);
+    }
+  };
+
+  const priorityColors: Record<string, string> = {
+    critical: 'var(--neon-pink)',
+    high:     'var(--neon-amber)',
+    medium:   'var(--neon-cyan)',
+    low:      'var(--neon-green)',
+  };
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)', zIndex: 750, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      onClick={onClose}
+    >
+      <motion.div initial={{ scale: 0.95, y: 15 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 15 }} onClick={(e) => e.stopPropagation()}
+        style={{
+          width: 'min(600px, 94vw)',
+          maxHeight: '85dvh',
+          background: 'rgba(10,10,22,0.98)',
+          backdropFilter: 'blur(24px)',
+          border: '1px solid var(--glass-border)',
+          borderLeft: `4px solid ${priorityColors[task.priority] || 'var(--glass-border)'}`,
+          borderRadius: 'var(--radius-xl)',
+          padding: '24px',
+          boxShadow: '0 24px 60px rgba(0,0,0,0.7)',
+          display: 'flex',
+          flexDirection: 'column',
+          overflowY: 'auto'
+        }}
+      >
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '18px' }}>
+          <div>
+            <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 600 }}>{task.category || 'General'}</span>
+            <h2 style={{ margin: '4px 0 0', fontSize: 'var(--text-md)', fontWeight: 700, color: 'var(--text-primary)' }}>{task.title}</h2>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', fontSize: '20px', padding: '4px' }}>×</button>
+        </div>
+
+        {/* Badges row */}
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '20px' }}>
+          <span className={`badge ${
+            task.priority === 'critical' || task.priority === 'high' ? 'badge--pink' : task.priority === 'medium' ? 'badge--amber' : 'badge--green'
+          }`} style={{ textTransform: 'capitalize' }}>
+            {task.priority} Priority
+          </span>
+          <span className="badge badge--cyan" style={{ textTransform: 'capitalize' }}>
+            {task.status.replace('_', ' ')}
+          </span>
+          {task.aiGenerated && (
+            <span className="badge badge--cyan flex items-center gap-1">
+              <Sparkles size={10} /> AI Synced
+            </span>
+          )}
+          {task.estimatedMinutes && (
+            <span className="badge badge--purple flex items-center gap-1">
+              <Clock size={10} /> {task.estimatedMinutes} min
+            </span>
+          )}
+        </div>
+
+        {/* Description Section */}
+        <div style={{ marginBottom: '20px' }}>
+          <h4 style={{ margin: '0 0 6px', fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Description</h4>
+          <div style={{
+            background: 'rgba(255,255,255,0.02)',
+            border: '1px solid var(--glass-border)',
+            borderRadius: 'var(--radius-md)',
+            padding: '12px 14px',
+            fontSize: 'var(--text-sm)',
+            color: task.description ? 'var(--text-secondary)' : 'var(--text-tertiary)',
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
+            maxHeight: '120px',
+            overflowY: 'auto'
+          }}>
+            {task.description || 'No description provided for this task.'}
+          </div>
+        </div>
+
+        {/* Real-time Countdown clock */}
+        <div style={{
+          background: urgency === 'overdue' ? 'rgba(236,72,153,0.06)' : urgency === 'red' ? 'rgba(239,68,68,0.06)' : 'rgba(0,229,255,0.03)',
+          border: `1px solid ${urgency === 'overdue' || urgency === 'red' ? 'rgba(236,72,153,0.3)' : 'rgba(0,229,255,0.2)'}`,
+          borderRadius: 'var(--radius-md)',
+          padding: '12px 14px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '20px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Clock size={16} style={{ color: urgency === 'overdue' || urgency === 'red' ? 'var(--neon-pink)' : 'var(--neon-cyan)' }} />
+            <span style={{ fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--text-secondary)' }}>Deadline Timeline</span>
+          </div>
+          <span style={{
+            fontSize: 'var(--text-sm)',
+            fontWeight: 700,
+            color: urgency === 'overdue' || urgency === 'red' ? 'var(--neon-pink)' : task.status === 'completed' ? 'var(--neon-green)' : 'var(--neon-cyan)',
+            letterSpacing: '0.5px'
+          }}>
+            {timeLeftStr}
+          </span>
+        </div>
+
+        {/* Checklist / Subtasks */}
+        {subtasks.length > 0 && (
+          <div style={{ marginBottom: '20px' }}>
+            <h4 style={{ margin: '0 0 8px', fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Checklist Subtasks</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-md)', padding: '10px 14px', maxHeight: '160px', overflowY: 'auto' }}>
+              {subtasks.map((st) => (
+                <div key={st.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: 'var(--text-sm)' }}>
+                  <input
+                    type="checkbox"
+                    checked={st.completed}
+                    onChange={() => handleSubtaskToggle(st.id)}
+                    style={{ cursor: 'pointer', width: '15px', height: '15px', accentColor: 'var(--neon-cyan)' }}
+                  />
+                  <span style={{
+                    color: st.completed ? 'var(--text-tertiary)' : 'var(--text-secondary)',
+                    textDecoration: st.completed ? 'line-through' : 'none',
+                    transition: 'all 0.15s ease'
+                  }}>{st.title}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Specialized Rescue Details if Active */}
+        {task.rescuePlan && task.status !== 'completed' && (
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(236,72,153,0.08) 0%, rgba(139,92,246,0.04) 100%)',
+            border: '1px solid rgba(236,72,153,0.4)',
+            borderRadius: 'var(--radius-md)',
+            padding: '12px 14px',
+            marginBottom: '20px',
+            boxShadow: '0 0 15px rgba(236, 72, 153, 0.15)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+              <Zap size={14} className="animate-pulse-neon" style={{ color: 'var(--neon-pink)' }} />
+              <span style={{ fontSize: 'var(--text-xs)', fontWeight: 700, color: 'var(--neon-pink)', textTransform: 'uppercase', letterSpacing: '1px' }}>AI Rescue Mode Active</span>
+            </div>
+            <p style={{ margin: 0, fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+              Chronos Time Guardian has generated an auto-rescue focus list and micro-tasks for this item to resolve your time crunch.
+            </p>
+          </div>
+        )}
+
+        {/* Action Buttons Footer */}
+        <div style={{ display: 'flex', gap: '10px', marginTop: 'auto', borderTop: '1px solid var(--glass-border)', paddingTop: '16px', flexWrap: 'wrap' }}>
+          <NeonButton
+            variant={task.status === 'completed' ? 'cyan' : 'green'}
+            onClick={async () => {
+              await onCompleteToggle(task.id);
+              onClose();
+            }}
+            icon={task.status === 'completed' ? <RotateCcw size={14} /> : <Check size={14} />}
+          >
+            {task.status === 'completed' ? 'Restore Task' : 'Complete Task'}
+          </NeonButton>
+
+          <NeonButton variant="purple" onClick={() => { onEditClick(task); onClose(); }} icon={<Edit2 size={14} />}>
+            Edit Task
+          </NeonButton>
+
+          <div style={{ marginLeft: isMobile ? '0' : 'auto' }}>
+            <NeonButton variant="purple" onClick={onClose}>Close</NeonButton>
           </div>
         </div>
       </motion.div>
