@@ -6,8 +6,10 @@ import { useDemo } from '@/hooks/useDemo';
 import { useToast } from '@/components/ui/Toast';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { NeonButton } from '@/components/ui/NeonButton';
-import { UserMode, WorkStyle, MotivationType, CommunicationStyle } from '@/types';
+import { UserMode, WorkStyle, MotivationType, CommunicationStyle, NotificationChannel } from '@/types';
 import { User, Brain, Zap, Bell, Database, Link2, ChevronRight, Check, X, Download } from 'lucide-react';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db as clientDb } from '@/lib/firebase';
 
 type Section = 'profile' | 'personality' | 'features' | 'integrations' | 'notifications' | 'data';
 
@@ -75,12 +77,12 @@ export default function SettingsPage() {
     }
   };
 
-  // Feature toggles state (would be persisted to Firestore in production)
+  // Feature toggles state
   const [features, setFeatures] = useState({
-    ghostWorker:   user?.preferences?.ghostWorkerEnabled   ?? true,
-    gamification:  user?.preferences?.gamificationEnabled  ?? true,
-    rescueMode:    user?.preferences?.rescueModeEnabled    ?? true,
-    voice:         user?.preferences?.voiceEnabled         ?? false,
+    ghostWorker:   true,
+    gamification:  true,
+    rescueMode:    true,
+    voice:         false,
     cameraScam:    false,
   });
 
@@ -91,9 +93,157 @@ export default function SettingsPage() {
     timing: '2h',
   });
 
-  const updateFeature = (key: keyof typeof features, val: boolean) => {
+  // Sync state with user profile once loaded
+  useEffect(() => {
+    if (user) {
+      setFeatures({
+        ghostWorker:   user.preferences?.ghostWorkerEnabled   ?? true,
+        gamification:  user.preferences?.gamificationEnabled  ?? true,
+        rescueMode:    user.preferences?.rescueModeEnabled    ?? true,
+        voice:         user.preferences?.voiceEnabled         ?? false,
+        cameraScam:    localStorage.getItem('chronos_camera_scan_enabled') === 'true',
+      });
+
+      const channels = user.preferences?.notificationChannels || [];
+      setNotifs({
+        push:  channels.includes('push'),
+        email: channels.includes('email'),
+        inApp: channels.includes('inApp'),
+        timing: localStorage.getItem('chronos_alert_timing') || '2h',
+      });
+    }
+  }, [user]);
+
+  const updateFeatureSetting = async (key: keyof typeof features, val: boolean) => {
+    // 1. Update local UI state immediately
     setFeatures((f) => ({ ...f, [key]: val }));
-    showToast({ type: 'success', message: 'Preference saved.' });
+
+    if (key === 'cameraScam') {
+      localStorage.setItem('chronos_camera_scan_enabled', val ? 'true' : 'false');
+      showToast({ type: 'success', message: 'Camera Scan setting auto-saved.' });
+      return;
+    }
+
+    // 2. Prepare new preferences payload
+    const mapKey: Record<string, string> = {
+      ghostWorker: 'ghostWorkerEnabled',
+      gamification: 'gamificationEnabled',
+      rescueMode: 'rescueModeEnabled',
+      voice: 'voiceEnabled',
+    };
+    const prefKey = mapKey[key];
+    if (!prefKey) return;
+
+    const currentPreferences = user?.preferences || {
+      gamificationEnabled: true,
+      ghostWorkerEnabled: false,
+      rescueModeEnabled: false,
+      voiceEnabled: false,
+      notificationChannels: [],
+    };
+
+    const updatedPreferences = {
+      ...currentPreferences,
+      [prefKey]: val,
+    };
+
+    if (!isDemo && user?.id) {
+      try {
+        const docRef = doc(clientDb, 'users', user.id);
+        await updateDoc(docRef, {
+          preferences: updatedPreferences,
+        });
+        showToast({ type: 'success', message: 'Settings auto-saved.' });
+      } catch (err) {
+        console.error('Failed to auto-save preference:', err);
+        showToast({ type: 'error', message: 'Failed to auto-save changes.' });
+      }
+    } else {
+      showToast({ type: 'success', message: 'Settings saved (Demo Mode).' });
+    }
+  };
+
+  const updateNotificationSetting = async (key: 'push' | 'email' | 'inApp' | 'timing', val: any) => {
+    // 1. Update local UI state immediately
+    let newNotifs = { ...notifs };
+    if (key === 'timing') {
+      newNotifs.timing = val;
+      localStorage.setItem('chronos_alert_timing', val);
+    } else {
+      newNotifs[key] = val;
+    }
+    setNotifs(newNotifs);
+
+    if (key === 'timing') {
+      showToast({ type: 'success', message: 'Alert timing auto-saved.' });
+      return;
+    }
+
+    // 2. Build channels list
+    const channels: NotificationChannel[] = [];
+    if (newNotifs.push) channels.push('push');
+    if (newNotifs.email) channels.push('email');
+    if (newNotifs.inApp) channels.push('inApp');
+
+    const currentPreferences = user?.preferences || {
+      gamificationEnabled: true,
+      ghostWorkerEnabled: false,
+      rescueModeEnabled: false,
+      voiceEnabled: false,
+      notificationChannels: [],
+    };
+
+    const updatedPreferences = {
+      ...currentPreferences,
+      notificationChannels: channels,
+    };
+
+    if (!isDemo && user?.id) {
+      try {
+        const docRef = doc(clientDb, 'users', user.id);
+        await updateDoc(docRef, {
+          preferences: updatedPreferences,
+        });
+        showToast({ type: 'success', message: 'Notification channels auto-saved.' });
+      } catch (err) {
+        console.error('Failed to auto-save notification channels:', err);
+        showToast({ type: 'error', message: 'Failed to auto-save notification settings.' });
+      }
+    } else {
+      showToast({ type: 'success', message: 'Notification settings saved (Demo Mode).' });
+    }
+  };
+
+  const updatePersonalitySetting = async (key: 'workStyle' | 'motivationType' | 'communicationStyle', val: any) => {
+    if (!user) return;
+
+    const currentPersonality = user.personality || {
+      workStyle: 'sprinter',
+      motivationType: 'encouragement',
+      communicationStyle: 'casual',
+      timezone: 'UTC',
+      peakHours: [],
+    };
+
+    const updatedPersonality = {
+      ...currentPersonality,
+      [key]: val,
+    };
+
+    if (!isDemo && user.id) {
+      try {
+        const docRef = doc(clientDb, 'users', user.id);
+        await updateDoc(docRef, {
+          personality: updatedPersonality,
+        });
+        showToast({ type: 'success', message: 'Personality profile auto-saved!' });
+      } catch (err) {
+        console.error('Failed to auto-save personality profile:', err);
+        showToast({ type: 'error', message: 'Failed to save personality change.' });
+      }
+    } else {
+      showToast({ type: 'success', message: `Personality profile updated in Demo Mode!` });
+    }
   };
 
   const exportData = () => {

@@ -87,27 +87,33 @@ export const useNotifications = (userId: string) => {
   }, [userId, isDemo]);
 
   // 2. Request permission and retrieve FCM token
-  const requestPermission = async () => {
+  const requestPermission = async (isAutomatic = false) => {
     if (typeof window === 'undefined' || !('Notification' in window)) {
       console.warn('Notifications not supported in this browser.');
       return false;
     }
 
+    const existingPermission = Notification.permission;
+
     if (isDemo) {
-      showToast({
-        type: 'success',
-        message: 'Demo Notification Permission Granted!',
-      });
+      if (!isAutomatic) {
+        showToast({
+          type: 'success',
+          message: 'Demo Notification Permission Granted!',
+        });
+      }
       return true;
     }
 
     try {
       const permission = await Notification.requestPermission();
       if (permission === 'granted') {
-        showToast({
-          type: 'success',
-          message: 'Notifications enabled successfully!',
-        });
+        if (existingPermission !== 'granted' && !isAutomatic) {
+          showToast({
+            type: 'success',
+            message: 'Notifications enabled successfully!',
+          });
+        }
 
         // Register Service Worker and retrieve Token
         if (messaging && 'serviceWorker' in navigator) {

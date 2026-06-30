@@ -22,7 +22,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onMenuClick, onSearchClick }) =>
   // Request notification permissions and register FCM service worker automatically
   React.useEffect(() => {
     if (user?.id) {
-      requestPermission();
+      requestPermission(true);
     }
   }, [user?.id]);
 

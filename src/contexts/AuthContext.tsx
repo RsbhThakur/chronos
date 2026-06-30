@@ -5,7 +5,7 @@ import { useSession, signIn as nextAuthSignIn, signOut as nextAuthSignOut } from
 import { useRouter, usePathname } from 'next/navigation';
 import { auth as clientAuth, db as clientDb } from '@/lib/firebase';
 import { signInWithCustomToken, signOut as firebaseSignOut, onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { UserProfile } from '@/types';
 import { useDemo } from '@/hooks/useDemo';
 
@@ -127,16 +127,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [user, isDemo, loading, pathname, router]);
 
-  // 3. Listen to Firebase Auth state change and fetch Firestore profile
+  // 3. Listen to Firebase Auth state change and fetch Firestore profile real-time
   useEffect(() => {
     if (isDemo) return;
 
-    const unsubscribe = onAuthStateChanged(clientAuth, async (firebaseUser) => {
+    let unsubSnapshot: (() => void) | null = null;
+
+    const unsubscribeAuth = onAuthStateChanged(clientAuth, async (firebaseUser) => {
       if (firebaseUser) {
-        try {
-          const docRef = doc(clientDb, 'users', firebaseUser.uid);
-          const docSnap = await getDoc(docRef);
-          
+        const docRef = doc(clientDb, 'users', firebaseUser.uid);
+        
+        // Clean up any existing snapshot listener
+        if (unsubSnapshot) unsubSnapshot();
+
+        unsubSnapshot = onSnapshot(docRef, (docSnap) => {
           if (docSnap.exists()) {
             const profileData = docSnap.data();
             const profile: UserProfile = {
@@ -173,12 +177,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.warn('User profile document not found in Firestore.');
             setUser(null);
           }
-        } catch (err) {
-          console.error('Failed to fetch user profile from Firestore:', err);
-        } finally {
           setLoading(false);
-        }
+        }, (err) => {
+          console.error('Failed to subscribe to user profile in Firestore:', err);
+          setLoading(false);
+        });
       } else {
+        if (unsubSnapshot) unsubSnapshot();
         if (status !== 'loading') {
           setUser(null);
           setLoading(false);
@@ -186,7 +191,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribeAuth();
+      if (unsubSnapshot) unsubSnapshot();
+    };
   }, [status, router, pathname, isDemo]);
 
   // Callbacks
