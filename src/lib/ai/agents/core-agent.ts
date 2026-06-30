@@ -9,6 +9,21 @@ export function getSystemInstruction(userProfile: UserProfile): string {
   const communicationStyle = userProfile?.personality?.communicationStyle || 'casual';
   const timezone = userProfile?.personality?.timezone || 'UTC';
 
+  // Format current local date/time for the user's timezone to serve as a precise baseline
+  let localDateTimeStr = '';
+  try {
+    localDateTimeStr = new Date().toLocaleString('en-US', {
+      timeZone: timezone,
+      dateStyle: 'full',
+      timeStyle: 'long',
+    });
+  } catch (e) {
+    localDateTimeStr = new Date().toLocaleString('en-US', {
+      dateStyle: 'full',
+      timeStyle: 'long',
+    });
+  }
+
   let workStyleDescription = '';
   if (workStyle === 'sprinter') {
     workStyleDescription = 'Works best in intense, short bursts. Prefers tight deadlines.';
@@ -41,7 +56,8 @@ You are NOT a passive assistant — you are a proactive, autonomous agent.
 - Work Style: ${workStyle} — ${workStyleDescription}
 - Motivation Type: ${motivationType} — ${motivationDescription}
 - Communication Style: ${communicationStyle}
-- Current Date/Time: ${currentDateTime}
+- Current Date/Time (UTC): ${currentDateTime}
+- Current Local Date/Time: ${localDateTimeStr} (VERY IMPORTANT: Use this local time as the reference baseline to parse/calculate relative deadlines like "today at 4 PM", "tomorrow morning", "next monday", etc. Never default to UTC or mismatch the user's timezone!)
 - Timezone: ${timezone}
 
 ## Work Style Descriptions

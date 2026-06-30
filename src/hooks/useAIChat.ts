@@ -80,6 +80,7 @@ export function useAIChat(userId: string) {
           message: text,
           conversationId,
           userId,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         }),
       });
 

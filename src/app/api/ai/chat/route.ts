@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
         const session = await getServerSession(authOptions);
         
         const body = await req.json().catch(() => ({}));
-        const { message, conversationId: reqConversationId, userId } = body;
+        const { message, conversationId: reqConversationId, userId, timezone: clientTimezone } = body;
 
         const authedUserId = session?.user?.id || userId;
 
@@ -100,6 +100,19 @@ export async function POST(req: NextRequest) {
             onboardingCompleted: true,
             createdAt: new Date(),
           };
+        }
+
+        if (clientTimezone) {
+          if (!userProfile.personality) {
+            userProfile.personality = {
+              workStyle: 'mixed',
+              motivationType: 'encouragement',
+              communicationStyle: 'casual',
+              timezone: 'UTC',
+              peakHours: [9, 10, 11, 14, 15, 16],
+            };
+          }
+          userProfile.personality.timezone = clientTimezone;
         }
 
         // 3. Fetch conversation history from Firestore
@@ -176,9 +189,10 @@ export async function POST(req: NextRequest) {
             const toolResults: any[] = [];
 
             // Add model turn representing function calls to contents array
+            // Spreading/passing the full fc object preserves required internal properties like thought_signature
             contents.push({
               role: 'model',
-              parts: turnFunctionCalls.map(fc => ({ functionCall: { name: fc.name, args: fc.args } }))
+              parts: turnFunctionCalls.map(fc => ({ functionCall: fc }))
             });
 
             for (const fc of turnFunctionCalls) {
