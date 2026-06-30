@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function LoginPage() {
-  const { signIn, startDemo, loading, user, isDemo } = useAuth();
+  const { signIn, signInGuest, startDemo, loading, user, isDemo } = useAuth();
 
   // Auto-trigger demo if param is passed
   useEffect(() => {
@@ -29,6 +29,9 @@ export default function LoginPage() {
         <div style={{ display: 'flex', gap: '15px' }}>
           <button onClick={signIn} style={{ background: '#00f0ff', color: '#000', border: 'none', padding: '12px 24px', borderRadius: '5px', cursor: 'pointer', fontFamily: 'var(--font-jetbrains-mono), monospace', fontWeight: 'bold', boxShadow: '0 0 10px #00f0ff' }}>
             SIGN IN WITH GOOGLE
+          </button>
+          <button onClick={signInGuest} style={{ background: '#a855f7', color: '#fff', border: 'none', padding: '12px 24px', borderRadius: '5px', cursor: 'pointer', fontFamily: 'var(--font-jetbrains-mono), monospace', fontWeight: 'bold', boxShadow: '0 0 10px #a855f7' }}>
+            LOG IN AS GUEST (LIVE DB)
           </button>
           <button onClick={startDemo} style={{ background: 'transparent', color: '#00f0ff', border: '2px solid #00f0ff', padding: '10px 22px', borderRadius: '5px', cursor: 'pointer', fontFamily: 'var(--font-jetbrains-mono), monospace', fontWeight: 'bold' }}>
             TRY DEMO MODE

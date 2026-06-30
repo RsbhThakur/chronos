@@ -14,6 +14,7 @@ interface AuthContextType {
   loading: boolean;
   isDemo: boolean;
   signIn: () => Promise<void>;
+  signInGuest: () => Promise<void>;
   signOut: () => Promise<void>;
   startDemo: () => void;
   googleAccessToken: string | null;
@@ -173,6 +174,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await nextAuthSignIn('google');
   };
 
+  const signInGuest = async () => {
+    localStorage.removeItem('chronos_demo_mode');
+    setIsDemo(false);
+    setLoading(true);
+    await nextAuthSignIn('guest');
+  };
+
   const signOut = async () => {
     localStorage.removeItem('chronos_demo_mode');
     localStorage.removeItem('chronos_demo_mode_persona');
@@ -203,6 +211,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loading,
         isDemo,
         signIn,
+        signInGuest,
         signOut,
         startDemo,
         googleAccessToken,

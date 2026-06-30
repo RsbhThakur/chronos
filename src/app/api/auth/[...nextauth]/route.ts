@@ -1,5 +1,6 @@
 import NextAuth, { NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
+import CredentialsProvider from 'next-auth/providers/credentials';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 
 export const authOptions: NextAuthOptions = {
@@ -16,13 +17,26 @@ export const authOptions: NextAuthOptions = {
         },
       },
     }),
+    CredentialsProvider({
+      id: 'guest',
+      name: 'Guest Account',
+      credentials: {},
+      async authorize() {
+        return {
+          id: 'guest-judge-account-id',
+          name: 'Guest Judge',
+          email: 'judge@chronos-app.ai',
+          image: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80',
+        };
+      }
+    }),
   ],
   session: {
     strategy: 'jwt',
   },
   callbacks: {
     async signIn({ user, account }) {
-      if (account?.provider === 'google') {
+      if (account?.provider === 'google' || account?.provider === 'guest') {
         const userId = user.id;
         const userDocRef = adminDb.collection('users').doc(userId);
         const doc = await userDocRef.get();
@@ -73,8 +87,13 @@ export const authOptions: NextAuthOptions = {
       if (account && user) {
         token.accessToken = account.access_token;
         token.refreshToken = account.refresh_token;
-        token.expiresAt = (account.expires_at || 0) * 1000;
+        token.expiresAt = account.expires_at ? account.expires_at * 1000 : Date.now() + 24 * 60 * 60 * 1000;
         token.id = user.id;
+        token.provider = account.provider;
+      }
+
+      if (token.provider === 'guest') {
+        return token;
       }
 
       // Check if token has expired
