@@ -49,17 +49,17 @@ const Toast: React.FC<{ toast: ToastItem; onDismiss: (id: string) => void }> = (
   React.useEffect(() => {
     const step = 100 / (toast.duration / 50);
     intervalRef.current = setInterval(() => {
-      setProgress((p) => {
-        if (p <= 0) {
-          clearInterval(intervalRef.current!);
-          onDismiss(toast.id);
-          return 0;
-        }
-        return p - step;
-      });
+      setProgress((p) => Math.max(0, p - step));
     }, 50);
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [toast.id, toast.duration, onDismiss]);
+  }, [toast.id, toast.duration]);
+
+  React.useEffect(() => {
+    if (progress <= 0) {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      onDismiss(toast.id);
+    }
+  }, [progress, toast.id, onDismiss]);
 
   return (
     <motion.div
