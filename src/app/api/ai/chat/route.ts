@@ -128,10 +128,12 @@ export async function POST(req: NextRequest) {
           if (msg.content) {
             parts.push({ text: msg.content });
           }
-          if (msg.toolCalls && msg.toolCalls.length > 0) {
-            parts.push(...msg.toolCalls.map(tc => ({ functionCall: { name: tc.name, args: tc.args } })));
+          // Do NOT append raw, unresolved toolCalls to completed historical turns.
+          // This prevents sending incomplete tool sequences (which lack matching functionResponse parts)
+          // to the Gemini API, completely resolving thought_signature validation errors for older messages.
+          if (parts.length > 0) {
+            contents.push({ role, parts });
           }
-          contents.push({ role, parts });
         }
 
         // Append the new user message
