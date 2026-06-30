@@ -78,7 +78,7 @@ const CalendarView: React.FC<{ tasks: Task[] }> = ({ tasks }) => {
 };
 
 // ─── List View ────────────────────────────────────────────────────────────────
-const ListView: React.FC<{ tasks: Task[]; onComplete: (id: string) => void; onDelete: (id: string) => void; isMobile?: boolean }> = ({ tasks, onComplete, onDelete, isMobile = false }) => (
+const ListView: React.FC<{ tasks: Task[]; onComplete: (id: string) => void; onDelete: (id: string) => void; onEdit: (task: Task) => void; isMobile?: boolean }> = ({ tasks, onComplete, onDelete, onEdit, isMobile = false }) => (
   <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '8px' : '2px' }}>
     {/* Header */}
     {!isMobile && (
@@ -93,6 +93,7 @@ const ListView: React.FC<{ tasks: Task[]; onComplete: (id: string) => void; onDe
         if (isMobile) {
           return (
             <motion.div key={task.id} initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { delay: i * 0.03 } }}
+              onClick={() => onEdit(task)}
               style={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -101,6 +102,7 @@ const ListView: React.FC<{ tasks: Task[]; onComplete: (id: string) => void; onDe
                 background: 'rgba(255,255,255,0.01)',
                 border: '1px solid var(--glass-border)',
                 borderRadius: 'var(--radius-md)',
+                cursor: 'pointer',
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
@@ -109,8 +111,8 @@ const ListView: React.FC<{ tasks: Task[]; onComplete: (id: string) => void; onDe
                   {task.category && <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', marginTop: '2px' }}>{task.category}</div>}
                 </div>
                 <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
-                  <button onClick={() => onComplete(task.id)} title="Complete" style={{ background: 'none', border: '1px solid var(--neon-green)', borderRadius: 'var(--radius-sm)', padding: '3px 6px', cursor: 'pointer', color: 'var(--neon-green)', fontSize: '10px' }}>✓</button>
-                  <button onClick={() => onDelete(task.id)} title="Delete" style={{ background: 'none', border: '1px solid var(--neon-pink)', borderRadius: 'var(--radius-sm)', padding: '3px 6px', cursor: 'pointer', color: 'var(--neon-pink)', fontSize: '10px' }}>×</button>
+                  <button onClick={(e) => { e.stopPropagation(); onComplete(task.id); }} title={task.status === 'completed' ? "Restore Task" : "Complete"} style={{ background: 'none', border: task.status === 'completed' ? '1px solid var(--neon-cyan)' : '1px solid var(--neon-green)', borderRadius: 'var(--radius-sm)', padding: '3px 6px', cursor: 'pointer', color: task.status === 'completed' ? 'var(--neon-cyan)' : 'var(--neon-green)', fontSize: '10px' }}>{task.status === 'completed' ? '↺' : '✓'}</button>
+                  <button onClick={(e) => { e.stopPropagation(); onDelete(task.id); }} title="Delete" style={{ background: 'none', border: '1px solid var(--neon-pink)', borderRadius: 'var(--radius-sm)', padding: '3px 6px', cursor: 'pointer', color: 'var(--neon-pink)', fontSize: '10px' }}>×</button>
                 </div>
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
@@ -126,7 +128,8 @@ const ListView: React.FC<{ tasks: Task[]; onComplete: (id: string) => void; onDe
 
         return (
           <motion.div key={task.id} initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { delay: i * 0.03 } }}
-            style={{ display: 'grid', gridTemplateColumns: '1fr 100px 80px 100px 80px', gap: '12px', padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.04)', alignItems: 'center', cursor: 'default' }}
+            style={{ display: 'grid', gridTemplateColumns: '1fr 100px 80px 100px 80px', gap: '12px', padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.04)', alignItems: 'center', cursor: 'pointer' }}
+            onClick={() => onEdit(task)}
             onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
             onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
           >
@@ -140,8 +143,8 @@ const ListView: React.FC<{ tasks: Task[]; onComplete: (id: string) => void; onDe
               <Clock size={9} /> {new Date(task.deadline).toLocaleDateString()}
             </span>
             <div style={{ display: 'flex', gap: '6px' }}>
-              <button onClick={() => onComplete(task.id)} title="Complete" style={{ background: 'none', border: '1px solid var(--neon-green)', borderRadius: 'var(--radius-sm)', padding: '3px 6px', cursor: 'pointer', color: 'var(--neon-green)', fontSize: '10px' }}>✓</button>
-              <button onClick={() => onDelete(task.id)} title="Delete" style={{ background: 'none', border: '1px solid var(--neon-pink)', borderRadius: 'var(--radius-sm)', padding: '3px 6px', cursor: 'pointer', color: 'var(--neon-pink)', fontSize: '10px' }}>×</button>
+              <button onClick={(e) => { e.stopPropagation(); onComplete(task.id); }} title={task.status === 'completed' ? "Restore Task" : "Complete"} style={{ background: 'none', border: task.status === 'completed' ? '1px solid var(--neon-cyan)' : '1px solid var(--neon-green)', borderRadius: 'var(--radius-sm)', padding: '3px 6px', cursor: 'pointer', color: task.status === 'completed' ? 'var(--neon-cyan)' : 'var(--neon-green)', fontSize: '10px' }}>{task.status === 'completed' ? '↺' : '✓'}</button>
+              <button onClick={(e) => { e.stopPropagation(); onDelete(task.id); }} title="Delete" style={{ background: 'none', border: '1px solid var(--neon-pink)', borderRadius: 'var(--radius-sm)', padding: '3px 6px', cursor: 'pointer', color: 'var(--neon-pink)', fontSize: '10px' }}>×</button>
             </div>
           </motion.div>
         );
@@ -225,6 +228,131 @@ const AddTaskModal: React.FC<{ onClose: () => void; onCreate: (d: Partial<Task>)
   );
 };
 
+// ─── Edit Task Modal ──────────────────────────────────────────────────────────
+const EditTaskModal: React.FC<{
+  task: Task;
+  onClose: () => void;
+  onUpdate: (id: string, d: Partial<Task>) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
+}> = ({ task, onClose, onUpdate, onDelete }) => {
+  const [title, setTitle] = useState(task.title || '');
+  const [description, setDescription] = useState(task.description || '');
+  const [priority, setPriority] = useState<TaskPriority>(task.priority || 'medium');
+  const [status, setStatus] = useState<TaskStatus>(task.status || 'todo');
+  const [category, setCategory] = useState(task.category || 'General');
+  const [minutes, setMinutes] = useState(task.estimatedMinutes || 60);
+  const [deadline, setDeadline] = useState(() => {
+    const d = task.deadline ? new Date(task.deadline) : new Date();
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().slice(0, 16);
+  });
+  const [loading, setLoading] = useState(false);
+  const { showToast } = useToast();
+
+  const handleSave = async () => {
+    if (!title.trim()) return;
+    setLoading(true);
+    try {
+      await onUpdate(task.id, {
+        title,
+        description,
+        priority,
+        status,
+        deadline: new Date(deadline),
+        estimatedMinutes: minutes,
+        category,
+      });
+      showToast({ type: 'success', message: `Task "${title}" updated!` });
+      onClose();
+    } catch {
+      showToast({ type: 'error', message: 'Failed to update task.' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteClick = async () => {
+    if (confirm('Are you sure you want to delete this task?')) {
+      setLoading(true);
+      try {
+        await onDelete(task.id);
+        onClose();
+      } catch {
+        showToast({ type: 'error', message: 'Failed to delete task.' });
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', zIndex: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      onClick={onClose}
+    >
+      <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} onClick={(e) => e.stopPropagation()}
+        style={{ width: 'min(520px, 94vw)', background: 'rgba(10,10,22,0.98)', backdropFilter: 'blur(24px)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-xl)', padding: '24px', boxShadow: '0 24px 60px rgba(0,0,0,0.6)' }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <h2 style={{ margin: 0, fontSize: 'var(--text-md)', fontWeight: 700, color: 'var(--neon-cyan)' }}>Edit Task</h2>
+          <button onClick={handleDeleteClick} style={{ background: 'rgba(236, 72, 153, 0.1)', border: '1px solid rgba(236,72,153,0.3)', borderRadius: 'var(--radius-sm)', padding: '4px 10px', color: 'var(--neon-pink)', cursor: 'pointer', fontSize: 'var(--text-xs)' }}>Delete Task</button>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div>
+            <label style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', display: 'block', marginBottom: '6px' }}>Title</label>
+            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Task title..." style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-md)', padding: '10px 14px', color: 'var(--text-primary)', fontSize: 'var(--text-sm)', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }} />
+          </div>
+          <div>
+            <label style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', display: 'block', marginBottom: '6px' }}>Description</label>
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description (optional)..." rows={2} style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-md)', padding: '10px 14px', color: 'var(--text-primary)', fontSize: 'var(--text-sm)', outline: 'none', fontFamily: 'inherit', resize: 'vertical', boxSizing: 'border-box' }} />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+            <div>
+              <label style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', display: 'block', marginBottom: '6px' }}>Priority</label>
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                {(['critical', 'high', 'medium', 'low'] as TaskPriority[]).map((p) => (
+                  <button key={p} onClick={() => setPriority(p)} style={{ padding: '5px 10px', borderRadius: 'var(--radius-sm)', border: `1px solid ${priority === p ? priorityColors[p] : 'var(--glass-border)'}`, background: priority === p ? `${priorityColors[p]}15` : 'transparent', color: priority === p ? priorityColors[p] : 'var(--text-tertiary)', fontSize: '10px', cursor: 'pointer', textTransform: 'capitalize' }}>{p}</button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', display: 'block', marginBottom: '6px' }}>Category</label>
+              <input value={category} onChange={(e) => setCategory(e.target.value)} style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-md)', padding: '8px 12px', color: 'var(--text-primary)', fontSize: 'var(--text-sm)', outline: 'none', boxSizing: 'border-box' }} />
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+            <div>
+              <label style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', display: 'block', marginBottom: '6px' }}>Status</label>
+              <select value={status} onChange={(e) => setStatus(e.target.value as TaskStatus)} style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-md)', padding: '8px 12px', color: 'var(--text-primary)', fontSize: 'var(--text-sm)', outline: 'none', cursor: 'pointer', boxSizing: 'border-box' }}>
+                <option value="todo" style={{ background: '#0a0a14', color: 'var(--text-primary)' }}>Todo</option>
+                <option value="in_progress" style={{ background: '#0a0a14', color: 'var(--text-primary)' }}>In Progress</option>
+                <option value="completed" style={{ background: '#0a0a14', color: 'var(--text-primary)' }}>Completed</option>
+                <option value="overdue" style={{ background: '#0a0a14', color: 'var(--text-primary)' }}>Overdue</option>
+              </select>
+            </div>
+            <div>
+              <label style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', display: 'block', marginBottom: '6px' }}>Est. (min)</label>
+              <input type="number" value={minutes} min={5} onChange={(e) => setMinutes(Number(e.target.value))} style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-md)', padding: '8px 12px', color: 'var(--text-primary)', fontSize: 'var(--text-sm)', outline: 'none', boxSizing: 'border-box' }} />
+            </div>
+          </div>
+
+          <div>
+            <label style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', display: 'block', marginBottom: '6px' }}>Deadline</label>
+            <input type="datetime-local" value={deadline} onChange={(e) => setDeadline(e.target.value)} style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-md)', padding: '8px 12px', color: 'var(--text-primary)', fontSize: 'var(--text-sm)', outline: 'none', colorScheme: 'dark', boxSizing: 'border-box' }} />
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
+            <NeonButton variant="cyan" fullWidth loading={loading} onClick={handleSave}>Save Changes</NeonButton>
+            <NeonButton variant="purple" onClick={onClose}>Cancel</NeonButton>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
 // ─── Tasks Page ───────────────────────────────────────────────────────────────
 export default function TasksPage() {
   const { user } = useAuth();
@@ -241,6 +369,7 @@ export default function TasksPage() {
   const [filterPriority, setFilterPriority] = useState<TaskPriority | 'all'>('all');
   const [filterStatus, setFilterStatus] = useState<TaskStatus | 'all'>('all');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [activeGhostTask, setActiveGhostTask] = useState<Task | null>(null);
 
   const allTasks = isDemo ? demoTasks : tasks;
@@ -270,8 +399,14 @@ export default function TasksPage() {
 
   const handleComplete = async (id: string) => {
     if (isDemo) return;
-    await completeTask(id);
-    showToast({ type: 'success', message: 'Task completed! +15 XP 🎉' });
+    const taskToToggle = allTasks.find((t) => t.id === id);
+    if (taskToToggle?.status === 'completed') {
+      await updateTask(id, { status: 'todo' });
+      showToast({ type: 'info', message: 'Task restored to Todo.' });
+    } else {
+      await completeTask(id);
+      showToast({ type: 'success', message: 'Task completed! +15 XP 🎉' });
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -336,8 +471,8 @@ export default function TasksPage() {
             <TaskKanban
               tasks={filtered}
               onTaskUpdate={async (id, updates) => { if (!isDemo) await updateTask(id, updates); }}
-              onTaskClick={() => {}}
-              onTaskEdit={() => {}}
+              onTaskClick={(task) => setEditingTask(task)}
+              onTaskEdit={(task) => setEditingTask(task)}
               onTaskComplete={handleComplete}
               onTaskDelete={handleDelete}
               onTaskRescue={(id) => router.push(`/rescue/${id}`)}
@@ -348,7 +483,7 @@ export default function TasksPage() {
         ) : view === 'list' ? (
           <div style={{ flex: 1, overflow: 'auto', padding: isMobile ? '0 12px 90px' : '0 24px 90px' }}>
             <GlassCard padding="sm" hoverable={false} style={{ marginTop: '16px' }}>
-              <ListView tasks={filtered} onComplete={handleComplete} onDelete={handleDelete} isMobile={isMobile} />
+              <ListView tasks={filtered} onComplete={handleComplete} onDelete={handleDelete} onEdit={(task) => setEditingTask(task)} isMobile={isMobile} />
             </GlassCard>
           </div>
         ) : (
@@ -362,6 +497,27 @@ export default function TasksPage() {
 
       <AnimatePresence>
         {showAddModal && <AddTaskModal onClose={() => setShowAddModal(false)} onCreate={handleCreate} />}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {editingTask && (
+          <EditTaskModal
+            task={editingTask}
+            onClose={() => setEditingTask(null)}
+            onUpdate={async (id, updates) => {
+              if (isDemo) {
+                showToast({ type: 'info', message: 'Demo mode: changes are not saved.' });
+                return;
+              }
+              await updateTask(id, updates);
+            }}
+            onDelete={async (id) => {
+              if (isDemo) return;
+              await deleteTask(id);
+              showToast({ type: 'info', message: 'Task deleted.' });
+            }}
+          />
+        )}
       </AnimatePresence>
 
       <AnimatePresence>

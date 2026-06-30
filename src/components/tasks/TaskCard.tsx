@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Edit2, Trash2, Zap, Sparkles, AlertTriangle, Ghost } from 'lucide-react';
+import { Check, Edit2, Trash2, Zap, Sparkles, AlertTriangle, Ghost, RotateCcw } from 'lucide-react';
 import { Task } from '@/types';
 
 interface TaskCardProps {
@@ -102,11 +102,15 @@ export const TaskCard: React.FC<TaskCardProps> = ({
 
   const handleCompleteClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsCompleting(true);
-    // Give animation time to play before calling callback
-    setTimeout(() => {
+    if (task.status === 'completed') {
       onComplete(task.id);
-    }, 400);
+    } else {
+      setIsCompleting(true);
+      // Give animation time to play before calling callback
+      setTimeout(() => {
+        onComplete(task.id);
+      }, 400);
+    }
   };
 
   return (
@@ -303,6 +307,26 @@ export const TaskCard: React.FC<TaskCardProps> = ({
                   onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
                 >
                   <Check size={16} />
+                </button>
+              )}
+
+              {task.status === 'completed' && (
+                <button
+                  onClick={handleCompleteClick}
+                  className="flex items-center justify-center"
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    padding: '2px',
+                    transition: 'color var(--transition-fast)',
+                  }}
+                  title="Restore Task"
+                  onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--neon-cyan)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
+                >
+                  <RotateCcw size={15} />
                 </button>
               )}
               
