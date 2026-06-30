@@ -18,39 +18,225 @@ interface AIChatSidebarProps {
   isTablet?: boolean;
 }
 
-// Simple regex-based markdown formatter
-const formatMarkdown = (text: string) => {
-  if (!text) return '';
-  let html = text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+// Premium, safe tokenized Markdown Parser & Renderer to replace raw HTML injection
+const parseInlineMarkdown = (text: string): React.ReactNode[] => {
+  if (!text) return [];
+  // Match inline code `code`, bold **text**, and links [label](url)
+  const regex = /(\`.*?\`|\*\*.*?\*\*|\[.*?\]\(.*?\))/g;
+  const parts = text.split(regex);
 
-  // Bold (**text**)
-  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-  
-  // Italics (*text*)
-  html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-
-  // Inline Code (`code`)
-  html = html.replace(/`([^`]+)`/g, '<code style="font-family: var(--font-jetbrains-mono), monospace; font-size: 11px; background: rgba(255,255,255,0.06); padding: 2px 4px; border-radius: 3px; color: var(--neon-cyan);">$1</code>');
-
-  // Bullet points (leading •, * or -)
-  const lines = html.split('\n');
-  const formattedLines = lines.map((line) => {
-    const trimmed = line.trim();
-    if (trimmed.startsWith('•') || trimmed.startsWith('*') || trimmed.startsWith('-')) {
-      const content = trimmed.replace(/^[•*-]\s*/, '');
-      return `<li style="margin-left: 16px; margin-bottom: 4px; list-style-type: disc;">${content}</li>`;
+  return parts.map((part, index) => {
+    if (part.startsWith('`') && part.endsWith('`')) {
+      const code = part.slice(1, -1);
+      return (
+        <code key={index} style={{
+          fontFamily: 'var(--font-jetbrains-mono), monospace',
+          fontSize: '11px',
+          background: 'rgba(255,255,255,0.08)',
+          padding: '2px 5px',
+          borderRadius: '4px',
+          color: 'var(--neon-cyan)',
+          border: '1px solid rgba(255,255,255,0.04)',
+        }}>
+          {code}
+        </code>
+      );
+    } else if (part.startsWith('**') && part.endsWith('**')) {
+      const boldText = part.slice(2, -2);
+      return (
+        <strong key={index} style={{ color: 'var(--text-primary)', fontWeight: 700 }}>
+          {boldText}
+        </strong>
+      );
+    } else if (part.startsWith('[') && part.endsWith(')')) {
+      const match = part.match(/\[(.*?)\]\((.*?)\)/);
+      if (match) {
+        const [, label, url] = match;
+        return (
+          <a
+            key={index}
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: 'var(--neon-cyan)', textDecoration: 'underline', fontWeight: 500 }}
+          >
+            {label}
+          </a>
+        );
+      }
     }
-    return line;
+    return part;
   });
-  html = formattedLines.join('\n');
+};
 
-  // Line breaks
-  html = html.replace(/\n/g, '<br />');
+const parseTextWithMarkdown = (text: string, blockKey: number): React.ReactNode => {
+  const lines = text.split('\n');
+  const elements: React.ReactNode[] = [];
+  
+  let inList = false;
+  let listItems: React.ReactNode[] = [];
 
-  return html;
+  const flushList = (key: number) => {
+    if (listItems.length > 0) {
+      elements.push(
+        <ul key={`list-${key}`} style={{ margin: '8px 0 12px 0', paddingLeft: '20px', listStyleType: 'square', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          {listItems}
+        </ul>
+      );
+      listItems = [];
+      inList = false;
+    }
+  };
+
+  lines.forEach((line, i) => {
+    const trimmed = line.trim();
+
+    // List item check
+    if (trimmed.startsWith('•') || trimmed.startsWith('* ') || trimmed.startsWith('- ') || trimmed.startsWith('— ')) {
+      inList = true;
+      const itemContent = line.replace(/^\s*[•\*\-—]\s+/, '');
+      listItems.push(
+        <li key={`li-${i}`} style={{ color: 'var(--text-secondary)', fontSize: 'var(--text-xs)', marginBottom: '4px', lineHeight: 1.5 }}>
+          {parseInlineMarkdown(itemContent)}
+        </li>
+      );
+      return;
+    } else {
+      flushList(i);
+    }
+
+    // Headers
+    if (line.startsWith('# ')) {
+      elements.push(
+        <h2 key={i} style={{ color: 'var(--neon-pink)', fontSize: 'var(--text-sm)', fontWeight: 800, marginTop: '16px', marginBottom: '8px', fontFamily: 'var(--font-display)', letterSpacing: '0.5px' }}>
+          {parseInlineMarkdown(line.slice(2))}
+        </h2>
+      );
+    } else if (line.startsWith('## ')) {
+      elements.push(
+        <h3 key={i} style={{ color: 'var(--neon-purple)', fontSize: 'var(--text-xs)', fontWeight: 700, marginTop: '14px', marginBottom: '6px', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '3px', fontFamily: 'var(--font-display)', letterSpacing: '0.5px' }}>
+          {parseInlineMarkdown(line.slice(3))}
+        </h3>
+      );
+    } else if (line.startsWith('### ')) {
+      elements.push(
+        <h4 key={i} style={{ color: 'var(--neon-cyan)', fontSize: 'var(--text-xs)', fontWeight: 700, marginTop: '12px', marginBottom: '4px', fontFamily: 'var(--font-display)' }}>
+          {parseInlineMarkdown(line.slice(4))}
+        </h4>
+      );
+    }
+    // Empty line
+    else if (trimmed === '') {
+      elements.push(<div key={i} style={{ height: '6px' }} />);
+    }
+    // Standard paragraph
+    else {
+      elements.push(
+        <p key={i} style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', margin: '0 0 6px', lineHeight: 1.5 }}>
+          {parseInlineMarkdown(line)}
+        </p>
+      );
+    }
+  });
+
+  // Flush remaining list items
+  flushList(lines.length);
+
+  return <div key={`text-block-${blockKey}`}>{elements}</div>;
+};
+
+// Interactive copy-ready CodeBlock widget
+const CodeBlock: React.FC<{ code: string; language: string }> = ({ code, language }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div style={{
+      background: 'rgba(5, 5, 10, 0.65)',
+      border: '1px solid var(--glass-border)',
+      borderRadius: 'var(--radius-md)',
+      margin: '10px 0',
+      overflow: 'hidden',
+      fontFamily: 'var(--font-jetbrains-mono), monospace',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+      width: '100%',
+    }}>
+      <div style={{
+        background: 'rgba(255,255,255,0.03)',
+        padding: '6px 12px',
+        fontSize: '10px',
+        color: 'var(--text-tertiary)',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        borderBottom: '1px solid rgba(255,255,255,0.05)',
+      }}>
+        <span style={{ fontWeight: 600, color: 'var(--text-secondary)', letterSpacing: '0.5px' }}>{language.toUpperCase() || 'CODE'}</span>
+        <button
+          onClick={handleCopy}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: copied ? 'var(--neon-green)' : 'var(--neon-cyan)',
+            cursor: 'pointer',
+            fontSize: '9px',
+            padding: '2px 6px',
+            borderRadius: '3px',
+            fontWeight: 600,
+            transition: 'all 0.15s ease',
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(0, 229, 255, 0.08)'}
+          onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+        >
+          {copied ? 'Copied ✓' : 'Copy'}
+        </button>
+      </div>
+      <pre style={{
+        margin: 0,
+        padding: '12px',
+        fontSize: '11px',
+        overflowX: 'auto',
+        color: 'rgba(255,255,255,0.95)',
+        lineHeight: 1.5,
+        background: 'transparent',
+      }}>
+        <code style={{ fontFamily: 'inherit', color: 'inherit' }}>{code}</code>
+      </pre>
+    </div>
+  );
+};
+
+// Main MarkdownRenderer component with copy-to-clipboard functionality
+const MarkdownRenderer: React.FC<{ text: string }> = ({ text }) => {
+  if (!text) return null;
+
+  // Split by triple backticks for code block identification
+  const parts = text.split(/(```[\s\S]*?```)/g);
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '100%' }}>
+      {parts.map((part, index) => {
+        if (part.startsWith('```') && part.endsWith('```')) {
+          const content = part.slice(3, -3);
+          const lines = content.split('\n');
+          let language = '';
+          let code = content;
+          if (lines.length > 0 && lines[0].trim().length > 0 && !lines[0].includes(' ') && lines[0].trim().length < 15) {
+            language = lines[0].trim();
+            code = lines.slice(1).join('\n');
+          }
+          return <CodeBlock key={index} code={code.trim()} language={language} />;
+        } else {
+          return parseTextWithMarkdown(part, index);
+        }
+      })}
+    </div>
+  );
 };
 
 export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
@@ -286,10 +472,7 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
                         {isUser ? (
                           msg.content
                         ) : (
-                          <div
-                            dangerouslySetInnerHTML={{ __html: formatMarkdown(msg.content) }}
-                            style={{ display: 'inline-block' }}
-                          />
+                          <MarkdownRenderer text={msg.content} />
                         )}
                       </div>
 
