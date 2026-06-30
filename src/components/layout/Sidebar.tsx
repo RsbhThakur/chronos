@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -8,6 +8,9 @@ import {
   LayoutDashboard, CheckSquare, Target, BarChart3, Settings, X, Zap, Star
 } from 'lucide-react';
 import { useDemo } from '@/hooks/useDemo';
+import { useAuth } from '@/hooks/useAuth';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -26,7 +29,42 @@ const navItems = [
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile, onClose, isCollapsed = false }) => {
   const pathname = usePathname();
-  const { gamification } = useDemo();
+  const { user, isDemo } = useAuth();
+  const { gamification: demoGamification } = useDemo();
+
+  const [gamification, setGamification] = useState({
+    level: 1,
+    xp: 0,
+    streak: 0,
+    badges: [] as string[],
+  });
+
+  // Sync with real-time gamification statistics
+  useEffect(() => {
+    if (isDemo) {
+      setGamification(demoGamification);
+    } else if (user?.id) {
+      const statsRef = doc(db, 'users', user.id, 'gamification', 'stats');
+      const unsubscribe = onSnapshot(
+        statsRef,
+        (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            setGamification({
+              level: data.level || 1,
+              xp: data.xp || 0,
+              streak: data.streak || 0,
+              badges: data.badges || [],
+            });
+          }
+        },
+        (err) => {
+          console.error('Failed to listen to gamification stats:', err);
+        }
+      );
+      return () => unsubscribe();
+    }
+  }, [isDemo, user?.id, demoGamification]);
 
   const xpPercent = gamification.xp % 100;
   const nextLevelXp = 100;
