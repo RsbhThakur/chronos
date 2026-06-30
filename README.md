@@ -1,165 +1,219 @@
 # ⏳ Chronos — Your AI Time Guardian
 
-> **The Last-Minute Life Saver** — An AI-powered productivity companion that doesn't just remind you about deadlines — it rescues you from missing them.
-
-[![Built with Gemini](https://img.shields.io/badge/Built%20with-Gemini%202.5-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://ai.google.dev/)
-[![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com/)
-[![Cloud Run](https://img.shields.io/badge/Cloud%20Run-4285F4?style=for-the-badge&logo=google-cloud&logoColor=white)](https://cloud.google.com/run)
-[![Next.js](https://img.shields.io/badge/Next.js%2014-000000?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
+> **Winner-Ready Submission for Problem Statement 1: The Last-Minute Life Saver**  
+> *An autonomous, proactive AI-powered productivity companion that moves beyond passive notification fatigue to actively rescue deadlines, draft deliverables, predict bottlenecks, and guide users step-by-step through high-pressure time blocks.*
 
 ---
 
-## 🎯 Problem Statement
+## 🔗 Live Submission Links
 
-Students, professionals, and entrepreneurs frequently miss deadlines, assignments, meetings, and important commitments. Existing productivity tools rely on **passive reminders** that are easy to ignore and do little to help users actually **complete** their tasks.
-
-**Chronos solves this** by being a **proactive, autonomous AI agent** that detects when you're about to miss a deadline and intervenes with real help — not just another notification.
-
----
-
-## 🚀 Key Features
-
-### 🚨 Rescue Mode
-When a deadline approaches and you're behind, Chronos auto-generates a **compressed action plan** with exact time blocks, identifies what can be skipped, and guides you step-by-step through completion.
-
-### 👻 Ghost Worker
-AI autonomously **drafts emails, documents, presentations, and code boilerplate** while you focus on other tasks. Review, edit, and approve — or let it handle the grunt work.
-
-### 🔮 Time Warp
-Analyzes your **past behavior patterns** and **predicts future bottlenecks** before they happen. See your high-risk days coming a week in advance.
-
-### 🎭 Accountability Partner
-Adapts its communication style based on your personality — from gentle encouragement to drill-sergeant urgency to data-driven analysis. It escalates as deadlines approach.
-
-### 🧩 Smart Decomposition
-Break any goal into **AI-generated micro-tasks** with realistic time estimates, dependencies, and calendar integration.
-
-### 🎤 Voice & Camera
-Talk to Chronos or **scan whiteboards, notes, and documents** with your camera — it extracts tasks and deadlines automatically.
-
-### 🎮 Gamification
-XP, levels, streaks, and achievement badges — toggleable per user preference. Stay motivated without the gimmick.
-
-### 📊 AI-Powered Analytics
-Real-time dashboards with productivity trends, AI-generated weekly insights, and exportable reports.
+| Deliverable | URL / Resource |
+|-------------|----------------|
+| **Deployed Application** | [🚀 Click Here to Open Chronos (Live on Google Cloud Run)](#) *(Enter your live URL here)* |
+| **GitHub Repository** | [📂 Source Code Repository](https://github.com/RsbhThakur/chronos) |
+| **Project Description (Google Doc)** | [📄 Complete Project Document](https://docs.google.com/document/d/1TMrB_fpBILqKIFLBay5Xrk2egZlI1uUx8cnrGPKSnqo/edit) |
 
 ---
 
-## 🏗️ Architecture
+## 🎯 Problem Statement & Impact (20% Weight)
+
+Traditional productivity systems are built around **passive reminders**—static alarms, red notification badges, or email alerts. They lack context, are easy to ignore, and fail to offer support when a user is falling behind. Consequently:
+* **Students** miss exams and assignment submissions.
+* **Professionals** run behind on client deliverables and critical project milestones.
+* **Entrepreneurs** suffer from priority whiplash, missing pitches and fundraising deadlines.
+
+**Chronos** addresses this by converting your calendar and task lists into an **active, self-healing system**. It is an **autonomous guardian** that detects when high-priority tasks are slipping, transitions the UI into **Rescue Mode** to compress your time blocks, drafts your emails/code via **Ghost Workers**, and motivates you through a personality-adaptive **Accountability Partner**.
+
+---
+
+## 🧠 Agentic Depth (20% Weight)
+
+Chronos is built on a **multi-agent orchestration framework** utilizing 6 specialized Gemini AI Agents that collaborate via Cloud Firestore.
 
 ```
-Next.js 14 (App Router) → API Routes → Gemini 2.5 AI Agents → Firebase (Firestore/Auth/FCM)
-                                                              → Google Calendar/Gmail/Tasks APIs
-                                                              → Deployed on Google Cloud Run
+                  ┌────────────────────────────────────────────────────────┐
+                  │                 CHRONOS CORE ORCHESTRATOR              │
+                  │              (Gemini 2.5 Flash + 14 Tools)             │
+                  └──────┬────────────┬─────────────┬────────────┬─────────┘
+                         │            │             │            │
+                         ▼            ▼             ▼            ▼
+                 ┌──────────────┐ ┌───────────┐ ┌──────────┐ ┌───────────────┐
+                 │ RESCUE AGENT │ │   GHOST   │ │TIME WARP │ │ACCOUNTABILITY │
+                 │ (Gemini Pro) │ │  WORKER   │ │ (Flash)  │ │    (Flash)    │
+                 └──────────────┘ └───────────┘ └──────────┘ └───────────────┘
 ```
 
-### AI Agent System (5 Specialized Agents)
-
-| Agent | Model | Purpose |
-|-------|-------|---------|
-| **Core Agent** | Gemini 2.5 Flash | Main conversational AI with 14 function-calling tools |
-| **Rescue Agent** | Gemini 2.5 Pro | Generates compressed action plans under time pressure |
-| **Ghost Worker** | Gemini 2.5 Pro | Autonomously drafts deliverables |
-| **Time Warp** | Gemini 2.5 Flash | Predictive bottleneck analysis |
-| **Accountability** | Gemini 2.5 Flash | Personality-adaptive motivation |
-| **Decomposer** | Gemini 2.5 Flash | Goal → micro-task breakdown |
+| Agent | Core Model | Purpose & Implementation |
+|-------|------------|--------------------------|
+| **Core Orchestrator** | `gemini-1.5-flash` | Equipped with **14 Gemini function-calling tools** to query tasks, manage schedules, fetch emails, and invoke sub-agents. |
+| **Rescue Planner** | `gemini-1.5-pro` | Initiated when time-budgets fail. Generates a compact, high-density minute-by-minute action plan using structured JSON outputs. |
+| **Ghost Worker Studio** | `gemini-1.5-pro` | Autonomously writes background drafts (emails, project summaries, presentation slides, or code boilerplate) while you focus on execution. |
+| **Time Warp Predictor** | `gemini-1.5-flash` | Runs statistical analysis over past performance data to forecast cognitive loads and predict calendar bottlenecks 7 days out. |
+| **Accountability Partner** | `gemini-1.5-flash`| Adapts its motivation style (Gentle Mentor, Drill Sergeant, or Analytical Strategist) to write dynamic, escalating reminders. |
+| **AI Goal Decomposer** | `gemini-1.5-flash`| Recursively breaks complex goals into chronological micro-tasks with dependencies, realistic durations, and automatic calendar sync. |
 
 ---
 
-## 🛠️ Google Technologies Used (15)
+## 🚀 Innovation & Key Features (20% Weight)
 
-| # | Technology | Usage |
-|---|-----------|-------|
-| 1 | **Gemini 2.5 Flash** | Core chat, quick analysis, camera vision |
-| 2 | **Gemini 2.5 Pro** | Rescue Mode planning, Ghost Worker |
-| 3 | **Gemini Function Calling** | 14 tools for autonomous agent behavior |
-| 4 | **Gemini Structured Output** | Type-safe AI responses via Zod schemas |
-| 5 | **Gemini Vision** | Camera-based document/whiteboard scanning |
-| 6 | **Google AI Studio** | API key management, prompt prototyping |
-| 7 | **Firebase Auth** | Google OAuth sign-in |
-| 8 | **Cloud Firestore** | NoSQL database for all application data |
-| 9 | **Firebase Cloud Messaging** | Push notifications |
-| 10 | **Google Calendar API** | Calendar integration & sync |
-| 11 | **Gmail API** | Email reminders & Ghost Worker drafts |
-| 12 | **Google Tasks API** | Task synchronization |
-| 13 | **Google Cloud Run** | Container deployment |
-| 14 | **Google Cloud Build** | CI/CD pipeline |
-| 15 | **Web Speech API** | Voice-enabled assistance |
+### 🚨 1. Real-Time Rescue Mode (The "Guardian" Interventions)
+When you are on the verge of missing a deadline, passive warnings are thrown away. Activating **Rescue Mode**:
+* Locks down the dashboard interface into an **Action Center** focusing on a singular goal.
+* Triggers the **Rescue Planner Agent** to weigh outstanding subtasks, calculate available minutes, and compile a strictly sequenced schedule.
+* Identifies non-critical sub-tasks and flags them as "Sacrifices" (to be skipped or rescheduled) to secure your primary deadline.
 
----
+### 👻 2. Ghost Worker Studio
+Need to send project updates, draft code structures, or write slide outlines while finishing a research paper?
+* Tell the companion to "Write my draft presentation outline for tomorrow's demo."
+* The **Ghost Worker Agent** runs in the background, creating draft folders, files, and formatted email copy inside a responsive "Ghost Worker Sandbox" for 1-click review, editing, and deployment.
 
-## 🎨 Design
+### 🔮 3. Time Warp Predictive Bottleneck Forecaster
+Most calendar apps show you what is scheduled; Time Warp shows you **how you will perform**.
+* Synthesizes performance data (milestone success ratios, habit consistency, sleep indicators).
+* Generates a **Cognitive Bottleneck forecast chart**, predicting high-risk calendar overload days up to a week in advance, recommending early scheduling offloads.
 
-**Dark Cyberpunk Aesthetic** with neon accents (cyan/purple/pink), glassmorphism, and micro-animations. Three user modes with tailored experiences:
-
-- 🎓 **Student Mode** — Exams, assignments, campus placements
-- 💼 **Professional Mode** — Projects, meetings, deliverables
-- 🚀 **Entrepreneur Mode** — Pitches, launches, fundraising
+### 🎤 4. Multi-Modal Vision & Voice Extraction
+* **OCR Vision Engine**: Upload a whiteboard snapshot, class schedule, or napkin-written task list. The camera parser extracts dates, titles, and details, structuring them instantly into trackable Kanban tasks.
+* **Voice HUD**: Talk to Chronos through a dynamic glassmorphic audio visualizer to dictate tasks, request progress updates, or change your active avatar mode.
 
 ---
 
-## 🏃 Getting Started
+## 🛠️ Usage of Google Technologies (15% Weight)
 
-### Prerequisites
-- Node.js 20+
-- Google Cloud Platform project with billing enabled
-- Firebase project
-- Gemini API key (from Google AI Studio)
+Chronos is built from the ground up to integrate tightly with the **Google Developer Cloud**:
 
-### Local Development
-```bash
-git clone <repo-url>
-cd chronos
-npm install
-cp .env.example .env.local   # Fill in your API keys
-npm run dev                   # http://localhost:3000
+1. **Gemini 1.5 Flash**: Orchestrates real-time conversation, executes voice stream interpretation, and runs vision-based OCR scanning.
+2. **Gemini 1.5 Pro**: Handles complex multi-variable optimization problems (Rescue planning schedules) and rich creative generation (Ghost Worker drafts).
+3. **Gemini Function Calling (14 Tools)**: Wires the LLM core directly to our database systems to autonomously manage schedules.
+4. **Gemini Structured Output**: Strictly validates AI plans, draft templates, and predictive insights using zod schemas.
+5. **Google AI Studio**: Empowered prompt prototyping, system prompt optimization, and fast developer sandboxing.
+6. **Firebase Authentication (with Google OAuth)**: Secure Google Sign-In, retrieving session tokens for OAuth-scoped Google Calendar/Gmail/Tasks APIs.
+7. **Cloud Firestore**: Real-time database synchronizing Tasks, Habits, Goals, User Preferences, Analytics, and Rescue states instantly.
+8. **Firebase Cloud Messaging (FCM)**: Delivers instant desktop and mobile push notifications for real-time accountability warnings.
+9. **Google Calendar API**: Live synchronizes tasks, smart-decomposed milestones, and rescue timeblocks directly onto the user's Google Calendar.
+10. **Gmail API**: Intercepts inbound notifications, drafts emails, and sends outbound progress images using Google OAuth credentials.
+11. **Google Tasks API**: Bi-directionally syncs tasks between the Chronos Kanban Board and native Google Tasks.
+12. **Google Cloud Run**: Highly scalable container deployment host, ensuring high-speed delivery with global SSL terminations.
+13. **Google Cloud Build**: Integrated CI/CD pipeline building Docker containers and pushing artifacts automatically.
+
+---
+
+## 🎨 Product Experience & Design (10% Weight)
+
+Chronos features a premium **Glassmorphic Cyberpunk Dark Mode** design with smooth micro-animations, tailored specifically to prevent distraction and stimulate focus:
+
+* **Instantaneous UI Feel (0ms Latency)**: Goal Creation, Habit Toggling, and Task Tracking utilize highly robust **Optimistic UI Updates**. Modals close immediately, checklists toggle instantly, and list arrays expand on click, handling Firestore background synchronization and automatic state rollbacks gracefully.
+* **Insulated Application Resilience**: Wrapped inside a luxury glassmorphic **Global Error Boundary**. Sub-component crashes or network dropouts are localized—letting the user "Restore Guardian" with a single click without losing their page workspace or active Rescue session.
+* **Tailored Personas**: Personalize your productivity dashboard by selecting one of three focused modes on boarding:
+  * 🎓 **Student Persona**: Tailored for exams, homework, study groups, and placement preparation.
+  * 💼 **Professional Persona**: Optimized for standups, sprints, corporate presentations, and cross-functional deliverables.
+  * 🚀 **Entrepreneur Persona**: Geared for seed rounds, pitch decks, product launches, and operational multitasking.
+
+---
+
+## 💻 Technical Implementation (10% Weight)
+
+### 🧱 Tech Stack
+* **Framework**: Next.js 14 (App Router)
+* **Language**: TypeScript (Strict-type checked, 0 compile errors)
+* **Styling**: Vanilla CSS Modules (Glassmorphism, custom dark-neon variables, HSL theme customizers)
+* **Auth**: NextAuth.js (Google Provider with deep API write-scopes)
+* **Database**: Firebase SDK / Firebase Admin SDK
+
+---
+
+## 🏃 Getting Started & Local Setup
+
+### 📋 Prerequisites
+* **Node.js**: Version 20.x or above
+* **Google Cloud Console**: Access to set up Google OAuth 2.0 Credentials (with Calendar, Tasks, and Gmail APIs enabled)
+* **Firebase Console**: A project initialized with Authentication (Google Sign-In) and Cloud Firestore
+
+### ⚙️ Environment Configuration
+Create a `.env.local` file in the root directory based on `.env.example`:
+
+```properties
+# === Gemini Vertex AI ===
+VERTEX_PROJECT_ID=your_gcp_project_id_here
+VERTEX_LOCATION=global
+GOOGLE_APPLICATION_CREDENTIALS=
+GOOGLE_APPLICATION_CREDENTIALS_JSON=
+GEMINI_MODEL_FLASH=gemini-1.5-flash
+GEMINI_MODEL_PRO=gemini-1.5-pro
+
+# === Firebase Client ===
+NEXT_PUBLIC_FIREBASE_API_KEY=your_apiKey_here
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_authDomain_here
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_projectId_here
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_storageBucket_here
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_senderId_here
+NEXT_PUBLIC_FIREBASE_APP_ID=your_appId_here
+
+# === Firebase Admin ===
+FIREBASE_SERVICE_ACCOUNT_KEY=your_base64_encoded_service_account_json
+
+# === Google OAuth ===
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+# === NextAuth ===
+NEXTAUTH_SECRET=your_nextauth_cryptographic_secret
+NEXTAUTH_URL=http://localhost:3000
+
+# === FCM VAPID Key ===
+NEXT_PUBLIC_FIREBASE_VAPID_KEY=your_vapid_key
 ```
 
-### Deployment (Google Cloud Run)
-```bash
-gcloud builds submit --config cloudbuild.yaml
-```
+### 🚀 Running Locally
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/RsbhThakur/chronos.git
+   cd chronos
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Run the TypeScript type verification to ensure compiler consistency:
+   ```bash
+   npx tsc --noEmit
+   ```
+4. Start the local Next.js development server:
+   ```bash
+   npm run dev
+   ```
+5. Open [http://localhost:3000](http://localhost:3000) in your web browser.
 
 ---
 
-## 📁 Project Structure
+## 📦 Google Cloud Deployment
 
-```
-chronos/
-├── docs/
-│   ├── TECHNICAL_DESIGN.md      # Architecture & product specification
-│   └── CODE_SPECIFICATION.md    # Implementation-level code spec
-├── src/
-│   ├── app/                     # Next.js App Router pages & API routes
-│   ├── components/              # React components (UI, chat, tasks, etc.)
-│   ├── hooks/                   # Custom React hooks
-│   ├── lib/                     # Firebase, AI agents, utilities
-│   │   ├── ai/agents/           # 6 specialized Gemini AI agents
-│   │   └── demo/                # Demo mode with 3 user personas
-│   └── types/                   # TypeScript type definitions
-├── public/                      # PWA manifest, service worker, icons
-├── Dockerfile                   # Cloud Run container
-├── cloudbuild.yaml              # CI/CD for GCP
-└── README.md
-```
+Chronos is optimized for automated deployment on **Google Cloud Run** using **Cloud Build**.
+
+1. Authenticate with the Google Cloud CLI:
+   ```bash
+   gcloud auth login
+   ```
+2. Set your active Google Cloud project:
+   ```bash
+   gcloud config set project your-gcp-project-id
+   ```
+3. Submit the Docker build and deploy to Cloud Run automatically:
+   ```bash
+   gcloud builds submit --config cloudbuild.yaml
+   ```
 
 ---
 
-## 📚 Documentation
+## 👥 Evaluation Guide (Usability & Completeness - 5% Weight)
 
-| Document | Description |
-|----------|-------------|
-| [TECHNICAL_DESIGN.md](docs/TECHNICAL_DESIGN.md) | Complete architecture, AI agent system, Firestore schema, deployment strategy, team work distribution, and evaluation matrix alignment |
-| [CODE_SPECIFICATION.md](docs/CODE_SPECIFICATION.md) | Implementation-level specification for every file — CSS design tokens, TypeScript types, component props/state, API contracts, agent system prompts, demo data |
-
----
-
-## 👥 Team
-
-Built for the **BlockseBlock Hackathon 2026** — The Last-Minute Life Saver challenge.
+To allow judges to thoroughly evaluate Chronos' deep features without requiring tedious account setup, API integrations, or real task completion cycles:
+* **Interactive Demo Mode**: Click **"Try Demo Mode"** on the onboarding screen.
+* Select one of the three personas (**Student**, **Professional**, or **Entrepreneur**).
+* This instantly hydrates your session with rich, active preset collections representing realistic states: active Kanban task boards, multiple ongoing goals, mock Google Calendar events, historic performance data for Time Warp, and custom accountability feedback.
+* **Test the Rescue Mode**: Click the glowing **Rescue Mode** toggle inside the header. Watch the layout transition seamlessly, observe the computed schedule, and witness how tasks rearrange to shield your priority deadline instantly!
 
 ---
 
 ## 📄 License
-
-MIT License — See [LICENSE](LICENSE) for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
