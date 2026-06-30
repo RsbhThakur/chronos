@@ -470,6 +470,7 @@ export const AIChatSidebar: React.FC<AIChatSidebarProps> = ({
         isOpen={cameraOpen}
         onClose={() => setCameraOpen(false)}
         onScanComplete={handleScanComplete}
+        userId={userId}
       />
     </>
   );

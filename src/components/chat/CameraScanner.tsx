@@ -11,17 +11,20 @@ interface CameraScannerProps {
   isOpen: boolean;
   onClose: () => void;
   onScanComplete: (tasks: any[]) => void;
+  userId?: string;
 }
 
 export const CameraScanner: React.FC<CameraScannerProps> = ({
   isOpen,
   onClose,
   onScanComplete,
+  userId,
 }) => {
   const { showToast } = useToast();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
   const [hasCamera, setHasCamera] = useState(false);
@@ -35,6 +38,15 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
   const [activeTab, setActiveTab] = useState<'camera' | 'upload'>('upload');
   const [isDragging, setIsDragging] = useState(false);
 
+  // Focus modal container on mount
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => {
+        containerRef.current?.focus();
+      }, 50);
+    }
+  }, [isOpen]);
+
   // Start Camera Stream
   const startCamera = async () => {
     try {
@@ -42,22 +54,45 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
         streamRef.current.getTracks().forEach((track) => track.stop());
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' },
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
+      if (typeof navigator === 'undefined' || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('navigator.mediaDevices or getUserMedia is not supported in this browser context (unsecured HTTP or unsupported browser)');
       }
+
+      // Try with ideal 'environment' constraint first (back camera on phones),
+      // then fall back to standard video constraint to prevent desktop errors
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' } },
+        });
+      } catch (err) {
+        console.warn('[CameraScanner] FacingMode constraint failed, falling back to basic video:', err);
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+        });
+      }
+
+      streamRef.current = stream;
       setHasCamera(true);
       setCameraActive(true);
+
+      // Bind stream immediately if element is already mounted
+      if (videoRef.current) {
+        const video = videoRef.current;
+        video.srcObject = stream;
+        video.play().catch((playErr) => {
+          console.warn('[CameraScanner] Immediate play failed, autoPlay should kick in:', playErr);
+        });
+      }
     } catch (err: any) {
       console.error('[CameraScanner] Camera permission/access error:', err);
       setHasCamera(false);
       setCameraActive(false);
       showToast({
         type: 'error',
-        message: 'Could not access camera. Ensure permissions are granted or use the file upload instead.',
+        message: err.message?.includes('unsupported')
+          ? 'Webcam features require a secure HTTPS connection or localhost. Please use file upload instead.'
+          : 'Could not access camera. Ensure permissions are granted or use the file upload instead.',
       });
       setActiveTab('upload');
     }
@@ -89,6 +124,50 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
     }
   }, [isOpen]);
 
+  // Bind camera stream reliably as soon as the <video> element mounts
+  useEffect(() => {
+    if (cameraActive && streamRef.current && videoRef.current) {
+      const video = videoRef.current;
+      video.srcObject = streamRef.current;
+      video.play().catch((playErr) => {
+        console.warn('[CameraScanner] video.play() failed on ref mount:', playErr);
+      });
+    }
+  }, [cameraActive, capturedImage, activeTab]);
+
+  // Helper to extract and process image from clipboard data
+  const handlePasteImage = (clipboardData: DataTransfer | null) => {
+    if (!isOpen || activeTab !== 'upload' || capturedImage) return false;
+
+    const items = clipboardData?.items;
+    if (items) {
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          const file = items[i].getAsFile();
+          if (file) {
+            processFile(file);
+            showToast({
+              type: 'success',
+              message: 'Image pasted from clipboard!',
+            });
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  };
+
+  // Add Clipboard Paste (Ctrl+V) listener globally when modal is open on upload tab
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      handlePasteImage(e.clipboardData);
+    };
+
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  }, [isOpen, activeTab, capturedImage]);
+
   // Capture Snapshot
   const captureSnapshot = () => {
     const video = videoRef.current;
@@ -117,7 +196,7 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
       const res = await fetch('/api/ai/scan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: base64Image }),
+        body: JSON.stringify({ image: base64Image, userId }),
       });
 
       if (!res.ok) throw new Error('API processing failed');
@@ -223,6 +302,11 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
 
   return (
     <div
+      ref={containerRef}
+      tabIndex={0}
+      onPaste={(e) => {
+        handlePasteImage(e.clipboardData);
+      }}
       style={{
         position: 'fixed',
         inset: 0,
@@ -234,6 +318,7 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
         alignItems: 'center',
         justifyContent: 'center',
         padding: '20px',
+        outline: 'none',
       }}
     >
       <div
@@ -288,7 +373,7 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
                 transition: 'all 0.2s ease',
               }}
             >
-              DRAG & DROP UPLOAD
+              DRAG / DROP / PASTE
             </button>
             <button
               onClick={() => setActiveTab('camera')}
@@ -318,25 +403,32 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
           <canvas ref={canvasRef} style={{ display: 'none' }} />
 
           {/* Active Camera Feed */}
-          {activeTab === 'camera' && cameraActive && !capturedImage && (
-            <div style={{ width: '100%', position: 'relative', flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          {activeTab === 'camera' && !capturedImage && (
+            <div style={{ width: '100%', position: 'relative', flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '300px', background: '#000' }}>
               <video
                 ref={videoRef}
                 autoPlay
                 playsInline
                 muted
-                style={{ width: '100%', height: '100%', objectFit: 'cover', minHeight: '300px' }}
+                style={{ width: '100%', height: '100%', objectFit: 'cover', minHeight: '300px', display: cameraActive ? 'block' : 'none' }}
               />
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: '20px',
-                  border: '2px dashed rgba(0,229,255,0.4)',
-                  borderRadius: 'var(--radius-md)',
-                  pointerEvents: 'none',
-                  boxShadow: '0 0 0 9999px rgba(0,0,0,0.4)',
-                }}
-              />
+              {!cameraActive ? (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+                  <Loader2 size={36} className="animate-spin text-cyan" style={{ color: 'var(--neon-cyan)' }} />
+                  <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>Initializing camera stream...</span>
+                </div>
+              ) : (
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: '20px',
+                    border: '2px dashed rgba(0,229,255,0.4)',
+                    borderRadius: 'var(--radius-md)',
+                    pointerEvents: 'none',
+                    boxShadow: '0 0 0 9999px rgba(0,0,0,0.4)',
+                  }}
+                />
+              )}
             </div>
           )}
 
@@ -347,6 +439,16 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  fileInputRef.current?.click();
+                }
+              }}
+              onPaste={(e) => {
+                handlePasteImage(e.clipboardData);
+              }}
               style={{
                 flex: 1,
                 display: 'flex',
@@ -362,6 +464,7 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
                 transition: 'all 0.2s ease',
                 minHeight: '260px',
                 boxShadow: isDragging ? '0 0 15px rgba(0, 229, 255, 0.1) inset' : 'none',
+                outline: 'none',
               }}
             >
               <input
@@ -390,8 +493,11 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
                 <Upload size={24} className={isDragging ? 'neon-text-cyan' : ''} />
               </motion.div>
               <h3 style={{ fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 8px 0', textAlign: 'center' }}>
-                {isDragging ? 'Drop Image Here!' : 'Drag & Drop Task Image'}
+                {isDragging ? 'Drop Image Here!' : 'Drag & Drop / Paste Image'}
               </h3>
+              <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', margin: '0 0 4px 0', textAlign: 'center' }}>
+                or press <kbd style={{ background: 'rgba(255,255,255,0.08)', padding: '2px 6px', borderRadius: '4px', border: '1px solid var(--glass-border)', fontSize: '10px' }}>Ctrl + V</kbd> to paste
+              </p>
               <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', margin: '0 0 4px 0', textAlign: 'center' }}>
                 or <span style={{ color: 'var(--neon-cyan)', textDecoration: 'underline' }}>browse files</span> on your computer
               </p>
@@ -400,6 +506,7 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({
               </span>
             </div>
           )}
+
 
           {/* Snapshot Preview / Results */}
           {capturedImage && (
