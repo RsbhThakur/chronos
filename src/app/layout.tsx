@@ -30,7 +30,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable} ${orbitron.variable}`}>
+    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable} ${orbitron.variable}`} data-scroll-behavior="smooth">
       <head>
         <script
           dangerouslySetInnerHTML={{
