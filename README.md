@@ -11,7 +11,7 @@
 |-------------|----------------|
 | **Deployed Application** | [🚀 Click Here to Open Chronos (Live on Google Cloud Run)](https://chronos-435347523554.asia-south1.run.app/) |
 | **GitHub Repository** | [📂 Source Code Repository](https://github.com/RsbhThakur/chronos) |
-| **Project Description (Google Doc)** | [📄 Complete Project Document](https://docs.google.com/document/d/1TMrB_fpBILqKIFLBay5Xrk2egZlI1uUx8cnrGPKSnqo/edit) |
+| **Project Description (Google Doc)** | [📄 Complete Project Document](https://docs.google.com/document/d/1fBjMYUSveW5GDx3KaT9J7ZFr0P8wl_V539bFFP0dx_M/edit?usp=sharing) |
 
 ---
 
