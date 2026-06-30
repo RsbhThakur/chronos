@@ -158,6 +158,41 @@ export default function DashboardPage() {
   const [showTour, setShowTour] = useState(false);
   const router = useRouter();
 
+  // Gamification state for real or demo sessions
+  const [gamificationState, setGamificationState] = useState<any>({
+    level: 1,
+    xp: 0,
+    streak: 0,
+    badges: []
+  });
+
+  useEffect(() => {
+    if (isDemo) {
+      setGamificationState(gamification);
+    } else if (user?.id) {
+      const fetchGamification = async () => {
+        try {
+          const { doc, getDoc } = await import('firebase/firestore');
+          const { db: clientDb } = await import('@/lib/firebase');
+          const statsRef = doc(clientDb, 'users', user.id, 'gamification', 'stats');
+          const statsSnap = await getDoc(statsRef);
+          if (statsSnap.exists()) {
+            const data = statsSnap.data();
+            setGamificationState({
+              level: data.level || 1,
+              xp: data.xp || 0,
+              streak: data.streak || 0,
+              badges: data.badges || []
+            });
+          }
+        } catch (err) {
+          console.error('Failed to fetch real gamification stats:', err);
+        }
+      };
+      fetchGamification();
+    }
+  }, [isDemo, user?.id, gamification]);
+
   // Show demo tour once per session when in demo mode
   useEffect(() => {
     if (isDemo) {
@@ -218,7 +253,7 @@ export default function DashboardPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       {/* Status Bar */}
-      <StatusBar tasks={allTasks} streak={gamification.streak} />
+      <StatusBar tasks={allTasks} streak={gamificationState.streak} />
 
       {/* Main content area */}
       <div style={{ flex: 1, overflow: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -366,16 +401,16 @@ export default function DashboardPage() {
               {/* XP Bar */}
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                  <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>Level {gamification.level}</span>
-                  <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>{gamification.xp % 100}/100 XP</span>
+                  <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>Level {gamificationState.level}</span>
+                  <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)' }}>{gamificationState.xp % 100}/100 XP</span>
                 </div>
                 <div style={{ height: '6px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${gamification.xp % 100}%`, background: 'linear-gradient(90deg, var(--neon-cyan), var(--neon-purple))', transition: 'width 0.6s ease' }} />
+                  <div style={{ height: '100%', width: `${gamificationState.xp % 100}%`, background: 'linear-gradient(90deg, var(--neon-cyan), var(--neon-purple))', transition: 'width 0.6s ease' }} />
                 </div>
               </div>
               {/* Badges */}
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                {gamification.badges.slice(0, 6).map((badge: any, i: number) => {
+                {gamificationState.badges.slice(0, 6).map((badge: any, i: number) => {
                 const name = typeof badge === 'string' ? badge : (badge?.name ?? '');
                 const lower = name.toLowerCase();
                 let cls = 'badge--purple';
