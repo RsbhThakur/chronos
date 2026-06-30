@@ -11,6 +11,7 @@ import { UserMode, WorkStyle, MotivationType, CommunicationStyle, NotificationCh
 import { User, Brain, Zap, Bell, Database, Link2, ChevronRight, Check, X, Download } from 'lucide-react';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db as clientDb } from '@/lib/firebase';
+import { useResponsive } from '@/hooks/useResponsive';
 
 type Section = 'profile' | 'personality' | 'features' | 'integrations' | 'notifications' | 'data';
 
@@ -45,6 +46,7 @@ const SettingRow: React.FC<{ label: string; description?: string; children: Reac
 
 export default function SettingsPage() {
   const { user, signOut } = useAuth();
+  const { isMobile } = useResponsive();
   const router = useRouter();
   const { isDemo, updateDemoUser, switchDemoMode } = useDemo();
   const { showToast } = useToast();
@@ -511,25 +513,56 @@ export default function SettingsPage() {
   };
 
   return (
-    <div style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: '100%', overflow: 'hidden' }}>
       {/* Sidebar nav */}
-      <div style={{ width: '200px', flexShrink: 0, borderRight: '1px solid var(--glass-border)', padding: '20px 12px', display: 'flex', flexDirection: 'column', gap: '2px', overflowY: 'auto' }}>
+      <div style={{
+        width: isMobile ? '100%' : '200px',
+        flexDirection: isMobile ? 'row' : 'column',
+        flexShrink: 0,
+        borderRight: isMobile ? 'none' : '1px solid var(--glass-border)',
+        borderBottom: isMobile ? '1px solid var(--glass-border)' : 'none',
+        padding: isMobile ? '8px' : '20px 12px',
+        display: 'flex',
+        gap: '4px',
+        overflowX: isMobile ? 'auto' : 'hidden',
+        overflowY: isMobile ? 'hidden' : 'auto',
+        scrollbarWidth: 'none',
+        msOverflowStyle: 'none',
+      }}>
         {sections.map(({ id, label, icon }) => (
           <button
             key={id}
             onClick={() => setActiveSection(id)}
-            style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 12px', borderRadius: 'var(--radius-md)', border: 'none', background: activeSection === id ? 'rgba(0,229,255,0.08)' : 'transparent', color: activeSection === id ? 'var(--neon-cyan)' : 'var(--text-secondary)', cursor: 'pointer', fontSize: 'var(--text-xs)', fontWeight: activeSection === id ? 600 : 400, textAlign: 'left', width: '100%', borderLeft: `2px solid ${activeSection === id ? 'var(--neon-cyan)' : 'transparent'}`, transition: 'all 0.15s ease' }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '8px 12px',
+              borderRadius: 'var(--radius-md)',
+              border: 'none',
+              background: activeSection === id ? 'rgba(0,229,255,0.08)' : 'transparent',
+              color: activeSection === id ? 'var(--neon-cyan)' : 'var(--text-secondary)',
+              cursor: 'pointer',
+              fontSize: 'var(--text-xs)',
+              fontWeight: activeSection === id ? 600 : 400,
+              textAlign: 'left',
+              width: isMobile ? 'auto' : '100%',
+              whiteSpace: isMobile ? 'nowrap' : 'normal',
+              borderLeft: isMobile ? 'none' : `2px solid ${activeSection === id ? 'var(--neon-cyan)' : 'transparent'}`,
+              borderBottom: isMobile ? `2px solid ${activeSection === id ? 'var(--neon-cyan)' : 'transparent'}` : 'none',
+              transition: 'all 0.15s ease'
+            }}
             onMouseEnter={(e) => { if (activeSection !== id) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
             onMouseLeave={(e) => { if (activeSection !== id) e.currentTarget.style.background = 'transparent'; }}
           >
-            <span style={{ flexShrink: 0 }}>{icon}</span>
+            <span style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>{icon}</span>
             {label}
           </button>
         ))}
       </div>
 
       {/* Content */}
-      <div style={{ flex: 1, overflow: 'auto', padding: '24px 32px', paddingBottom: '90px' }}>
+      <div style={{ flex: 1, overflow: 'auto', padding: isMobile ? '16px' : '24px 32px', paddingBottom: '90px' }}>
         <h2 style={{ margin: '0 0 4px', fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--text-primary)' }}>
           {sections.find((s) => s.id === activeSection)?.label}
         </h2>
