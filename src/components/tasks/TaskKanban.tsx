@@ -74,6 +74,12 @@ export const TaskKanban: React.FC<TaskKanbanProps> = ({
 
   // Helper to filter tasks by column status
   const getTasksByStatus = (status: TaskStatus) => {
+    if (status === 'todo') {
+      return tasks.filter((t) => t.status === 'todo' || t.status === 'overdue');
+    }
+    if (status === 'in_progress') {
+      return tasks.filter((t) => t.status === 'in_progress' || t.status === 'rescued');
+    }
     return tasks.filter((t) => t.status === status);
   };
 

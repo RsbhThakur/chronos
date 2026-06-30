@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { executeToolCall } from '@/lib/ai/tool-executor';
 import { adminDb } from '@/lib/firebase-admin';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
 export async function GET(request: Request) {
   try {
@@ -62,6 +64,43 @@ export async function POST(request: Request) {
     // Fetch and return the newly created task
     const taskSnap = await adminDb.collection('users').doc(userId).collection('tasks').doc(result.taskId).get();
     const createdTask = taskSnap.exists ? taskSnap.data() : null;
+
+    // Automatically sync to Google Calendar if enabled in settings
+    if (createdTask) {
+      try {
+        const userDoc = await adminDb.collection('users').doc(userId).get();
+        const userData = userDoc.exists ? userDoc.data() : null;
+        const calendarSyncEnabled = userData?.preferences?.calendarSyncEnabled === true;
+
+        if (calendarSyncEnabled) {
+          const session = await getServerSession(authOptions) as { accessToken?: string } | null;
+          if (session?.accessToken) {
+            const deadlineDate = createdTask.deadline && typeof createdTask.deadline.toDate === 'function'
+              ? createdTask.deadline.toDate()
+              : new Date(createdTask.deadline);
+
+            const startTime = deadlineDate.toISOString();
+            const estimatedMinutes = createdTask.estimatedMinutes || 30;
+            const endTime = new Date(deadlineDate.getTime() + estimatedMinutes * 60 * 1000).toISOString();
+
+            await executeToolCall(
+              'createCalendarEvent',
+              {
+                title: createdTask.title,
+                startTime,
+                endTime,
+                description: createdTask.description || '',
+              },
+              userId,
+              session
+            );
+            console.log(`[API POST Tasks] Automatically synced task ${result.taskId} to Google Calendar.`);
+          }
+        }
+      } catch (calendarErr) {
+        console.error('[API POST Tasks] Failed to automatically sync task to Google Calendar:', calendarErr);
+      }
+    }
 
     return NextResponse.json({ success: true, task: createdTask, message: result.message });
   } catch (error) {

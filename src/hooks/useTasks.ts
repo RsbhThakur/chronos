@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { collection, onSnapshot } from 'firebase/firestore';
+import { collection, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Task } from '@/types';
 import { useDemo } from '@/hooks/useDemo';
@@ -47,12 +47,25 @@ export const useTasks = (userId: string, filters?: UseTasksFilters) => {
     const unsubscribe = onSnapshot(
       tasksCollectionRef,
       (snapshot) => {
-        const fetched = snapshot.docs.map((doc) => {
-          const data = doc.data();
+        const now = new Date();
+        const fetched = snapshot.docs.map((snapshotDoc) => {
+          const data = snapshotDoc.data();
+          const deadline = data.deadline?.toDate ? data.deadline.toDate() : new Date(data.deadline);
+          let status = data.status || 'todo';
+
+          // Automatically heal overdue task status in Firestore
+          if (status !== 'completed' && status !== 'rescued' && deadline < now && status !== 'overdue') {
+            status = 'overdue';
+            updateDoc(doc(db, 'users', userId, 'tasks', snapshotDoc.id), { status: 'overdue' }).catch((err) => {
+              console.error('Failed to auto-transition task to overdue in Firestore:', err);
+            });
+          }
+
           return {
             ...data,
-            id: doc.id,
-            deadline: data.deadline?.toDate ? data.deadline.toDate() : new Date(data.deadline),
+            id: snapshotDoc.id,
+            status,
+            deadline,
             createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt),
             completedAt: data.completedAt?.toDate ? data.completedAt.toDate() : (data.completedAt ? new Date(data.completedAt) : null),
           } as Task;
