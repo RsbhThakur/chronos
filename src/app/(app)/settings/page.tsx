@@ -321,6 +321,37 @@ export default function SettingsPage() {
     showToast({ type: 'success', message: 'Data exported!' });
   };
 
+  const handleDeleteAccount = async () => {
+    if (isDemo) {
+      showToast({ type: 'success', message: 'Purging demo state...' });
+      localStorage.removeItem('chronos_demo_mode');
+      localStorage.removeItem('chronos_demo_mode_persona');
+      localStorage.removeItem('chronos_demo_profiles');
+      localStorage.removeItem('chronos_camera_scan_enabled');
+      localStorage.removeItem('chronos_alert_timing');
+      signOut();
+      return;
+    }
+
+    try {
+      showToast({ type: 'info', message: 'Purging user account and collections...' });
+      const response = await fetch('/api/users/delete', {
+        method: 'DELETE',
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        showToast({ type: 'success', message: 'Account successfully deleted.' });
+        signOut();
+      } else {
+        showToast({ type: 'error', message: result.error || 'Failed to delete account.' });
+      }
+    } catch (err) {
+      console.error('Error deleting account:', err);
+      showToast({ type: 'error', message: 'An unexpected error occurred.' });
+    }
+  };
+
   const renderSection = () => {
     switch (activeSection) {
       case 'profile':
@@ -516,7 +547,7 @@ export default function SettingsPage() {
             <SettingRow label="Delete Account" description="Permanently remove all data — this cannot be undone">
               {showDeleteConfirm ? (
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <NeonButton variant="pink" size="sm" onClick={() => { showToast({ type: 'error', message: 'Account deletion requires server confirmation.' }); setShowDeleteConfirm(false); }}>
+                  <NeonButton variant="pink" size="sm" onClick={() => { handleDeleteAccount(); setShowDeleteConfirm(false); }}>
                     Confirm Delete
                   </NeonButton>
                   <NeonButton variant="purple" size="sm" onClick={() => setShowDeleteConfirm(false)}>Cancel</NeonButton>
