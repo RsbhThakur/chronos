@@ -107,6 +107,24 @@ export default function GoalsPage() {
 
   // Handle Complete Habit Completion log
   const handleCompleteHabit = async (habitId: string) => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const originalHabits = [...habits];
+
+    // Optimistically update the local habit state instantly (0ms latency for logging)
+    setHabits((prev) =>
+      prev.map((h) => {
+        if (h.id === habitId) {
+          if (h.completedDates.includes(todayStr)) return h;
+          return {
+            ...h,
+            completedDates: [...h.completedDates, todayStr],
+            streak: h.streak + 1,
+          };
+        }
+        return h;
+      })
+    );
+
     try {
       const response = await fetch('/api/goals/habits', {
         method: 'PATCH',
@@ -124,12 +142,16 @@ export default function GoalsPage() {
 
       showToast({ type: 'success', message: 'Habit logged! Keep the streak going 🔥' });
 
+      // If we are not in simulated demo mode, sync the fully processed state from the server
       if (!isDemo) {
         await fetchGoalsAndHabits();
       }
     } catch (err: any) {
       console.error('Failed to complete habit:', err);
       showToast({ type: 'error', message: err.message || 'Failed to log habit.' });
+      
+      // Rollback to original habits on failure
+      setHabits(originalHabits);
     }
   };
 
@@ -252,16 +274,57 @@ export default function GoalsPage() {
     }
 
     setSubmittingGoal(true);
+
+    // Formulate a premium optimistic Goal object
+    const optimisticId = 'goal-opt-' + Math.random().toString(36).substring(2, 9);
+    const newOptimisticGoal: Goal = {
+      id: optimisticId,
+      userId: user?.id || 'demo-student-001',
+      title: goalTitle,
+      description: goalDescription,
+      deadline: new Date(goalDeadline),
+      createdAt: new Date(),
+      status: 'active',
+      progress: 0,
+      milestones: manualMilestones.map((m) => ({
+        id: 'm-opt-' + Math.random().toString(36).substring(2, 9),
+        title: m.title,
+        dueDate: new Date(m.dueDate),
+        completed: false,
+      })),
+      linkedTaskIds: [],
+    };
+
+    // Save current goals state for graceful rollback on API failure
+    const originalGoals = [...goals];
+
+    // Optimistically push the goal onto the visible list instantly
+    setGoals((prev) => [newOptimisticGoal, ...prev]);
+
+    // Cache fields and reset form state to close the modal instantly (0ms interaction latency)
+    const currentGoalTitle = goalTitle;
+    const currentGoalDescription = goalDescription;
+    const currentGoalDeadline = goalDeadline;
+    const currentUseSmartDecompose = useSmartDecompose;
+    const currentManualMilestones = [...manualMilestones];
+
+    setIsCreateGoalOpen(false);
+    setGoalTitle('');
+    setGoalDescription('');
+    setGoalDeadline('');
+    setUseSmartDecompose(false);
+    setManualMilestones([]);
+
     try {
-      if (useSmartDecompose) {
+      if (currentUseSmartDecompose) {
         // AI Smart Decompose flow
         const response = await fetch('/api/ai/decompose', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            title: goalTitle,
-            description: goalDescription,
-            deadline: goalDeadline,
+            title: currentGoalTitle,
+            description: currentGoalDescription,
+            deadline: currentGoalDeadline,
             userId: user?.id || 'demo-student-001',
           }),
         });
@@ -279,9 +342,9 @@ export default function GoalsPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             userId: user?.id || 'demo-student-001',
-            title: goalTitle,
-            description: goalDescription,
-            deadline: goalDeadline,
+            title: currentGoalTitle,
+            description: currentGoalDescription,
+            deadline: currentGoalDeadline,
           }),
         });
 
@@ -292,8 +355,8 @@ export default function GoalsPage() {
 
         // If goal creation had manual milestones, add them through a PATCH
         const goalId = data.goal?.id || data.goalId;
-        if (goalId && manualMilestones.length > 0) {
-          const mappedMilestonesWithIds = manualMilestones.map((m) => ({
+        if (goalId && currentManualMilestones.length > 0) {
+          const mappedMilestonesWithIds = currentManualMilestones.map((m) => ({
             id: 'm-' + Math.random().toString(36).substring(2, 9),
             title: m.title,
             dueDate: m.dueDate,
@@ -316,21 +379,16 @@ export default function GoalsPage() {
         showToast({ type: 'success', message: 'Goal created successfully!' });
       }
 
-      // Close modal & reset fields
-      setIsCreateGoalOpen(false);
-      setGoalTitle('');
-      setGoalDescription('');
-      setGoalDeadline('');
-      setUseSmartDecompose(false);
-      setManualMilestones([]);
-
-      // Reload
+      // Reload real data if not in simulated demo mode
       if (!isDemo) {
         await fetchGoalsAndHabits();
       }
     } catch (err: any) {
       console.error('Goal creation failed:', err);
       showToast({ type: 'error', message: err.message || 'Failed to create goal.' });
+      
+      // Rollback optimistic update on failure
+      setGoals(originalGoals);
     } finally {
       setSubmittingGoal(false);
     }
@@ -344,15 +402,44 @@ export default function GoalsPage() {
     }
 
     setSubmittingHabit(true);
+
+    // Formulate a premium optimistic Habit object
+    const optimisticId = 'habit-opt-' + Math.random().toString(36).substring(2, 9);
+    const newOptimisticHabit: Habit = {
+      id: optimisticId,
+      userId: user?.id || 'demo-student-001',
+      title: habitTitle,
+      frequency: habitFrequency,
+      completedDates: [],
+      streak: 0,
+      category: habitCategory || 'General',
+    };
+
+    // Save current habits state for rollback on API failure
+    const originalHabits = [...habits];
+
+    // Optimistically push the habit onto the visible list instantly
+    setHabits((prev) => [newOptimisticHabit, ...prev]);
+
+    // Cache fields and reset form state to close the modal instantly (0ms interaction latency)
+    const currentHabitTitle = habitTitle;
+    const currentHabitFrequency = habitFrequency;
+    const currentHabitCategory = habitCategory;
+
+    setIsCreateHabitOpen(false);
+    setHabitTitle('');
+    setHabitFrequency('daily');
+    setHabitCategory('');
+
     try {
       const response = await fetch('/api/goals/habits', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: user?.id || 'demo-student-001',
-          title: habitTitle,
-          frequency: habitFrequency,
-          category: habitCategory || 'General',
+          title: currentHabitTitle,
+          frequency: currentHabitFrequency,
+          category: currentHabitCategory || 'General',
         }),
       });
 
@@ -363,19 +450,16 @@ export default function GoalsPage() {
 
       showToast({ type: 'success', message: 'Habit created successfully! 🔥' });
 
-      // Close modal & reset fields
-      setIsCreateHabitOpen(false);
-      setHabitTitle('');
-      setHabitFrequency('daily');
-      setHabitCategory('');
-
-      // Reload
+      // Reload real data if not in simulated demo mode
       if (!isDemo) {
         await fetchGoalsAndHabits();
       }
     } catch (err: any) {
       console.error('Habit creation failed:', err);
       showToast({ type: 'error', message: err.message || 'Failed to create habit.' });
+      
+      // Rollback optimistic update on failure
+      setHabits(originalHabits);
     } finally {
       setSubmittingHabit(false);
     }
