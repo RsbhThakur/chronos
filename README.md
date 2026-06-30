@@ -9,13 +9,13 @@
 
 | Deliverable | URL / Resource |
 |-------------|----------------|
-| **Deployed Application** | [🚀 Click Here to Open Chronos (Live on Google Cloud Run)](#) *(Enter your live URL here)* |
+| **Deployed Application** | [🚀 Click Here to Open Chronos (Live on Google Cloud Run)](https://chronos-435347523554.asia-south1.run.app/) |
 | **GitHub Repository** | [📂 Source Code Repository](https://github.com/RsbhThakur/chronos) |
 | **Project Description (Google Doc)** | [📄 Complete Project Document](https://docs.google.com/document/d/1TMrB_fpBILqKIFLBay5Xrk2egZlI1uUx8cnrGPKSnqo/edit) |
 
 ---
 
-## 🎯 Problem Statement & Impact (20% Weight)
+## 🎯 Problem Statement & Impact
 
 Traditional productivity systems are built around **passive reminders**—static alarms, red notification badges, or email alerts. They lack context, are easy to ignore, and fail to offer support when a user is falling behind. Consequently:
 * **Students** miss exams and assignment submissions.
@@ -26,7 +26,7 @@ Traditional productivity systems are built around **passive reminders**—static
 
 ---
 
-## 🧠 Agentic Depth (20% Weight)
+## 🧠 Agentic Depth
 
 Chronos is built on a **multi-agent orchestration framework** utilizing 6 specialized Gemini AI Agents that collaborate via Cloud Firestore.
 
@@ -45,16 +45,16 @@ Chronos is built on a **multi-agent orchestration framework** utilizing 6 specia
 
 | Agent | Core Model | Purpose & Implementation |
 |-------|------------|--------------------------|
-| **Core Orchestrator** | `gemini-1.5-flash` | Equipped with **14 Gemini function-calling tools** to query tasks, manage schedules, fetch emails, and invoke sub-agents. |
-| **Rescue Planner** | `gemini-1.5-pro` | Initiated when time-budgets fail. Generates a compact, high-density minute-by-minute action plan using structured JSON outputs. |
-| **Ghost Worker Studio** | `gemini-1.5-pro` | Autonomously writes background drafts (emails, project summaries, presentation slides, or code boilerplate) while you focus on execution. |
-| **Time Warp Predictor** | `gemini-1.5-flash` | Runs statistical analysis over past performance data to forecast cognitive loads and predict calendar bottlenecks 7 days out. |
-| **Accountability Partner** | `gemini-1.5-flash`| Adapts its motivation style (Gentle Mentor, Drill Sergeant, or Analytical Strategist) to write dynamic, escalating reminders. |
-| **AI Goal Decomposer** | `gemini-1.5-flash`| Recursively breaks complex goals into chronological micro-tasks with dependencies, realistic durations, and automatic calendar sync. |
+| **Core Orchestrator** | `gemini-3.5-flash` | Equipped with **14 Gemini function-calling tools** to query tasks, manage schedules, fetch emails, and invoke sub-agents. |
+| **Rescue Planner** | `gemini-3.1-pro` | Initiated when time-budgets fail. Generates a compact, high-density minute-by-minute action plan using structured JSON outputs. |
+| **Ghost Worker Studio** | `gemini-3.1-pro` | Autonomously writes background drafts (emails, project summaries, presentation slides, or code boilerplate) while you focus on execution. |
+| **Time Warp Predictor** | `gemini-3.5-flash` | Runs statistical analysis over past performance data to forecast cognitive loads and predict calendar bottlenecks 7 days out. |
+| **Accountability Partner** | `gemini-3.5-flash`| Adapts its motivation style (Gentle Mentor, Drill Sergeant, or Analytical Strategist) to write dynamic, escalating reminders. |
+| **AI Goal Decomposer** | `gemini-3.5-flash`| Recursively breaks complex goals into chronological micro-tasks with dependencies, realistic durations, and automatic calendar sync. |
 
 ---
 
-## 🚀 Innovation & Key Features (20% Weight)
+## 🚀 Innovation & Key Features
 
 ### 🚨 1. Real-Time Rescue Mode (The "Guardian" Interventions)
 When you are on the verge of missing a deadline, passive warnings are thrown away. Activating **Rescue Mode**:
@@ -78,12 +78,12 @@ Most calendar apps show you what is scheduled; Time Warp shows you **how you wil
 
 ---
 
-## 🛠️ Usage of Google Technologies (15% Weight)
+## 🛠️ Usage of Google Technologies
 
 Chronos is built from the ground up to integrate tightly with the **Google Developer Cloud**:
 
-1. **Gemini 1.5 Flash**: Orchestrates real-time conversation, executes voice stream interpretation, and runs vision-based OCR scanning.
-2. **Gemini 1.5 Pro**: Handles complex multi-variable optimization problems (Rescue planning schedules) and rich creative generation (Ghost Worker drafts).
+1. **Gemini 3.5 Flash**: Orchestrates real-time conversation, executes voice stream interpretation, and runs vision-based OCR scanning.
+2. **Gemini 3.1 Pro**: Handles complex multi-variable optimization problems (Rescue planning schedules) and rich creative generation (Ghost Worker drafts).
 3. **Gemini Function Calling (14 Tools)**: Wires the LLM core directly to our database systems to autonomously manage schedules.
 4. **Gemini Structured Output**: Strictly validates AI plans, draft templates, and predictive insights using zod schemas.
 5. **Google AI Studio**: Empowered prompt prototyping, system prompt optimization, and fast developer sandboxing.
@@ -98,7 +98,7 @@ Chronos is built from the ground up to integrate tightly with the **Google Devel
 
 ---
 
-## 🎨 Product Experience & Design (10% Weight)
+## 🎨 Product Experience & Design
 
 Chronos features a premium **Glassmorphic Cyberpunk Dark Mode** design with smooth micro-animations, tailored specifically to prevent distraction and stimulate focus:
 
@@ -111,7 +111,7 @@ Chronos features a premium **Glassmorphic Cyberpunk Dark Mode** design with smoo
 
 ---
 
-## 💻 Technical Implementation (10% Weight)
+## 💻 Technical Implementation
 
 ### 🧱 Tech Stack
 * **Framework**: Next.js 14 (App Router)
@@ -138,8 +138,8 @@ VERTEX_PROJECT_ID=your_gcp_project_id_here
 VERTEX_LOCATION=global
 GOOGLE_APPLICATION_CREDENTIALS=
 GOOGLE_APPLICATION_CREDENTIALS_JSON=
-GEMINI_MODEL_FLASH=gemini-1.5-flash
-GEMINI_MODEL_PRO=gemini-1.5-pro
+GEMINI_MODEL_FLASH=gemini-3.5-flash
+GEMINI_MODEL_PRO=gemini-3.1-pro
 
 # === Firebase Client ===
 NEXT_PUBLIC_FIREBASE_API_KEY=your_apiKey_here
@@ -205,7 +205,7 @@ Chronos is optimized for automated deployment on **Google Cloud Run** using **Cl
 
 ---
 
-## 👥 Evaluation Guide (Usability & Completeness - 5% Weight)
+## 👥 Evaluation Guide
 
 To allow judges to thoroughly evaluate Chronos' deep features without requiring tedious account setup, API integrations, or real task completion cycles:
 * **Interactive Demo Mode**: Click **"Try Demo Mode"** on the onboarding screen.
