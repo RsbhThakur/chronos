@@ -5,7 +5,10 @@ import { getMessaging, Messaging } from 'firebase/messaging';
 
 const getFirebaseConfig = () => {
   if (typeof window !== 'undefined' && (window as any).__FIREBASE_CONFIG__) {
-    return (window as any).__FIREBASE_CONFIG__;
+    const config = (window as any).__FIREBASE_CONFIG__;
+    if (config.apiKey && config.apiKey !== '') {
+      return config;
+    }
   }
   return {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || 'AIzaSyPlaceholderKeyForBuildTimePrerendering',

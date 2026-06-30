@@ -22,6 +22,8 @@ export const metadata: Metadata = {
   description: "Your AI-powered productivity companion that rescues you from missed deadlines",
 };
 
+export const dynamic = 'force-dynamic';
+
 import Providers from "@/components/providers/Providers";
 
 export default function RootLayout({
