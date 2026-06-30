@@ -84,6 +84,7 @@ export interface Task {
   ghostWorkerOutput: GhostWorkerOutput | null;
   createdAt: Date;
   completedAt: Date | null;
+  calendarEventId?: string | null;
 }
 
 // ===== GOAL TYPES =====
