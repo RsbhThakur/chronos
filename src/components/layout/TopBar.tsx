@@ -178,7 +178,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onMenuClick, onSearchClick }) =>
           </div>
         )}
         <button
-          onClick={signOut}
+          onClick={() => signOut()}
           title="Sign Out"
           style={{
             background: 'none', border: 'none', cursor: 'pointer',
