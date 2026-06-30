@@ -55,6 +55,8 @@ export const GlassCard: React.FC<GlassCardProps> = ({
 
   const baseStyle: React.CSSProperties = {
     padding: paddingMap[padding],
+    borderWidth: '1px',
+    borderStyle: 'solid',
     borderColor: isHovered && glowColor !== 'none' ? glowBorderMap[glowColor] : 'var(--glass-border)',
     boxShadow: isHovered && glowColor !== 'none' ? glowShadowMap[glowColor] : undefined,
     cursor: onClick ? 'pointer' : undefined,
