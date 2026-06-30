@@ -84,9 +84,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       color: 'var(--text-primary)',
       boxSizing: 'border-box',
     }}>
-      {/* Top Bar */}
       <TopBar
-        onMenuClick={() => setSidebarOpen((v) => !v)}
+        onMenuClick={() => {
+          if (isMobile) {
+            setSidebarOpen((v) => !v);
+          } else {
+            setIsCollapsed((v) => !v);
+          }
+        }}
         onSearchClick={togglePalette}
       />
 
