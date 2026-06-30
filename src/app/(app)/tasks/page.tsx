@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useTasks } from '@/hooks/useTasks';
@@ -78,7 +78,7 @@ const CalendarView: React.FC<{ tasks: Task[] }> = ({ tasks }) => {
 };
 
 // ─── List View ────────────────────────────────────────────────────────────────
-const ListView: React.FC<{ tasks: Task[]; onComplete: (id: string) => void; onDelete: (id: string) => void; onEdit: (task: Task) => void; isMobile?: boolean }> = ({ tasks, onComplete, onDelete, onEdit, isMobile = false }) => (
+const ListView: React.FC<{ tasks: Task[]; onComplete: (id: string) => void; onDelete: (id: string) => void; onEdit: (task: Task) => void; onTaskClick?: (task: Task) => void; isMobile?: boolean }> = ({ tasks, onComplete, onDelete, onEdit, onTaskClick, isMobile = false }) => (
   <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? '8px' : '2px' }}>
     {/* Header */}
     {!isMobile && (
@@ -93,7 +93,7 @@ const ListView: React.FC<{ tasks: Task[]; onComplete: (id: string) => void; onDe
         if (isMobile) {
           return (
             <motion.div key={task.id} initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { delay: i * 0.03 } }}
-              onClick={() => onEdit(task)}
+              onClick={() => onTaskClick ? onTaskClick(task) : onEdit(task)}
               style={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -129,7 +129,7 @@ const ListView: React.FC<{ tasks: Task[]; onComplete: (id: string) => void; onDe
         return (
           <motion.div key={task.id} initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { delay: i * 0.03 } }}
             style={{ display: 'grid', gridTemplateColumns: '1fr 100px 80px 100px 80px', gap: '12px', padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.04)', alignItems: 'center', cursor: 'pointer' }}
-            onClick={() => onEdit(task)}
+            onClick={() => onTaskClick ? onTaskClick(task) : onEdit(task)}
             onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
             onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
           >
@@ -605,8 +605,10 @@ export default function TasksPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [activeGhostTask, setActiveGhostTask] = useState<Task | null>(null);
+  const [viewingTask, setViewingTask] = useState<Task | null>(null);
 
   const allTasks = isDemo ? demoTasks : tasks;
+  const activeViewingTask = viewingTask ? allTasks.find((t) => t.id === viewingTask.id) : null;
 
   const filtered = allTasks.filter((t) => {
     if (search && !t.title.toLowerCase().includes(search.toLowerCase())) return false;
@@ -705,7 +707,7 @@ export default function TasksPage() {
             <TaskKanban
               tasks={filtered}
               onTaskUpdate={async (id, updates) => { if (!isDemo) await updateTask(id, updates); }}
-              onTaskClick={(task) => setEditingTask(task)}
+              onTaskClick={(task) => setViewingTask(task)}
               onTaskEdit={(task) => setEditingTask(task)}
               onTaskComplete={handleComplete}
               onTaskDelete={handleDelete}
@@ -717,7 +719,7 @@ export default function TasksPage() {
         ) : view === 'list' ? (
           <div style={{ flex: 1, overflow: 'auto', padding: isMobile ? '0 12px 90px' : '0 24px 90px' }}>
             <GlassCard padding="sm" hoverable={false} style={{ marginTop: '16px' }}>
-              <ListView tasks={filtered} onComplete={handleComplete} onDelete={handleDelete} onEdit={(task) => setEditingTask(task)} isMobile={isMobile} />
+              <ListView tasks={filtered} onComplete={handleComplete} onDelete={handleDelete} onEdit={(task) => setEditingTask(task)} onTaskClick={(task) => setViewingTask(task)} isMobile={isMobile} />
             </GlassCard>
           </div>
         ) : (
@@ -749,6 +751,22 @@ export default function TasksPage() {
               if (isDemo) return;
               await deleteTask(id);
               showToast({ type: 'info', message: 'Task deleted.' });
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {activeViewingTask && (
+          <TaskSummaryModal
+            task={activeViewingTask}
+            onClose={() => setViewingTask(null)}
+            onEditClick={(task) => setEditingTask(task)}
+            onCompleteToggle={handleComplete}
+            onUpdateSubtasks={async (id, subtasks) => {
+              if (!isDemo) {
+                await updateTask(id, { subtasks });
+              }
             }}
           />
         )}
