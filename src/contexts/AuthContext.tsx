@@ -15,7 +15,7 @@ interface AuthContextType {
   isDemo: boolean;
   signIn: () => Promise<void>;
   signInGuest: () => Promise<void>;
-  signOut: () => Promise<void>;
+  signOut: (callbackUrl?: string) => Promise<void>;
   startDemo: () => void;
   googleAccessToken: string | null;
 }
@@ -104,7 +104,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     syncFirebase();
   }, [session, status, isDemo]);
 
-  // 2. Listen to Firebase Auth state change and fetch Firestore profile
+  // 2. React to refresh token expiration error
+  useEffect(() => {
+    if (session && (session as any).error === 'RefreshAccessTokenError') {
+      console.warn('OAuth refresh token expired or revoked. Redirecting to sign-in page with session_expired error.');
+      signOut('/login?error=session_expired');
+    }
+  }, [session]);
+
+  // 3. Listen to Firebase Auth state change and fetch Firestore profile
   useEffect(() => {
     if (isDemo) return;
 
@@ -181,7 +189,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await nextAuthSignIn('guest');
   };
 
-  const signOut = async () => {
+  const signOut = async (callbackUrl = '/login') => {
     localStorage.removeItem('chronos_demo_mode');
     localStorage.removeItem('chronos_demo_mode_persona');
     if (demoActive) {
@@ -192,9 +200,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
     setLoading(true);
     if (clientAuth.currentUser) {
-      await firebaseSignOut(clientAuth);
+      try {
+        await firebaseSignOut(clientAuth);
+      } catch (err) {
+        console.error('Error in firebaseSignOut during custom redirect:', err);
+      }
     }
-    await nextAuthSignOut();
+    await nextAuthSignOut({ callbackUrl });
   };
 
   const startDemo = () => {
