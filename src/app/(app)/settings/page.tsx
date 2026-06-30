@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useDemo } from '@/hooks/useDemo';
 import { useToast } from '@/components/ui/Toast';
@@ -44,6 +45,7 @@ const SettingRow: React.FC<{ label: string; description?: string; children: Reac
 
 export default function SettingsPage() {
   const { user, signOut } = useAuth();
+  const router = useRouter();
   const { isDemo } = useDemo();
   const { showToast } = useToast();
   const [activeSection, setActiveSection] = useState<Section>('profile');
@@ -246,6 +248,26 @@ export default function SettingsPage() {
     }
   };
 
+  const handleRetakeQuiz = async () => {
+    showToast({ type: 'info', message: 'Resetting onboarding state...' });
+    if (!isDemo && user?.id) {
+      try {
+        const docRef = doc(clientDb, 'users', user.id);
+        await updateDoc(docRef, {
+          onboardingCompleted: false,
+        });
+        showToast({ type: 'success', message: 'Redirecting to Personality Quiz!' });
+        router.push('/onboarding');
+      } catch (err) {
+        console.error('Failed to reset onboardingCompleted status:', err);
+        showToast({ type: 'error', message: 'Failed to initiate quiz retake.' });
+      }
+    } else {
+      showToast({ type: 'success', message: 'Redirecting to Personality Quiz (Demo Mode)!' });
+      router.push('/onboarding');
+    }
+  };
+
   const exportData = () => {
     const data = { user, exportedAt: new Date().toISOString() };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -294,26 +316,74 @@ export default function SettingsPage() {
             <SettingRow label="Work Style" description="How you approach tasks">
               <div style={{ display: 'flex', gap: '6px' }}>
                 {(['sprinter', 'marathoner', 'mixed'] as WorkStyle[]).map((s) => (
-                  <span key={s} style={{ fontSize: '10px', padding: '3px 10px', borderRadius: 'var(--radius-full)', border: `1px solid ${user?.personality?.workStyle === s ? 'var(--neon-purple)' : 'var(--glass-border)'}`, color: user?.personality?.workStyle === s ? 'var(--neon-purple)' : 'var(--text-tertiary)', textTransform: 'capitalize', cursor: 'default' }}>{s}</span>
+                  <span
+                    key={s}
+                    onClick={() => updatePersonalitySetting('workStyle', s)}
+                    style={{
+                      fontSize: '10px',
+                      padding: '3px 10px',
+                      borderRadius: 'var(--radius-full)',
+                      border: `1px solid ${user?.personality?.workStyle === s ? 'var(--neon-purple)' : 'var(--glass-border)'}`,
+                      color: user?.personality?.workStyle === s ? 'var(--neon-purple)' : 'var(--text-tertiary)',
+                      textTransform: 'capitalize',
+                      cursor: 'pointer',
+                      background: user?.personality?.workStyle === s ? 'rgba(180,0,255,0.06)' : 'transparent',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    {s}
+                  </span>
                 ))}
               </div>
             </SettingRow>
             <SettingRow label="Motivation Type" description="What drives you">
               <div style={{ display: 'flex', gap: '6px' }}>
                 {(['encouragement', 'pressure', 'data-driven'] as MotivationType[]).map((m) => (
-                  <span key={m} style={{ fontSize: '10px', padding: '3px 10px', borderRadius: 'var(--radius-full)', border: `1px solid ${user?.personality?.motivationType === m ? 'var(--neon-amber)' : 'var(--glass-border)'}`, color: user?.personality?.motivationType === m ? 'var(--neon-amber)' : 'var(--text-tertiary)', textTransform: 'capitalize', cursor: 'default' }}>{m}</span>
+                  <span
+                    key={m}
+                    onClick={() => updatePersonalitySetting('motivationType', m)}
+                    style={{
+                      fontSize: '10px',
+                      padding: '3px 10px',
+                      borderRadius: 'var(--radius-full)',
+                      border: `1px solid ${user?.personality?.motivationType === m ? 'var(--neon-amber)' : 'var(--glass-border)'}`,
+                      color: user?.personality?.motivationType === m ? 'var(--neon-amber)' : 'var(--text-tertiary)',
+                      textTransform: 'capitalize',
+                      cursor: 'pointer',
+                      background: user?.personality?.motivationType === m ? 'rgba(255,170,0,0.06)' : 'transparent',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    {m}
+                  </span>
                 ))}
               </div>
             </SettingRow>
             <SettingRow label="Communication Style" description="How Chronos talks to you">
               <div style={{ display: 'flex', gap: '6px' }}>
                 {(['casual', 'professional', 'minimal'] as CommunicationStyle[]).map((c) => (
-                  <span key={c} style={{ fontSize: '10px', padding: '3px 10px', borderRadius: 'var(--radius-full)', border: `1px solid ${user?.personality?.communicationStyle === c ? 'var(--neon-pink)' : 'var(--glass-border)'}`, color: user?.personality?.communicationStyle === c ? 'var(--neon-pink)' : 'var(--text-tertiary)', textTransform: 'capitalize', cursor: 'default' }}>{c}</span>
+                  <span
+                    key={c}
+                    onClick={() => updatePersonalitySetting('communicationStyle', c)}
+                    style={{
+                      fontSize: '10px',
+                      padding: '3px 10px',
+                      borderRadius: 'var(--radius-full)',
+                      border: `1px solid ${user?.personality?.communicationStyle === c ? 'var(--neon-pink)' : 'var(--glass-border)'}`,
+                      color: user?.personality?.communicationStyle === c ? 'var(--neon-pink)' : 'var(--text-tertiary)',
+                      textTransform: 'capitalize',
+                      cursor: 'pointer',
+                      background: user?.personality?.communicationStyle === c ? 'rgba(236,72,153,0.06)' : 'transparent',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    {c}
+                  </span>
                 ))}
               </div>
             </SettingRow>
-            <div style={{ marginTop: '20px' }}>
-              <NeonButton variant="purple" size="sm" onClick={() => showToast({ type: 'info', message: 'Retake quiz coming soon!' })}>Retake Personality Quiz</NeonButton>
+             <div style={{ marginTop: '20px' }}>
+              <NeonButton variant="purple" size="sm" onClick={handleRetakeQuiz}>Retake Personality Quiz</NeonButton>
             </div>
           </div>
         );
@@ -322,19 +392,19 @@ export default function SettingsPage() {
         return (
           <div>
             <SettingRow label="Ghost Worker" description="AI completes tasks on your behalf (emails, docs)">
-              <Toggle enabled={features.ghostWorker} onChange={(v) => updateFeature('ghostWorker', v)} color="var(--neon-cyan)" />
+              <Toggle enabled={features.ghostWorker} onChange={(v) => updateFeatureSetting('ghostWorker', v)} color="var(--neon-cyan)" />
             </SettingRow>
             <SettingRow label="Gamification" description="XP, levels, streaks, and badges">
-              <Toggle enabled={features.gamification} onChange={(v) => updateFeature('gamification', v)} color="var(--neon-purple)" />
+              <Toggle enabled={features.gamification} onChange={(v) => updateFeatureSetting('gamification', v)} color="var(--neon-purple)" />
             </SettingRow>
             <SettingRow label="Rescue Mode" description="Emergency planning for approaching deadlines">
-              <Toggle enabled={features.rescueMode} onChange={(v) => updateFeature('rescueMode', v)} color="var(--neon-pink)" />
+              <Toggle enabled={features.rescueMode} onChange={(v) => updateFeatureSetting('rescueMode', v)} color="var(--neon-pink)" />
             </SettingRow>
             <SettingRow label="Voice Assistant" description="Control Chronos with your voice">
-              <Toggle enabled={features.voice} onChange={(v) => updateFeature('voice', v)} color="var(--neon-green)" />
+              <Toggle enabled={features.voice} onChange={(v) => updateFeatureSetting('voice', v)} color="var(--neon-green)" />
             </SettingRow>
             <SettingRow label="Camera Scan" description="Scan documents and whiteboards">
-              <Toggle enabled={features.cameraScam} onChange={(v) => updateFeature('cameraScam', v)} color="var(--neon-amber)" />
+              <Toggle enabled={features.cameraScam} onChange={(v) => updateFeatureSetting('cameraScam', v)} color="var(--neon-amber)" />
             </SettingRow>
           </div>
         );
@@ -359,16 +429,16 @@ export default function SettingsPage() {
         return (
           <div>
             <SettingRow label="Push Notifications" description="Browser push alerts for deadlines">
-              <Toggle enabled={notifs.push} onChange={(v) => setNotifs((n) => ({ ...n, push: v }))} />
+              <Toggle enabled={notifs.push} onChange={(v) => updateNotificationSetting('push', v)} />
             </SettingRow>
             <SettingRow label="Email Notifications" description="Get deadline reminders via email">
-              <Toggle enabled={notifs.email} onChange={(v) => setNotifs((n) => ({ ...n, email: v }))} />
+              <Toggle enabled={notifs.email} onChange={(v) => updateNotificationSetting('email', v)} />
             </SettingRow>
             <SettingRow label="In-App Notifications" description="Toast and bell notifications inside Chronos">
-              <Toggle enabled={notifs.inApp} onChange={(v) => setNotifs((n) => ({ ...n, inApp: v }))} />
+              <Toggle enabled={notifs.inApp} onChange={(v) => updateNotificationSetting('inApp', v)} />
             </SettingRow>
             <SettingRow label="Alert Timing" description="How far before deadline to notify you">
-              <select value={notifs.timing} onChange={(e) => setNotifs((n) => ({ ...n, timing: e.target.value }))} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)', padding: '5px 10px', color: 'var(--text-primary)', fontSize: 'var(--text-xs)', outline: 'none', cursor: 'pointer' }}>
+              <select value={notifs.timing} onChange={(e) => updateNotificationSetting('timing', e.target.value)} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid var(--glass-border)', borderRadius: 'var(--radius-sm)', padding: '5px 10px', color: 'var(--text-primary)', fontSize: 'var(--text-xs)', outline: 'none', cursor: 'pointer' }}>
                 <option value="1h" style={{ background: '#0a0a14', color: 'var(--text-primary)' }}>1 hour before</option>
                 <option value="2h" style={{ background: '#0a0a14', color: 'var(--text-primary)' }}>2 hours before</option>
                 <option value="6h" style={{ background: '#0a0a14', color: 'var(--text-primary)' }}>6 hours before</option>

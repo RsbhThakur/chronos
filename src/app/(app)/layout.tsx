@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { TopBar } from '@/components/layout/TopBar';
 import { CommandPalette } from '@/components/layout/CommandPalette';
@@ -12,6 +12,7 @@ import { AIChatSidebar } from '@/components/chat/AIChatSidebar';
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, loading, isDemo } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const { isOpen: isPaletteOpen, open: openPalette, close: closePalette, toggle: togglePalette } = useCommandPalette();
 
   const [isMobile, setIsMobile] = useState(false);
@@ -72,6 +73,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   if (!user && !isDemo) return null;
+
+  if (pathname === '/onboarding') {
+    return <>{children}</>;
+  }
 
   return (
     <div style={{
